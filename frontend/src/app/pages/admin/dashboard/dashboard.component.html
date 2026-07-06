@@ -1,0 +1,627 @@
+<div class="dashboard-wrapper">
+  <!-- Top Bar -->
+  <header class="dash-header">
+    <div class="header-brand">
+      <img src="/assets/images/logo.png" alt="Logo" class="logo" />
+      <h2>Kangaroo Club Control Panel</h2>
+    </div>
+    <div class="header-actions">
+      <a routerLink="/" class="btn btn-secondary btn-sm">Visit Site</a>
+      <button (click)="logout()" class="btn btn-outline btn-sm">Log Out</button>
+    </div>
+  </header>
+
+  <div class="dash-layout">
+    <!-- Sidebar -->
+    <aside class="dash-sidebar">
+      <ul class="sidebar-menu">
+        <li [class.active]="activeTab === 'settings'" (click)="setTab('settings')">
+          <span class="icon">⚙️</span> Site Settings
+        </li>
+        <li [class.active]="activeTab === 'hero'" (click)="setTab('hero')">
+          <span class="icon">🖼️</span> Hero Banner
+        </li>
+        <li [class.active]="activeTab === 'programs'" (click)="setTab('programs')">
+          <span class="icon">🎓</span> School Programs
+        </li>
+        <li [class.active]="activeTab === 'testimonials'" (click)="setTab('testimonials')">
+          <span class="icon">💬</span> Parent Reviews
+        </li>
+        <li [class.active]="activeTab === 'gallery'" (click)="setTab('gallery')">
+          <span class="icon">📷</span> Gallery Items
+        </li>
+        <li [class.active]="activeTab === 'inquiries'" (click)="setTab('inquiries')">
+          <span class="icon">📩</span> Form Inquiries
+        </li>
+      </ul>
+    </aside>
+
+    <!-- Main Content Area -->
+    <main class="dash-main">
+      
+      <!-- SITE SETTINGS TAB -->
+      <section *ngIf="activeTab === 'settings'" class="tab-section">
+        <div class="section-title-bar">
+          <h2>Global Site Settings</h2>
+          <p>Configure general info, color tokens, and contact points.</p>
+        </div>
+
+        <div class="alert alert-success" *ngIf="settingsSuccess">
+          🎉 Settings updated successfully!
+        </div>
+        <div class="alert alert-danger" *ngIf="settingsError">
+          ⚠️ {{ settingsError }}
+        </div>
+
+        <form (ngSubmit)="saveSettings()" class="dash-form card">
+          <div class="form-grid">
+            <div class="form-group">
+              <label class="form-label">School Name</label>
+              <input type="text" [(ngModel)]="settings.site_name" name="site_name" class="form-control" />
+            </div>
+            <div class="form-group">
+              <label class="form-label">Logo Path</label>
+              <input type="text" [(ngModel)]="settings.site_logo" name="site_logo" class="form-control" />
+            </div>
+          </div>
+
+          <hr class="form-divider" />
+
+          <h3>Colors & Aesthetics</h3>
+          <div class="form-grid-3">
+            <div class="form-group">
+              <label class="form-label">Primary Color (Coral)</label>
+              <input type="text" [(ngModel)]="settings.primary_color" name="primary_color" class="form-control" />
+            </div>
+            <div class="form-group">
+              <label class="form-label">Secondary Color (Yellow)</label>
+              <input type="text" [(ngModel)]="settings.secondary_color" name="secondary_color" class="form-control" />
+            </div>
+            <div class="form-group">
+              <label class="form-label">Accent Color (Blue)</label>
+              <input type="text" [(ngModel)]="settings.accent_color" name="accent_color" class="form-control" />
+            </div>
+          </div>
+
+          <hr class="form-divider" />
+
+          <h3>Contact Details</h3>
+          <div class="form-grid">
+            <div class="form-group">
+              <label class="form-label">Contact Phone</label>
+              <input type="text" [(ngModel)]="settings.contact_phone" name="contact_phone" class="form-control" />
+            </div>
+            <div class="form-group">
+              <label class="form-label">Contact Email</label>
+              <input type="email" [(ngModel)]="settings.contact_email" name="contact_email" class="form-control" />
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Campus Address</label>
+            <input type="text" [(ngModel)]="settings.address" name="address" class="form-control" />
+          </div>
+          <div class="form-group">
+            <label class="form-label">Working Hours</label>
+            <input type="text" [(ngModel)]="settings.opening_hours" name="opening_hours" class="form-control" />
+          </div>
+
+          <hr class="form-divider" />
+
+          <h3>Social Connections</h3>
+          <div class="form-grid">
+            <div class="form-group">
+              <label class="form-label">Facebook URL</label>
+              <input type="text" [(ngModel)]="settings.facebook_url" name="facebook_url" class="form-control" />
+            </div>
+            <div class="form-group">
+              <label class="form-label">Instagram URL</label>
+              <input type="text" [(ngModel)]="settings.instagram_url" name="instagram_url" class="form-control" />
+            </div>
+            <div class="form-group">
+              <label class="form-label">Twitter/X URL</label>
+              <input type="text" [(ngModel)]="settings.twitter_url" name="twitter_url" class="form-control" />
+            </div>
+            <div class="form-group">
+              <label class="form-label">Youtube URL</label>
+              <input type="text" [(ngModel)]="settings.youtube_url" name="youtube_url" class="form-control" />
+            </div>
+          </div>
+
+          <hr class="form-divider" />
+          
+          <div class="form-group">
+            <label class="form-label">Footer Copyright text</label>
+            <input type="text" [(ngModel)]="settings.footer_text" name="footer_text" class="form-control" />
+          </div>
+
+          <button type="submit" class="btn btn-primary" [disabled]="settingsLoading">
+            {{ settingsLoading ? 'Saving Settings...' : 'Save Settings' }}
+          </button>
+        </form>
+      </section>
+
+      <!-- HERO SLIDES TAB -->
+      <section *ngIf="activeTab === 'hero'" class="tab-section">
+        <div class="section-title-bar">
+          <h2>Hero Carousel Settings</h2>
+          <p>Define rotating hero banner slides overlays, imagery, and call-to-actions.</p>
+        </div>
+
+        <div class="alert alert-success" *ngIf="heroSuccess">
+          🎉 Hero banner slides saved successfully!
+        </div>
+        <div class="alert alert-danger" *ngIf="heroError">
+          ⚠️ {{ heroError }}
+        </div>
+
+        <div class="section-header-config card">
+          <h3>Banner Fallback Information</h3>
+          <div class="form-group mt-15">
+            <label class="form-label">Section Title</label>
+            <input type="text" [(ngModel)]="heroSection.title" name="hero_title" class="form-control" />
+          </div>
+          <div class="form-group">
+            <label class="form-label">Section Subtitle</label>
+            <input type="text" [(ngModel)]="heroSection.subtitle" name="hero_subtitle" class="form-control" />
+          </div>
+          <div class="form-group">
+            <label class="form-label">Section Description</label>
+            <textarea [(ngModel)]="heroSection.description" name="hero_desc" class="form-control" rows="3"></textarea>
+          </div>
+        </div>
+
+        <h3>Active Slides ({{ heroSlides.length }})</h3>
+        <div class="slides-list">
+          <div class="slide-config-card card" *ngFor="let slide of heroSlides; let i = index">
+            <div class="slide-header">
+              <h4>Slide #{{ i + 1 }}</h4>
+              <button type="button" class="btn-remove" (click)="removeHeroSlide(i)">Remove Slide</button>
+            </div>
+            
+            <div class="form-grid">
+              <div class="form-group">
+                <label class="form-label">Slide Main Title</label>
+                <input type="text" [(ngModel)]="slide.title" name="slide_title_{{i}}" class="form-control" />
+              </div>
+              <div class="form-group">
+                <label class="form-label">Slide Subtitle</label>
+                <input type="text" [(ngModel)]="slide.subtitle" name="slide_sub_{{i}}" class="form-control" />
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Background Image URL/Path</label>
+              <input type="text" [(ngModel)]="slide.image" name="slide_img_{{i}}" class="form-control" />
+            </div>
+
+            <div class="form-grid">
+              <div class="form-group">
+                <label class="form-label">CTA Button Label</label>
+                <input type="text" [(ngModel)]="slide.cta_text" name="slide_btn_{{i}}" class="form-control" />
+              </div>
+              <div class="form-group">
+                <label class="form-label">CTA Button Route Link</label>
+                <input type="text" [(ngModel)]="slide.cta_link" name="slide_link_{{i}}" class="form-control" />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="action-buttons mt-30">
+          <button (click)="addHeroSlide()" class="btn btn-secondary">+ Add Slide</button>
+          <button (click)="saveHero()" class="btn btn-primary ml-10">Save Banner Settings</button>
+        </div>
+      </section>
+
+      <!-- PROGRAMS TAB -->
+      <section *ngIf="activeTab === 'programs'" class="tab-section">
+        <div class="section-title-bar">
+          <h2>School Programs Manager</h2>
+          <button (click)="openProgramModal()" class="btn btn-primary">+ Add New Program</button>
+        </div>
+
+        <div class="table-card card">
+          <table class="dash-table">
+            <thead>
+              <tr>
+                <th>Title</th>
+                <th>Age Group</th>
+                <th>Duration</th>
+                <th>Order</th>
+                <th>Status</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let prog of programs">
+                <td class="font-bold">{{ prog.title }}</td>
+                <td>{{ prog.age_group }}</td>
+                <td>{{ prog.duration }}</td>
+                <td>{{ prog.sort_order }}</td>
+                <td>
+                  <span class="badge" [class.badge-primary]="prog.is_active" [class.badge-secondary]="!prog.is_active">
+                    {{ prog.is_active ? 'Active' : 'Hidden' }}
+                  </span>
+                </td>
+                <td>
+                  <button (click)="openProgramModal(prog)" class="btn-table edit">Edit</button>
+                  <button (click)="deleteProgram(prog.id)" class="btn-table delete ml-5">Delete</button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- TESTIMONIALS TAB -->
+      <section *ngIf="activeTab === 'testimonials'" class="tab-section">
+        <div class="section-title-bar">
+          <h2>Parent Testimonials Manager</h2>
+          <button (click)="openTestimonialModal()" class="btn btn-primary">+ Add Testimonial</button>
+        </div>
+
+        <div class="table-card card">
+          <table class="dash-table">
+            <thead>
+              <tr>
+                <th>Parent Name</th>
+                <th>Child Details</th>
+                <th>Rating</th>
+                <th>Quote Excerpt</th>
+                <th>Status</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let test of testimonials">
+                <td class="font-bold">{{ test.author_name }}</td>
+                <td>{{ test.author_role }}</td>
+                <td>⭐⭐⭐⭐⭐ ({{ test.rating }})</td>
+                <td class="excerpt">{{ test.quote | slice:0:50 }}...</td>
+                <td>
+                  <span class="badge" [class.badge-primary]="test.is_active" [class.badge-secondary]="!test.is_active">
+                    {{ test.is_active ? 'Active' : 'Hidden' }}
+                  </span>
+                </td>
+                <td>
+                  <button (click)="openTestimonialModal(test)" class="btn-table edit">Edit</button>
+                  <button (click)="deleteTestimonial(test.id)" class="btn-table delete ml-5">Delete</button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- GALLERY TAB -->
+      <section *ngIf="activeTab === 'gallery'" class="tab-section">
+        <div class="section-title-bar">
+          <h2>School Gallery Manager</h2>
+          <button (click)="openGalleryModal()" class="btn btn-primary">+ Add Gallery Photo</button>
+        </div>
+
+        <div class="table-card card">
+          <table class="dash-table">
+            <thead>
+              <tr>
+                <th>Preview</th>
+                <th>Title</th>
+                <th>Category</th>
+                <th>Order</th>
+                <th>Status</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let item of galleryItems">
+                <td>
+                  <img [src]="item.media_url" alt="Preview" class="table-preview-img" />
+                </td>
+                <td class="font-bold">{{ item.title || 'Untitled' }}</td>
+                <td>{{ item.category }}</td>
+                <td>{{ item.sort_order }}</td>
+                <td>
+                  <span class="badge" [class.badge-primary]="item.is_active" [class.badge-secondary]="!item.is_active">
+                    {{ item.is_active ? 'Active' : 'Hidden' }}
+                  </span>
+                </td>
+                <td>
+                  <button (click)="openGalleryModal(item)" class="btn-table edit">Edit</button>
+                  <button (click)="deleteGallery(item.id)" class="btn-table delete ml-5">Delete</button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- FORM INQUIRIES TAB -->
+      <section *ngIf="activeTab === 'inquiries'" class="tab-section">
+        <div class="section-title-bar">
+          <h2>Form Submission Inquiries</h2>
+          <div class="inquiry-selector">
+            <button [class.active]="inquiryFilter === 'contact'" (click)="inquiryFilter = 'contact'">Contact Forms ({{ contacts.length }})</button>
+            <button [class.active]="inquiryFilter === 'franchise'" (click)="inquiryFilter = 'franchise'">Franchise Forms ({{ franchises.length }})</button>
+            <button [class.active]="inquiryFilter === 'jobs'" (click)="inquiryFilter = 'jobs'">Job Apps ({{ applications.length }})</button>
+          </div>
+        </div>
+
+        <!-- Contact Forms List -->
+        <div class="table-card card" *ngIf="inquiryFilter === 'contact'">
+          <table class="dash-table">
+            <thead>
+              <tr>
+                <th>Applicant Name</th>
+                <th>Email / Phone</th>
+                <th>Subject</th>
+                <th>Message</th>
+                <th>Submitted</th>
+                <th>Status</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let sub of contacts">
+                <td class="font-bold">{{ sub.name }}</td>
+                <td>
+                  <div>{{ sub.email }}</div>
+                  <div class="text-small text-light">{{ sub.phone }}</div>
+                </td>
+                <td><span class="badge badge-accent">{{ sub.subject }}</span></td>
+                <td class="message-cell">{{ sub.message }}</td>
+                <td>{{ sub.created_at | date:'short' }}</td>
+                <td>
+                  <span class="badge" [class.badge-primary]="sub.status === 'NEW'" [class.badge-secondary]="sub.status === 'RESOLVED'">
+                    {{ sub.status }}
+                  </span>
+                </td>
+                <td>
+                  <button *ngIf="sub.status === 'NEW'" (click)="resolveContact(sub.id)" class="btn-table edit">Resolve</button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Franchise Forms List -->
+        <div class="table-card card" *ngIf="inquiryFilter === 'franchise'">
+          <table class="dash-table">
+            <thead>
+              <tr>
+                <th>Applicant Name</th>
+                <th>Email / Phone</th>
+                <th>Location</th>
+                <th>Budget Range</th>
+                <th>Inquiry Note</th>
+                <th>Submitted</th>
+                <th>Status</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let inq of franchises">
+                <td class="font-bold">{{ inq.name }}</td>
+                <td>
+                  <div>{{ inq.email }}</div>
+                  <div class="text-small text-light">{{ inq.phone }}</div>
+                </td>
+                <td>{{ inq.city }}, {{ inq.state }}</td>
+                <td>{{ inq.investment_range }}</td>
+                <td class="message-cell">{{ inq.message }}</td>
+                <td>{{ inq.created_at | date:'short' }}</td>
+                <td>
+                  <span class="badge" [class.badge-primary]="inq.status === 'NEW'" [class.badge-secondary]="inq.status === 'RESOLVED'">
+                    {{ inq.status }}
+                  </span>
+                </td>
+                <td>
+                  <button *ngIf="inq.status === 'NEW'" (click)="resolveFranchise(inq.id)" class="btn-table edit">Resolve</button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Job Applications List -->
+        <div class="table-card card" *ngIf="inquiryFilter === 'jobs'">
+          <table class="dash-table">
+            <thead>
+              <tr>
+                <th>Applicant Name</th>
+                <th>Email / Phone</th>
+                <th>Cover Note</th>
+                <th>Application Date</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let app of applications">
+                <td class="font-bold">{{ app.applicant_name }}</td>
+                <td>
+                  <div>{{ app.applicant_email }}</div>
+                  <div class="text-small text-light">{{ app.applicant_phone }}</div>
+                </td>
+                <td class="message-cell">{{ app.cover_letter }}</td>
+                <td>{{ app.created_at | date:'short' }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+    </main>
+  </div>
+</div>
+
+<!-- PROGRAM CREATE/EDIT MODAL -->
+<div class="dash-modal" *ngIf="programModalOpen">
+  <div class="modal-content card">
+    <div class="modal-header">
+      <h3>{{ selectedProgram?.id ? 'Edit School Program' : 'Create New Program' }}</h3>
+      <button class="modal-close" (click)="closeProgramModal()">×</button>
+    </div>
+    
+    <div class="alert alert-success" *ngIf="programSuccess">
+      🎉 Program saved successfully!
+    </div>
+
+    <form (ngSubmit)="saveProgram()" *ngIf="selectedProgram">
+      <div class="form-group">
+        <label class="form-label">Program Title</label>
+        <input type="text" [(ngModel)]="selectedProgram.title" name="prog_title" class="form-control" required />
+      </div>
+
+      <div class="form-grid">
+        <div class="form-group">
+          <label class="form-label">Target Age Group</label>
+          <input type="text" [(ngModel)]="selectedProgram.age_group" name="prog_age" class="form-control" required />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Daily Duration</label>
+          <input type="text" [(ngModel)]="selectedProgram.duration" name="prog_dur" class="form-control" required />
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Program Description</label>
+        <textarea [(ngModel)]="selectedProgram.description" name="prog_desc" class="form-control" rows="3"></textarea>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Program Image URL</label>
+        <input type="text" [(ngModel)]="selectedProgram.image_url" name="prog_img" class="form-control" />
+      </div>
+
+      <div class="form-grid-3">
+        <div class="form-group">
+          <label class="form-label">Sort Order</label>
+          <input type="number" [(ngModel)]="selectedProgram.sort_order" name="prog_order" class="form-control" />
+        </div>
+        <div class="form-group" style="display:flex; align-items:center; height:100%; margin-top:30px;">
+          <input type="checkbox" [(ngModel)]="selectedProgram.is_active" name="prog_active" id="prog_active" style="width:20px; height:20px; cursor:pointer;" />
+          <label for="prog_active" style="margin-left:8px; font-weight:600; cursor:pointer;">Is Active/Visible</label>
+        </div>
+      </div>
+
+      <div class="highlights-section">
+        <h4>Program Bullet Highlights:</h4>
+        <div class="highlight-input-row" *ngFor="let high of selectedProgram.highlights; let j = index">
+          <input type="text" [(ngModel)]="selectedProgram.highlights[j]" name="highlight_{{j}}" class="form-control" placeholder="Highlight point" />
+          <button type="button" class="btn-remove" (click)="removeHighlight(j)">Remove</button>
+        </div>
+        <button type="button" (click)="addHighlight()" class="btn btn-outline btn-sm mt-10">+ Add Point</button>
+      </div>
+
+      <div class="modal-footer mt-20">
+        <button type="button" (click)="closeProgramModal()" class="btn btn-outline btn-sm">Cancel</button>
+        <button type="submit" class="btn btn-primary btn-sm ml-10">Save Program</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- TESTIMONIAL MODAL -->
+<div class="dash-modal" *ngIf="testimonialModalOpen">
+  <div class="modal-content card">
+    <div class="modal-header">
+      <h3>{{ selectedTestimonial?.id ? 'Edit Testimonial' : 'Create Testimonial' }}</h3>
+      <button class="modal-close" (click)="closeTestimonialModal()">×</button>
+    </div>
+    
+    <div class="alert alert-success" *ngIf="testimonialSuccess">
+      🎉 Testimonial saved successfully!
+    </div>
+
+    <form (ngSubmit)="saveTestimonial()" *ngIf="selectedTestimonial">
+      <div class="form-group">
+        <label class="form-label">Parent Name</label>
+        <input type="text" [(ngModel)]="selectedTestimonial.author_name" name="test_name" class="form-control" required />
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Author Subtitle / Child details</label>
+        <input type="text" [(ngModel)]="selectedTestimonial.author_role" name="test_role" class="form-control" required placeholder="e.g., Parent of Aarav (Kindergarten)" />
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Review Quote</label>
+        <textarea [(ngModel)]="selectedTestimonial.quote" name="test_quote" class="form-control" rows="4" required></textarea>
+      </div>
+
+      <div class="form-grid-3">
+        <div class="form-group">
+          <label class="form-label">Rating (1-5)</label>
+          <input type="number" [(ngModel)]="selectedTestimonial.rating" name="test_rate" min="1" max="5" class="form-control" required />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Sort Order</label>
+          <input type="number" [(ngModel)]="selectedTestimonial.sort_order" name="test_order" class="form-control" />
+        </div>
+        <div class="form-group" style="display:flex; align-items:center; height:100%; margin-top:30px;">
+          <input type="checkbox" [(ngModel)]="selectedTestimonial.is_active" name="test_active" id="test_active" style="width:20px; height:20px; cursor:pointer;" />
+          <label for="test_active" style="margin-left:8px; font-weight:600; cursor:pointer;">Visible</label>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Parent Avatar image path</label>
+        <input type="text" [(ngModel)]="selectedTestimonial.image_url" name="test_img" class="form-control" />
+      </div>
+
+      <div class="modal-footer">
+        <button type="button" (click)="closeTestimonialModal()" class="btn btn-outline btn-sm">Cancel</button>
+        <button type="submit" class="btn btn-primary btn-sm ml-10">Save Testimonial</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- GALLERY MODAL -->
+<div class="dash-modal" *ngIf="galleryModalOpen">
+  <div class="modal-content card">
+    <div class="modal-header">
+      <h3>{{ selectedGallery?.id ? 'Edit Gallery Item' : 'Create Gallery Item' }}</h3>
+      <button class="modal-close" (click)="closeGalleryModal()">×</button>
+    </div>
+    
+    <div class="alert alert-success" *ngIf="gallerySuccess">
+      🎉 Gallery item saved successfully!
+    </div>
+
+    <form (ngSubmit)="saveGallery()" *ngIf="selectedGallery">
+      <div class="form-group">
+        <label class="form-label">Image Title</label>
+        <input type="text" [(ngModel)]="selectedGallery.title" name="gal_title" class="form-control" placeholder="Optional title" />
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Image URL / Path</label>
+        <input type="text" [(ngModel)]="selectedGallery.media_url" name="gal_url" class="form-control" required />
+      </div>
+
+      <div class="form-grid">
+        <div class="form-group">
+          <label class="form-label">Category</label>
+          <select [(ngModel)]="selectedGallery.category" name="gal_cat" class="form-control">
+            <option value="Classrooms">Classrooms</option>
+            <option value="Play Area">Play Area</option>
+            <option value="Activities">Activities</option>
+            <option value="Events">Events</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Sort Order</label>
+          <input type="number" [(ngModel)]="selectedGallery.sort_order" name="gal_order" class="form-control" />
+        </div>
+      </div>
+
+      <div class="form-group" style="display:flex; align-items:center; margin: 15px 0;">
+        <input type="checkbox" [(ngModel)]="selectedGallery.is_active" name="gal_active" id="gal_active" style="width:20px; height:20px; cursor:pointer;" />
+        <label for="gal_active" style="margin-left:8px; font-weight:600; cursor:pointer;">Visible in Gallery Grid</label>
+      </div>
+
+      <div class="modal-footer">
+        <button type="button" (click)="closeGalleryModal()" class="btn btn-outline btn-sm">Cancel</button>
+        <button type="submit" class="btn btn-primary btn-sm ml-10">Save Item</button>
+      </div>
+    </form>
+  </div>
+</div>

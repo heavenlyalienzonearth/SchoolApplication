@@ -1,0 +1,316 @@
+<app-header></app-header>
+
+<!-- HERO BANNER -->
+<section class="hero-section" *ngIf="heroSlides.length > 0">
+  <div class="hero-slider">
+    <div class="hero-slide" 
+         *ngFor="let slide of heroSlides; let i = index"
+         [class.active]="i === currentSlide"
+         [style.background-image]="'linear-gradient(rgba(0,0,0,0.4), rgba(0,0,0,0.3)), url(' + slide.image + ')'">
+      <div class="container slide-content">
+        <div class="text-box animate-fade-in">
+          <p class="slide-subtitle">{{ slide.subtitle }}</p>
+          <h1 class="slide-title">{{ slide.title }}</h1>
+          <p class="hero-desc">{{ heroSection.description }}</p>
+          <div class="hero-actions">
+            <a [routerLink]="slide.cta_link" class="btn btn-secondary btn-lg">{{ slide.cta_text }}</a>
+            <a routerLink="/programs" class="btn btn-outline-white btn-lg">Our Programs</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <button class="slide-arrow prev" (click)="prevSlide()">❮</button>
+  <button class="slide-arrow next" (click)="nextSlide()">❯</button>
+  <div class="slide-dots">
+    <span *ngFor="let slide of heroSlides; let i = index" 
+          [class.active]="i === currentSlide"
+          (click)="setSlide(i)"></span>
+  </div>
+</section>
+
+<!-- ABOUT SECTION -->
+<section class="section about-sec bg-white">
+  <div class="container grid-2">
+    <div class="about-image-wrapper">
+      <div class="decorative-blob animate-float"></div>
+      <img [src]="aboutSection.media_url || '/assets/images/gallery_science.jpg'" alt="About Us" class="about-img shadow-lg" />
+    </div>
+    <div class="about-text-content">
+      <p class="subtitle">{{ aboutSection.subtitle || 'Who We Are' }}</p>
+      <h2>{{ aboutSection.title || 'Welcome to Kangaroo Club' }}</h2>
+      <p class="description-main">{{ aboutSection.description }}</p>
+      
+      <div class="features-grid">
+        <div class="feature-card" *ngFor="let feat of aboutFeatures">
+          <div class="feat-icon">★</div>
+          <div class="feat-text">
+            <h3>{{ feat.title }}</h3>
+            <p>{{ feat.desc }}</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- PROGRAMS SECTION -->
+<section class="section programs-sec">
+  <div class="container">
+    <div class="section-header">
+      <p class="subtitle">{{ programsSection.subtitle }}</p>
+      <h2>{{ programsSection.title }}</h2>
+      <p class="desc">{{ programsSection.description }}</p>
+    </div>
+
+    <div class="grid-3" *ngIf="programs.length > 0">
+      <div class="card program-card" *ngFor="let prog of programs">
+        <div class="prog-img-area">
+          <img [src]="prog.image_url" [alt]="prog.title" class="prog-img" />
+          <div class="prog-badge">{{ prog.age_group }}</div>
+        </div>
+        <div class="prog-content">
+          <h3>{{ prog.title }}</h3>
+          <p class="duration">⏱ Duration: {{ prog.duration }}</p>
+          <p class="prog-desc">{{ prog.description }}</p>
+          <ul class="prog-highlights" *ngIf="prog.highlights && prog.highlights.length > 0">
+            <li *ngFor="let high of prog.highlights">{{ high }}</li>
+          </ul>
+          <a routerLink="/admissions" class="btn btn-outline btn-sm learn-more-btn">Enroll Now</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- GALLERY SECTION -->
+<section class="section gallery-sec bg-white">
+  <div class="container">
+    <div class="section-header">
+      <p class="subtitle">{{ gallerySection.subtitle }}</p>
+      <h2>{{ gallerySection.title }}</h2>
+      <p class="desc">{{ gallerySection.description }}</p>
+    </div>
+
+    <!-- Category Filters -->
+    <div class="gallery-filters" *ngIf="categories.length > 1">
+      <button *ngFor="let cat of categories" 
+              [class.active]="cat === selectedCategory"
+              (click)="selectCategory(cat)">
+        {{ cat }}
+      </button>
+    </div>
+
+    <div class="gallery-grid" *ngIf="galleryItems.length > 0">
+      <div class="gallery-item-card" 
+           *ngFor="let item of getFilteredGallery()" 
+           (click)="openLightbox(item.media_url)">
+        <img [src]="item.media_url" [alt]="item.title" class="gallery-img" />
+        <div class="gallery-overlay">
+          <span class="zoom-icon">🔍</span>
+          <p class="gallery-title">{{ item.title }}</p>
+          <span class="gallery-cat">{{ item.category }}</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- TESTIMONIALS SECTION -->
+<section class="section testimonials-sec" *ngIf="testimonials.length > 0">
+  <div class="container">
+    <div class="section-header">
+      <p class="subtitle">{{ testimonialsSection.subtitle || 'Testimonials' }}</p>
+      <h2>{{ testimonialsSection.title || 'What Our Parents Say' }}</h2>
+      <p class="desc">{{ testimonialsSection.description }}</p>
+    </div>
+
+    <div class="testimonial-slider-container">
+      <div class="testimonial-card animate-fade-in" 
+           *ngFor="let test of testimonials; let i = index"
+           [class.hidden]="i !== currentTestimonial">
+        <div class="stars">
+          <span *ngFor="let star of [1,2,3,4,5]" 
+                class="star" 
+                [class.filled]="star <= test.rating">★</span>
+        </div>
+        <p class="quote">“{{ test.quote }}”</p>
+        <div class="author-area">
+          <img [src]="test.image_url" [alt]="test.author_name" class="author-avatar" />
+          <div class="author-info">
+            <h4>{{ test.author_name }}</h4>
+            <p>{{ test.author_role }}</p>
+          </div>
+        </div>
+      </div>
+      
+      <button class="test-arrow prev" (click)="prevTestimonial()">❮</button>
+      <button class="test-arrow next" (click)="nextTestimonial()">❯</button>
+      
+      <div class="testimonial-dots">
+        <span *ngFor="let test of testimonials; let i = index" 
+              [class.active]="i === currentTestimonial"
+              (click)="setTestimonial(i)"></span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- EVENTS SECTION -->
+<section class="section events-sec bg-white" *ngIf="events.length > 0">
+  <div class="container">
+    <div class="section-header">
+      <p class="subtitle">{{ eventsSection.subtitle || 'School Events' }}</p>
+      <h2>{{ eventsSection.title || "What's Happening" }}</h2>
+      <p class="desc">{{ eventsSection.description }}</p>
+    </div>
+
+    <div class="grid-3">
+      <div class="card event-card" *ngFor="let ev of events">
+        <div class="event-img-area">
+          <img [src]="ev.image_url" [alt]="ev.title" class="event-img" />
+          <div class="event-date-badge">
+            <span class="day">{{ ev.event_date | date:'dd' }}</span>
+            <span class="month">{{ ev.event_date | date:'MMM' }}</span>
+          </div>
+        </div>
+        <div class="event-content">
+          <h3>{{ ev.title }}</h3>
+          <p class="location">📍 Location: {{ ev.location }}</p>
+          <p class="event-desc">{{ ev.description }}</p>
+          <a routerLink="/contact" class="btn btn-outline btn-sm text-center">RSVP/Inquire</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- BLOGS SECTION -->
+<section class="section blogs-sec" *ngIf="blogs.length > 0">
+  <div class="container">
+    <div class="section-header">
+      <p class="subtitle">{{ blogsSection.subtitle || 'Our Blogs' }}</p>
+      <h2>{{ blogsSection.title || 'Educational Blogs' }}</h2>
+      <p class="desc">{{ blogsSection.description }}</p>
+    </div>
+
+    <div class="grid-3">
+      <div class="card blog-card" *ngFor="let blog of blogs">
+        <div class="blog-img-area">
+          <img [src]="blog.image_url" [alt]="blog.title" class="blog-img" />
+          <div class="blog-cat-badge">{{ blog.category }}</div>
+        </div>
+        <div class="blog-content">
+          <span class="blog-date">{{ blog.published_at | date:'longDate' }}</span>
+          <h3>{{ blog.title }}</h3>
+          <p class="blog-summary">{{ blog.summary }}</p>
+          <a [routerLink]="['/blog', blog.slug]" class="read-more">Read Full Post →</a>
+        </div>
+      </div>
+    </div>
+    
+    <div class="text-center mt-50">
+      <a routerLink="/blog" class="btn btn-accent">View All Blogs</a>
+    </div>
+  </div>
+</section>
+
+<!-- CONTACT & ENQUIRY SECTION -->
+<section class="section contact-sec bg-white">
+  <div class="container">
+    <div class="section-header">
+      <p class="subtitle">{{ contactSection.subtitle || 'Reach Us' }}</p>
+      <h2>{{ contactSection.title || 'Inquire Today' }}</h2>
+      <p class="desc">{{ contactSection.description }}</p>
+    </div>
+
+    <div class="grid-2">
+      <!-- Contact Form -->
+      <div class="card contact-form-card">
+        <h3 class="form-title">Send us a Message</h3>
+        <p class="form-instructions">Required fields are marked *</p>
+        
+        <div class="alert alert-success" *ngIf="formSuccess">
+          🎉 Thank you! Your enquiry has been received. Our counselor will get in touch with you shortly.
+        </div>
+        <div class="alert alert-danger" *ngIf="formError">
+          ⚠️ {{ formError }}
+        </div>
+
+        <form (ngSubmit)="submitContact()" #cForm="ngForm" *ngIf="!formSuccess">
+          <div class="form-group">
+            <label class="form-label" for="name">Your Name *</label>
+            <input type="text" id="name" name="name" [(ngModel)]="contactData.name" class="form-control" required placeholder="Enter full name" />
+          </div>
+          
+          <div class="grid-2">
+            <div class="form-group">
+              <label class="form-label" for="email">Your Email *</label>
+              <input type="email" id="email" name="email" [(ngModel)]="contactData.email" class="form-control" required placeholder="name@email.com" />
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="phone">Your Phone *</label>
+              <input type="tel" id="phone" name="phone" [(ngModel)]="contactData.phone" class="form-control" required placeholder="10-digit mobile number" />
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="subject">Inquiry Subject</label>
+            <select id="subject" name="subject" [(ngModel)]="contactData.subject" class="form-control">
+              <option value="General Enquiry">General Enquiry</option>
+              <option value="Admissions Inquiries">Admissions Inquiries</option>
+              <option value="Franchise Opportunity">Franchise Opportunity</option>
+              <option value="Career Openings">Career Openings</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="message">Your Message *</label>
+            <textarea id="message" name="message" [(ngModel)]="contactData.message" class="form-control" rows="5" required placeholder="How can we help your child?"></textarea>
+          </div>
+
+          <button type="submit" class="btn btn-primary btn-block" [disabled]="formSubmitted">
+            {{ formSubmitted ? 'Sending Inquiry...' : 'Submit Inquiry' }}
+          </button>
+        </form>
+      </div>
+
+      <!-- Map & Campus info -->
+      <div class="campus-info-card">
+        <div class="info-item-group">
+          <h3>Kangaroo Club Campus</h3>
+          <p class="campus-intro">Visit our modern campus for a guided tour and see our teachers and facilities in action.</p>
+        </div>
+        
+        <div class="map-placeholder">
+          <!-- Embed a modern Google Map placeholder -->
+          <div class="map-box">
+            <span class="map-pin">📍</span>
+            <p class="map-text">Interactive Map Placement</p>
+            <p class="map-address">Sunshine Valley, Mumbai Center</p>
+          </div>
+        </div>
+
+        <div class="quick-facts">
+          <h4>Campus Quick Facts:</h4>
+          <ul>
+            <li>🔒 24/7 Security guard patrol & CCTV Monitoring</li>
+            <li>🏥 In-house Pediatric First-Aid Nurse station</li>
+            <li>🍏 Nutritious school chef meal plans</li>
+            <li>🚍 GPS enabled air-conditioned bus service</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- LIGHTBOX MODAL -->
+<div class="lightbox-modal" *ngIf="lightboxImage" (click)="closeLightbox()">
+  <div class="lightbox-content animate-fade-in" (click)="$event.stopPropagation()">
+    <button class="lightbox-close" (click)="closeLightbox()">×</button>
+    <img [src]="lightboxImage" alt="Gallery Zoom" class="lightbox-img" />
+  </div>
+</div>
+
+<app-footer></app-footer>
