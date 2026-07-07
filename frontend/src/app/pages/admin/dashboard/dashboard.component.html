@@ -389,12 +389,12 @@
           <table class="dash-table">
             <thead>
               <tr>
-                <th style="width: 20%;">Parent Name</th>
-                <th style="width: 18%;">Child Details</th>
-                <th style="width: 15%;">Rating</th>
-                <th style="width: 25%;">Quote Excerpt</th>
-                <th style="width: 8%;">Status</th>
-                <th style="width: 14%;">Actions</th>
+                <th style="width: 15%;">Parent Name</th>
+                <th style="width: 15%;">Child Details</th>
+                <th style="width: 12%;">Rating</th>
+                <th style="width: 26%;">Quote Excerpt</th>
+                <th style="width: 10%;">Status</th>
+                <th style="width: 22%;">Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -730,6 +730,13 @@
       <div class="form-group">
         <label class="form-label">Image URL / Path</label>
         <input type="text" [(ngModel)]="selectedGallery.media_url" name="gal_url" class="form-control" required />
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Or Upload Image from Computer</label>
+        <input type="file" (change)="onGalleryFileSelected($event)" accept="image/*" class="form-control" style="padding: 6px;" />
+        <span *ngIf="uploadingGallery" class="text-small text-light" style="display: block; margin-top: 5px;">📤 Uploading image...</span>
+        <span *ngIf="uploadSuccess" class="text-small" style="color: #27AE60; display: block; margin-top: 5px;">✅ Upload complete! URL filled above.</span>
       </div>
 
       <div class="form-grid">

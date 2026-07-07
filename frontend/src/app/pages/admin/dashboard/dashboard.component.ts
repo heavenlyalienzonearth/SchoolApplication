@@ -52,6 +52,8 @@ export class DashboardComponent implements OnInit {
   selectedGallery: any = null;
   galleryModalOpen = false;
   gallerySuccess = false;
+  uploadingGallery = false;
+  uploadSuccess = false;
 
   // Inquiries Tab
   contacts: any[] = [];
@@ -358,6 +360,8 @@ export class DashboardComponent implements OnInit {
 
   openGalleryModal(item: any = null): void {
     this.gallerySuccess = false;
+    this.uploadSuccess = false;
+    this.uploadingGallery = false;
     if (item) {
       this.selectedGallery = { ...item };
     } else {
@@ -376,6 +380,27 @@ export class DashboardComponent implements OnInit {
   closeGalleryModal(): void {
     this.galleryModalOpen = false;
     this.selectedGallery = null;
+    this.uploadSuccess = false;
+    this.uploadingGallery = false;
+  }
+
+  onGalleryFileSelected(event: any): void {
+    const file: File = event.target.files[0];
+    if (file && this.selectedGallery) {
+      this.uploadingGallery = true;
+      this.uploadSuccess = false;
+      this.contentService.uploadImage(file).subscribe({
+        next: (res) => {
+          this.selectedGallery.media_url = res.url;
+          this.uploadingGallery = false;
+          this.uploadSuccess = true;
+        },
+        error: (err) => {
+          this.uploadingGallery = false;
+          alert('Upload failed: ' + (err.error?.detail || err.message));
+        }
+      });
+    }
   }
 
   saveGallery(): void {

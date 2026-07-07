@@ -1,4 +1,7 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+import os
+import shutil
+import uuid
+from fastapi import APIRouter, Depends, HTTPException, status, UploadFile, File
 from sqlalchemy.orm import Session
 from typing import List, Optional
 from datetime import datetime
@@ -477,3 +480,39 @@ def delete_career(
     db.delete(db_career)
     db.commit()
     return None
+
+@router.post("/upload")
+def upload_image(
+    file: UploadFile = File(...),
+    current_user: models.User = Depends(get_current_user)
+):
+    if not file.content_type.startswith("image/"):
+        raise HTTPException(status_code=400, detail="Only image files are allowed")
+        
+    orig_filename = file.filename
+    import re
+    name, ext = os.path.splitext(orig_filename)
+    sanitized_name = re.sub(r'[^a-zA-Z0-9_\-]', '_', name)
+    safe_filename = f"{sanitized_name}{ext}"
+    
+    src_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "..", "..", "frontend", "public", "assets", "images"))
+    dist_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "..", "..", "frontend", "dist", "frontend", "browser", "assets", "images"))
+    
+    os.makedirs(src_dir, exist_ok=True)
+    src_path = os.path.join(src_dir, safe_filename)
+    
+    try:
+        with open(src_path, "wb") as buffer:
+            shutil.copyfileobj(file.file, buffer)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to save file: {str(e)}")
+        
+    if os.path.exists(dist_dir):
+        dist_path = os.path.join(dist_dir, safe_filename)
+        try:
+            shutil.copyfile(src_path, dist_path)
+        except:
+            pass
+            
+    return {"url": f"http://localhost:8000/assets/images/{safe_filename}"}
+

@@ -97,6 +97,12 @@ export class ContentService {
     return this.apiService.delete<any>(`/gallery/${id}`);
   }
 
+  uploadImage(file: File): Observable<any> {
+    const formData = new FormData();
+    formData.append('file', file);
+    return this.apiService.post<any>('/upload', formData);
+  }
+
   // --- EVENTS ---
   getEvents(): Observable<any[]> {
     return this.apiService.get<any[]>('/events');
