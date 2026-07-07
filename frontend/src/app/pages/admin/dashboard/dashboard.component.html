@@ -313,9 +313,16 @@
             </div>
 
             <div class="form-group">
-              <label class="form-label">Background Image URL/Path</label>
-              <input type="text" [(ngModel)]="slide.image" name="slide_img_{{i}}" class="form-control" />
-            </div>
+               <label class="form-label">Background Image URL/Path</label>
+               <input type="text" [(ngModel)]="slide.image" name="slide_img_{{i}}" class="form-control" />
+             </div>
+
+             <div class="form-group">
+               <label class="form-label">Or Upload Slide Background Image</label>
+               <input type="file" (change)="onHeroSlideFileSelected($event, i)" accept="image/*" class="form-control" style="padding: 6px;" />
+               <span *ngIf="uploadingSlideIndex === i" class="text-small text-light" style="display: block; margin-top: 5px;">📤 Uploading slide image...</span>
+               <span *ngIf="uploadSlideSuccessIndex === i" class="text-small" style="color: #27AE60; display: block; margin-top: 5px;">✅ Upload complete! URL filled above.</span>
+             </div>
 
             <div class="form-grid">
               <div class="form-group">
@@ -834,5 +841,14 @@
       <button *ngIf="selectedInquiry?.status === 'NEW'" (click)="resolveFromModal()" class="btn btn-primary btn-sm">✓ Resolve</button>
       <button (click)="closeInquiryModal()" class="btn btn-outline btn-sm ml-10">❌ Cancel</button>
     </div>
+  </div>
+</div>
+
+<!-- CUSTOM TOAST NOTIFICATION -->
+<div class="custom-toast" [class.show]="toastVisible" [class.success]="toastType === 'success'" [class.error]="toastType === 'error'">
+  <div class="toast-content">
+    <span class="toast-icon" *ngIf="toastType === 'success'">🎉</span>
+    <span class="toast-icon" *ngIf="toastType === 'error'">❌</span>
+    <span class="toast-text">{{ toastMessage }}</span>
   </div>
 </div>

@@ -34,6 +34,8 @@ export class DashboardComponent implements OnInit {
   heroSlides: any[] = [];
   heroSuccess = false;
   heroError = '';
+  uploadingSlideIndex: number | null = null;
+  uploadSlideSuccessIndex: number | null = null;
 
   // Programs Tab
   programs: any[] = [];
@@ -63,6 +65,11 @@ export class DashboardComponent implements OnInit {
   selectedInquiry: any = null;
   selectedInquiryType = 'contact'; // 'contact' | 'franchise'
   inquiryModalOpen = false;
+
+  // Toast Notification
+  toastMessage = '';
+  toastType: 'success' | 'error' = 'success';
+  toastVisible = false;
 
   constructor(
     private authService: AuthService,
@@ -127,6 +134,7 @@ export class DashboardComponent implements OnInit {
         this.settings = data;
         this.settingsLoading = false;
         this.settingsSuccess = true;
+        this.showToast('Settings saved successfully!');
       },
       error: () => {
         this.settingsLoading = false;
@@ -186,11 +194,31 @@ export class DashboardComponent implements OnInit {
     this.contentService.updatePageSection('home', 'hero', updateData).subscribe({
       next: () => {
         this.heroSuccess = true;
+        this.showToast('Banner settings saved successfully!');
       },
       error: () => {
         this.heroError = 'Failed to save Hero section.';
       }
     });
+  }
+
+  onHeroSlideFileSelected(event: any, index: number): void {
+    const file: File = event.target.files[0];
+    if (file && this.heroSlides[index]) {
+      this.uploadingSlideIndex = index;
+      this.uploadSlideSuccessIndex = null;
+      this.contentService.uploadImage(file).subscribe({
+        next: (res) => {
+          this.heroSlides[index].image = res.url;
+          this.uploadingSlideIndex = null;
+          this.uploadSlideSuccessIndex = index;
+        },
+        error: (err) => {
+          this.uploadingSlideIndex = null;
+          this.showToast('Upload failed: ' + (err.error?.detail || err.message), 'error');
+        }
+      });
+    }
   }
 
   // --- PROGRAMS TAB ---
@@ -397,7 +425,7 @@ export class DashboardComponent implements OnInit {
         },
         error: (err) => {
           this.uploadingGallery = false;
-          alert('Upload failed: ' + (err.error?.detail || err.message));
+          this.showToast('Upload failed: ' + (err.error?.detail || err.message), 'error');
         }
       });
     }
@@ -512,5 +540,14 @@ export class DashboardComponent implements OnInit {
     }
     
     return `${day}${suffix} ${month} ${year}`;
+  }
+
+  showToast(message: string, type: 'success' | 'error' = 'success'): void {
+    this.toastMessage = message;
+    this.toastType = type;
+    this.toastVisible = true;
+    setTimeout(() => {
+      this.toastVisible = false;
+    }, 3000);
   }
 }
