@@ -101,17 +101,25 @@
       </button>
     </div>
 
-    <div class="gallery-grid" *ngIf="galleryItems.length > 0">
-      <div class="gallery-item-card" 
-           *ngFor="let item of getFilteredGallery()" 
-           (click)="openLightbox(item.media_url)">
-        <img [src]="item.media_url" [alt]="item.title" class="gallery-img" />
-        <div class="gallery-overlay">
-          <span class="zoom-icon">🔍</span>
-          <p class="gallery-title">{{ item.title }}</p>
-          <span class="gallery-cat">{{ item.category }}</span>
+    <div class="gallery-slider-wrapper" *ngIf="galleryItems.length > 0">
+      <button class="gallery-arrow gallery-arrow-prev" (click)="scrollGallery(-1); stopGalleryTimer(); startGalleryTimer()">◀</button>
+      
+      <div class="gallery-slider-container" #gallerySlider
+           (mouseenter)="stopGalleryTimer()"
+           (mouseleave)="startGalleryTimer()">
+        <div class="gallery-item-card" 
+             *ngFor="let item of getFilteredGallery()" 
+             (click)="openLightbox(item.media_url)">
+          <img [src]="item.media_url" [alt]="item.title" class="gallery-img" />
+          <div class="gallery-overlay">
+            <span class="zoom-icon">🔍</span>
+            <p class="gallery-title">{{ item.title }}</p>
+            <span class="gallery-cat">{{ item.category }}</span>
+          </div>
         </div>
       </div>
+      
+      <button class="gallery-arrow gallery-arrow-next" (click)="scrollGallery(1); stopGalleryTimer(); startGalleryTimer()">▶</button>
     </div>
   </div>
 </section>

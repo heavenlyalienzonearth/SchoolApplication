@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, ViewChild, ElementRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { FormsModule } from '@angular/forms';
@@ -28,6 +28,9 @@ interface AboutFeature {
 })
 export class HomeComponent implements OnInit, OnDestroy {
   // Page Sections data
+  @ViewChild('gallerySlider', { static: false }) gallerySlider!: ElementRef;
+  galleryInterval: any;
+
   heroSection: any = {};
   heroSlides: HeroSlide[] = [];
   currentSlide = 0;
@@ -81,6 +84,7 @@ export class HomeComponent implements OnInit, OnDestroy {
     this.loadEvents();
     this.loadBlogs();
     this.startHeroTimer();
+    this.startGalleryTimer();
   }
 
   loadSettings(): void {
@@ -95,6 +99,9 @@ export class HomeComponent implements OnInit, OnDestroy {
   ngOnDestroy(): void {
     if (this.slideInterval) {
       clearInterval(this.slideInterval);
+    }
+    if (this.galleryInterval) {
+      clearInterval(this.galleryInterval);
     }
   }
 
@@ -166,6 +173,9 @@ export class HomeComponent implements OnInit, OnDestroy {
         this.galleryItems = data;
         const cats = new Set(data.map(item => item.category));
         this.categories = ['All', ...Array.from(cats)];
+        setTimeout(() => {
+          this.startGalleryTimer();
+        }, 100);
       },
       error: () => {}
     });
@@ -200,6 +210,7 @@ export class HomeComponent implements OnInit, OnDestroy {
 
   // --- SLIDER CONTROLS ---
   startHeroTimer(): void {
+    if (typeof window === 'undefined') return;
     this.slideInterval = setInterval(() => {
       this.nextSlide();
     }, 6000);
@@ -243,9 +254,46 @@ export class HomeComponent implements OnInit, OnDestroy {
     this.currentTestimonial = index;
   }
 
-  // --- GALLERY CONTROLS ---
   selectCategory(category: string): void {
     this.selectedCategory = category;
+  }
+
+  startGalleryTimer(): void {
+    if (typeof window === 'undefined') return;
+    if (this.galleryInterval) {
+      clearInterval(this.galleryInterval);
+    }
+    this.galleryInterval = setInterval(() => {
+      this.scrollGallery(1);
+    }, 3500);
+  }
+
+  stopGalleryTimer(): void {
+    if (this.galleryInterval) {
+      clearInterval(this.galleryInterval);
+      this.galleryInterval = null;
+    }
+  }
+
+  scrollGallery(direction: number): void {
+    const el = this.gallerySlider?.nativeElement;
+    if (!el) return;
+    
+    const scrollAmount = 300;
+    const maxScroll = el.scrollWidth - el.clientWidth;
+    
+    let newScrollLeft = el.scrollLeft + (direction * scrollAmount);
+    
+    if (newScrollLeft > maxScroll + 15) {
+      newScrollLeft = 0;
+    } else if (newScrollLeft < -15) {
+      newScrollLeft = maxScroll;
+    }
+    
+    el.scrollTo({
+      left: newScrollLeft,
+      behavior: 'smooth'
+    });
   }
 
   getFilteredGallery(): any[] {
