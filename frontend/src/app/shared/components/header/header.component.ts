@@ -67,7 +67,6 @@ import { AuthService, User } from '../../../core/services/auth.service';
                 Program <span class="arrow-icon">▼</span>
               </a>
               <ul class="dropdown-menu" [class.show]="programsDropdownActive">
-                <li><a routerLink="/programs" routerLinkActive="active-link" [routerLinkActiveOptions]="{exact: true}" (click)="closeMenu()">All Programs</a></li>
                 <li><a routerLink="/programs/preschool" routerLinkActive="active-link" (click)="closeMenu()">PreSchooling</a></li>
               </ul>
             </li>

@@ -1,0 +1,118 @@
+<app-header></app-header>
+
+<!-- HERO BANNER -->
+<section class="about-hero-banner">
+  <div class="about-hero-overlay"></div>
+  <div class="container about-hero-container">
+    <p class="about-hero-subtitle">Kangaroo Kids International Preschool</p>
+    <h1 class="about-hero-title">About <span class="about-hero-accent">Us</span></h1>
+    <p class="about-breadcrumbs"><a routerLink="/">Home</a> &rsaquo; About Us</p>
+  </div>
+</section>
+
+<!-- LOADING STATE -->
+<div *ngIf="loading" class="about-loading-wrapper">
+  <div class="about-spinner"></div>
+  <p>Loading page content...</p>
+</div>
+
+<!-- MAIN PAGE CONTENT -->
+<div *ngIf="!loading" class="about-content-area animate-fade-in">
+
+  <!-- ABOUT INTRO SECTION -->
+  <section class="about-section about-intro-section">
+    <div class="container about-intro-grid">
+      <div class="about-image-column">
+        <div class="about-img-frame">
+          <img [src]="aboutIntro.media_url || '/assets/images/why_kangaroo_kids.png'"
+               alt="About Kangaroo Kids" class="about-img-main shadow-lg" />
+          <div class="about-experience-badge">
+            <span class="badge-number">25<sup>+</sup></span>
+            <span class="badge-text">Years of<br>Excellence</span>
+          </div>
+        </div>
+      </div>
+      
+      <div class="about-text-column">
+        <span class="about-section-eyebrow">{{ aboutIntro.subtitle || 'Who We Are' }}</span>
+        <h2 class="about-section-heading">{{ aboutIntro.title || 'About Us' }}</h2>
+        <div class="about-paragraphs">
+          <p *ngFor="let para of (aboutIntro.description || '').split('\n\n')">{{ para }}</p>
+        </div>
+        
+        <!-- Feature Tiles -->
+        <div class="about-features-grid" *ngIf="aboutFeatures.length > 0">
+          <div class="about-feature-tile" *ngFor="let feat of aboutFeatures">
+            <div class="about-tile-icon">★</div>
+            <div class="about-tile-content">
+              <h4>{{ feat.title }}</h4>
+              <p>{{ feat.desc }}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- VISION & PURPOSE SECTION -->
+  <section class="about-section about-vp-section">
+    <div class="container">
+      <div class="about-vp-grid">
+        <!-- Vision Card -->
+        <div class="about-vp-card about-vision-card">
+          <div class="about-vp-icon">🔭</div>
+          <span class="about-vp-eyebrow">{{ visionSection.subtitle || 'What We Strive For' }}</span>
+          <h3 class="about-vp-title">{{ visionSection.title || 'Our Vision' }}</h3>
+          <p class="about-vp-desc">{{ visionSection.description }}</p>
+        </div>
+        
+        <!-- Purpose Card -->
+        <div class="about-vp-card about-purpose-card">
+          <div class="about-vp-icon">🌱</div>
+          <span class="about-vp-eyebrow">{{ purposeSection.subtitle || 'Why We Exist' }}</span>
+          <h3 class="about-vp-title">{{ purposeSection.title || 'Our Purpose' }}</h3>
+          <p class="about-vp-desc">{{ purposeSection.description }}</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- OUR PHILOSOPHY SECTION -->
+  <section class="about-section about-philosophy-section">
+    <div class="container">
+      <div class="about-philosophy-header text-center">
+        <span class="about-section-eyebrow">{{ philosophySection.subtitle || 'The Kangaroo Kids Way' }}</span>
+        <h2 class="about-section-heading">{{ philosophySection.title || 'Our Philosophy' }}</h2>
+        <p class="about-philosophy-lead">{{ philosophySection.description }}</p>
+      </div>
+
+      <!-- Philosophy Core Values -->
+      <div class="about-values-grid" *ngIf="philosophyValues.length > 0">
+        <div class="about-value-card" *ngFor="let val of philosophyValues; let i = index">
+          <div class="about-value-number">0{{ i + 1 }}</div>
+          <div class="about-value-body">
+            <h3>{{ val.title }}</h3>
+            <p>{{ val.desc }}</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Every Child Can Banner -->
+      <div class="about-banner-footer">
+        <div class="about-banner-tag">Our Core Belief</div>
+        <h3 class="about-banner-title">"Every Child Can"</h3>
+        <p class="about-banner-text">
+          The iCan Learning System — our signature curriculum — is built on this belief.
+          It equips every child with future-ready skills, habits of mind, and the confidence
+          to take on any challenge life presents.
+        </p>
+        <div class="about-banner-actions">
+          <a routerLink="/curriculum" class="btn btn-secondary btn-lg">Explore Our Curriculum</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+</div>
+
+<app-footer></app-footer>

@@ -1,0 +1,424 @@
+/* --- ABOUT PAGE HERO BANNER --- */
+.about-hero-banner {
+  position: relative;
+  background: url('/assets/images/admissions_banner.jpg') center/cover no-repeat;
+  min-height: 300px;
+  display: flex;
+  align-items: center;
+}
+
+.about-hero-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(135deg, rgba(238, 90, 36, 0.85) 0%, rgba(6, 82, 221, 0.75) 100%);
+}
+
+.about-hero-container {
+  position: relative;
+  z-index: 2;
+  color: #ffffff;
+  padding: 50px 0;
+}
+
+.about-hero-subtitle {
+  font-size: 0.95rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  color: rgba(255, 255, 255, 0.85);
+  margin-bottom: 8px;
+}
+
+.about-hero-title {
+  font-family: 'Baloo 2', cursive, var(--font-heading);
+  font-size: 3rem;
+  font-weight: 800;
+  color: #ffffff;
+  margin-bottom: 12px;
+  line-height: 1.15;
+}
+
+.about-hero-accent {
+  color: #FFD23F;
+}
+
+.about-breadcrumbs {
+  font-size: 0.9rem;
+  color: rgba(255, 255, 255, 0.75);
+}
+
+.about-breadcrumbs a {
+  color: rgba(255, 255, 255, 0.9);
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.about-breadcrumbs a:hover {
+  text-decoration: underline;
+}
+
+/* --- LOADING STATE --- */
+.about-loading-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 100px 0;
+  gap: 15px;
+  color: var(--text-light);
+}
+
+.about-spinner {
+  width: 45px;
+  height: 45px;
+  border: 4px solid #f3f3f3;
+  border-top: 4px solid var(--primary);
+  border-radius: 50%;
+  animation: about-spin 1s linear infinite;
+}
+
+@keyframes about-spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* --- SECTIONS COMMON --- */
+.about-section {
+  padding: 70px 0;
+}
+
+.about-section-eyebrow {
+  font-size: 0.88rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  color: var(--primary);
+  margin-bottom: 8px;
+  display: block;
+}
+
+.about-section-heading {
+  font-family: 'Baloo 2', cursive, var(--font-heading);
+  font-size: 2.2rem;
+  font-weight: 800;
+  color: var(--text-dark);
+  margin-bottom: 20px;
+  line-height: 1.25;
+}
+
+/* --- ABOUT INTRO SECTION --- */
+.about-intro-section {
+  background-color: var(--bg-cream);
+}
+
+.about-intro-grid {
+  display: grid;
+  grid-template-columns: 1fr 1.1fr;
+  gap: 50px;
+  align-items: center;
+}
+
+.about-img-frame {
+  position: relative;
+}
+
+.about-img-main {
+  width: 100%;
+  border-radius: 20px;
+  height: 400px;
+  object-fit: cover;
+  display: block;
+}
+
+.about-experience-badge {
+  position: absolute;
+  bottom: -20px;
+  right: -20px;
+  background: linear-gradient(135deg, #EE5A24 0%, #D4145A 100%);
+  color: #ffffff;
+  border-radius: 50%;
+  width: 110px;
+  height: 110px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  box-shadow: 0 8px 25px rgba(238, 90, 36, 0.35);
+}
+
+.badge-number {
+  font-family: 'Baloo 2', cursive, var(--font-heading);
+  font-size: 2rem;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.badge-number sup {
+  font-size: 0.95rem;
+}
+
+.badge-text {
+  font-size: 0.65rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  line-height: 1.2;
+}
+
+.about-paragraphs p {
+  font-size: 1.05rem;
+  color: var(--text-light);
+  line-height: 1.7;
+  margin-bottom: 16px;
+}
+
+.about-features-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 15px;
+  margin-top: 25px;
+}
+
+.about-feature-tile {
+  background-color: var(--white);
+  padding: 16px;
+  border-radius: 14px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.04);
+  display: flex;
+  gap: 12px;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.about-feature-tile:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 22px rgba(0, 0, 0, 0.08);
+}
+
+.about-tile-icon {
+  color: var(--secondary);
+  font-size: 1.25rem;
+  margin-top: 2px;
+}
+
+.about-tile-content h4 {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--text-dark);
+  margin-bottom: 4px;
+}
+
+.about-tile-content p {
+  font-size: 0.82rem;
+  color: var(--text-light);
+  line-height: 1.5;
+  margin: 0;
+}
+
+/* --- VISION & PURPOSE SECTION --- */
+.about-vp-section {
+  background: linear-gradient(135deg, #1A0D3F 0%, #0A1950 100%);
+}
+
+.about-vp-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 30px;
+}
+
+.about-vp-card {
+  padding: 40px 30px;
+  border-radius: 20px;
+  color: #ffffff;
+  position: relative;
+  overflow: hidden;
+  transition: transform 0.3s ease;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.about-vp-card:hover {
+  transform: translateY(-5px);
+}
+
+.about-vision-card {
+  background-color: rgba(238, 90, 36, 0.15);
+}
+
+.about-purpose-card {
+  background-color: rgba(6, 82, 221, 0.15);
+}
+
+.about-vp-icon {
+  font-size: 2.8rem;
+  margin-bottom: 15px;
+}
+
+.about-vp-eyebrow {
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  color: #FFD23F;
+  margin-bottom: 8px;
+  display: block;
+}
+
+.about-vp-title {
+  font-family: 'Baloo 2', cursive, var(--font-heading);
+  font-size: 1.6rem;
+  font-weight: 800;
+  margin-bottom: 15px;
+}
+
+.about-vp-desc {
+  font-size: 0.98rem;
+  line-height: 1.65;
+  color: rgba(255, 255, 255, 0.85);
+  margin: 0;
+}
+
+/* --- OUR PHILOSOPHY SECTION --- */
+.about-philosophy-section {
+  background-color: var(--white);
+}
+
+.about-philosophy-header {
+  max-width: 750px;
+  margin: 0 auto 50px;
+}
+
+.about-philosophy-lead {
+  font-size: 1.1rem;
+  color: var(--text-light);
+  line-height: 1.7;
+  margin-top: 10px;
+}
+
+.about-values-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+  margin-bottom: 50px;
+}
+
+.about-value-card {
+  background-color: var(--bg-cream);
+  padding: 25px;
+  border-radius: 18px;
+  display: flex;
+  gap: 20px;
+  align-items: flex-start;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  border-left: 5px solid transparent;
+}
+
+.about-value-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08);
+}
+
+.about-value-card:nth-child(1) { border-left-color: #D4145A; }
+.about-value-card:nth-child(2) { border-left-color: #EE5A24; }
+.about-value-card:nth-child(3) { border-left-color: #0652DD; }
+.about-value-card:nth-child(4) { border-left-color: #9B59B6; }
+.about-value-card:nth-child(5) { border-left-color: #27AE60; }
+
+.about-value-number {
+  font-family: 'Baloo 2', cursive, var(--font-heading);
+  font-size: 2.2rem;
+  font-weight: 800;
+  color: rgba(0, 0, 0, 0.08);
+  line-height: 1;
+}
+
+.about-value-body h3 {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--text-dark);
+  margin-bottom: 8px;
+  line-height: 1.35;
+}
+
+.about-value-body p {
+  font-size: 0.88rem;
+  color: var(--text-light);
+  line-height: 1.6;
+  margin: 0;
+}
+
+/* --- FOOTER EVERY CHILD CAN BANNER --- */
+.about-banner-footer {
+  background: linear-gradient(135deg, #D4145A 0%, #EE5A24 50%, #FFD23F 100%);
+  border-radius: 20px;
+  padding: 50px;
+  text-align: center;
+  color: #ffffff;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 10px 30px rgba(238, 90, 36, 0.25);
+}
+
+.about-banner-tag {
+  display: inline-block;
+  background-color: rgba(255, 255, 255, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  padding: 4px 16px;
+  border-radius: 30px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  margin-bottom: 15px;
+}
+
+.about-banner-title {
+  font-family: 'Baloo 2', cursive, var(--font-heading);
+  font-size: 2.4rem;
+  font-weight: 800;
+  margin-bottom: 15px;
+}
+
+.about-banner-text {
+  font-size: 1.05rem;
+  line-height: 1.65;
+  color: rgba(255, 255, 255, 0.9);
+  max-width: 650px;
+  margin: 0 auto 25px;
+}
+
+/* --- RESPONSIVE MEDIA --- */
+@media (max-width: 900px) {
+  .about-intro-grid {
+    grid-template-columns: 1fr;
+    gap: 30px;
+  }
+  
+  .about-img-main {
+    height: 300px;
+  }
+  
+  .about-vp-grid {
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+  
+  .about-values-grid {
+    grid-template-columns: 1fr;
+    gap: 15px;
+  }
+  
+  .about-banner-footer {
+    padding: 30px 20px;
+  }
+  
+  .about-banner-title {
+    font-size: 1.9rem;
+  }
+  
+  .about-features-grid {
+    grid-template-columns: 1fr;
+  }
+}

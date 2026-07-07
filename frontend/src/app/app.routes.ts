@@ -1,6 +1,7 @@
 import { Routes } from '@angular/router';
 import { HomeComponent } from './pages/home/home.component';
 import { GeneralPageComponent } from './pages/general-page/general-page.component';
+import { AboutPageComponent } from './pages/about-page/about-page.component';
 import { GalleryPageComponent } from './pages/gallery-page/gallery-page.component';
 import { BlogPageComponent } from './pages/blog-page/blog-page.component';
 import { FAQPageComponent } from './pages/faq-page/faq-page.component';
@@ -15,7 +16,7 @@ import { authGuard } from './core/guards/auth.guard';
 export const routes: Routes = [
   // Public Landing & Sections Pages
   { path: '', component: HomeComponent },
-  { path: 'about', component: GeneralPageComponent, data: { pageCode: 'about', title: 'About Us' } },
+  { path: 'about', component: AboutPageComponent },
   { path: 'why-us', component: GeneralPageComponent, data: { pageCode: 'why_us', title: 'Why Choose Us' } },
   { path: 'programs', component: GeneralPageComponent, data: { pageCode: 'programs_info', title: 'Our Programs' } },
   { path: 'programs/preschool', component: GeneralPageComponent, data: { pageCode: 'preschool_program', title: 'PreSchooling' } },
