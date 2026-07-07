@@ -6,8 +6,8 @@
       <h2>Kangaroo Club Control Panel</h2>
     </div>
     <div class="header-actions">
-      <a routerLink="/" class="btn btn-secondary btn-sm">Visit Site</a>
-      <button (click)="logout()" class="btn btn-outline btn-sm">Log Out</button>
+      <a routerLink="/" class="btn btn-secondary btn-sm">🌐 Visit Site</a>
+      <button (click)="logout()" class="btn btn-outline btn-sm">🚪 Log Out</button>
     </div>
   </header>
 
@@ -15,6 +15,9 @@
     <!-- Sidebar -->
     <aside class="dash-sidebar">
       <ul class="sidebar-menu">
+        <li [class.active]="activeTab === 'analytics'" (click)="setTab('analytics')">
+          <span class="icon">📊</span> Analytics Overview
+        </li>
         <li [class.active]="activeTab === 'settings'" (click)="setTab('settings')">
           <span class="icon">⚙️</span> Site Settings
         </li>
@@ -42,6 +45,7 @@
       <div class="mobile-tab-nav">
         <label class="form-label" for="mobileTabSelect">Dashboard Navigation:</label>
         <select id="mobileTabSelect" [ngModel]="activeTab" (ngModelChange)="setTab($event)" class="form-control select-tab">
+          <option value="analytics">📊 Analytics Overview</option>
           <option value="settings">⚙️ Site Settings</option>
           <option value="hero">🖼️ Hero Banner</option>
           <option value="programs">🎓 School Programs</option>
@@ -51,6 +55,113 @@
         </select>
       </div>
       
+      
+      <!-- ANALYTICS TAB -->
+      <section *ngIf="activeTab === 'analytics'" class="tab-section">
+        <div class="section-title-bar">
+          <h2>Dashboard Analytics</h2>
+          <p>Key metrics, admissions activity, transfer request stats, and parental reviews.</p>
+        </div>
+
+        <!-- Admissions stats cards -->
+        <h3 class="dash-subtitle" style="font-size:1.15rem; color:#475569; margin: 20px 0 12px 0;">Admissions Registrations</h3>
+        <div class="metrics-grid">
+          <div class="metric-card card border-primary-left">
+            <span class="metric-label">Today</span>
+            <h3 class="metric-value">{{ analytics.admissions.day }}</h3>
+            <span class="metric-trend">New leads today</span>
+          </div>
+          <div class="metric-card card border-secondary-left">
+            <span class="metric-label">This Week</span>
+            <h3 class="metric-value">{{ analytics.admissions.week }}</h3>
+            <span class="metric-trend text-primary">Past 7 days</span>
+          </div>
+          <div class="metric-card card border-accent-left">
+            <span class="metric-label">This Month</span>
+            <h3 class="metric-value">{{ analytics.admissions.month }}</h3>
+            <span class="metric-trend text-accent">Past 30 days</span>
+          </div>
+          <div class="metric-card card border-dark-left">
+            <span class="metric-label">This Year</span>
+            <h3 class="metric-value">{{ analytics.admissions.year }}</h3>
+            <span class="metric-trend">Full Calendar Year</span>
+          </div>
+        </div>
+
+        <div class="chart-flex-grid mt-30">
+          <!-- Transfer Certificates Circular Doughnut Graph -->
+          <div class="chart-card card">
+            <h3>Transfer Certificate Requests</h3>
+            <p class="chart-desc">Share of TC requests vs. other form submissions</p>
+            
+            <div class="circular-chart-box">
+              <svg viewBox="0 0 36 36" class="circular-svg">
+                <!-- Background Circle -->
+                <path class="circle-bg"
+                  d="M18 2.0845
+                    a 15.9155 15.9155 0 0 1 0 31.831
+                    a 15.9155 15.9155 0 0 1 0 -31.831"
+                />
+                <!-- Progress Circle (Percentage) -->
+                <path class="circle"
+                  [attr.stroke-dasharray]="analytics.transfer_certificates.percentage + ', 100'"
+                  d="M18 2.0845
+                    a 15.9155 15.9155 0 0 1 0 31.831
+                    a 15.9155 15.9155 0 0 1 0 -31.831"
+                />
+                <!-- Centered Text -->
+                <text x="18" y="20.35" class="circle-text">{{ analytics.transfer_certificates.percentage }}%</text>
+              </svg>
+            </div>
+            
+            <div class="chart-legend">
+              <div class="legend-item">
+                <span class="legend-dot tc-dot"></span>
+                <span>TC Requests: <strong>{{ analytics.transfer_certificates.requests }}</strong></span>
+              </div>
+              <div class="legend-item">
+                <span class="legend-dot other-dot"></span>
+                <span>Other Submissions: <strong>{{ analytics.transfer_certificates.other }}</strong></span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Parent Feedback Ratings (Good vs. Improvement Needed) -->
+          <div class="chart-card card">
+            <h3>Parental Feedback Overview</h3>
+            <p class="chart-desc">Feedback ratings categorized from parent reviews</p>
+
+            <div class="feedback-stats-box">
+              <!-- Good Feedbacks (Rating >= 4) -->
+              <div class="feedback-bar-item">
+                <div class="feedback-header">
+                  <span class="feedback-label">❤️ Good Feedbacks (4-5 ★)</span>
+                  <span class="feedback-count"><strong>{{ analytics.feedback.good }}</strong> ({{ getPercentage(analytics.feedback.good, analytics.feedback.total) }}%)</span>
+                </div>
+                <div class="progress-bar-bg">
+                  <div class="progress-bar-fill good-fill" [style.width]="getPercentage(analytics.feedback.good, analytics.feedback.total) + '%'"></div>
+                </div>
+              </div>
+
+              <!-- Improvement Needed Feedbacks (Rating < 4) -->
+              <div class="feedback-bar-item mt-20">
+                <div class="feedback-header">
+                  <span class="feedback-label">⚠️ Improvement Needed (1-3 ★)</span>
+                  <span class="feedback-count"><strong>{{ analytics.feedback.improvement_needed }}</strong> ({{ getPercentage(analytics.feedback.improvement_needed, analytics.feedback.total) }}%)</span>
+                </div>
+                <div class="progress-bar-bg">
+                  <div class="progress-bar-fill improvement-fill" [style.width]="getPercentage(analytics.feedback.improvement_needed, analytics.feedback.total) + '%'"></div>
+                </div>
+              </div>
+
+              <div class="feedback-summary-footer mt-30">
+                <span>Total reviews in database: <strong>{{ analytics.feedback.total }}</strong></span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
       <!-- SITE SETTINGS TAB -->
       <section *ngIf="activeTab === 'settings'" class="tab-section">
         <div class="section-title-bar">
@@ -147,7 +258,7 @@
           </div>
 
           <button type="submit" class="btn btn-primary" [disabled]="settingsLoading">
-            {{ settingsLoading ? 'Saving Settings...' : 'Save Settings' }}
+            💾 {{ settingsLoading ? 'Saving Settings...' : 'Save Settings' }}
           </button>
         </form>
       </section>
@@ -187,7 +298,7 @@
           <div class="slide-config-card card" *ngFor="let slide of heroSlides; let i = index">
             <div class="slide-header">
               <h4>Slide #{{ i + 1 }}</h4>
-              <button type="button" class="btn-remove" (click)="removeHeroSlide(i)">Remove Slide</button>
+              <button type="button" class="btn-remove" (click)="removeHeroSlide(i)">❌ Remove Slide</button>
             </div>
             
             <div class="form-grid">
@@ -220,8 +331,8 @@
         </div>
 
         <div class="action-buttons mt-30">
-          <button (click)="addHeroSlide()" class="btn btn-secondary">+ Add Slide</button>
-          <button (click)="saveHero()" class="btn btn-primary ml-10">Save Banner Settings</button>
+          <button (click)="addHeroSlide()" class="btn btn-secondary">➕ Add Slide</button>
+          <button (click)="saveHero()" class="btn btn-primary ml-10">💾 Save Banner Settings</button>
         </div>
       </section>
 
@@ -229,7 +340,7 @@
       <section *ngIf="activeTab === 'programs'" class="tab-section">
         <div class="section-title-bar">
           <h2>School Programs Manager</h2>
-          <button (click)="openProgramModal()" class="btn btn-primary">+ Add New Program</button>
+          <button (click)="openProgramModal()" class="btn btn-primary">➕ Add New Program</button>
         </div>
 
         <div class="table-card card">
@@ -256,8 +367,8 @@
                   </span>
                 </td>
                 <td>
-                  <button (click)="openProgramModal(prog)" class="btn-table edit">Edit</button>
-                  <button (click)="deleteProgram(prog.id)" class="btn-table delete ml-5">Delete</button>
+                  <button (click)="openProgramModal(prog)" class="btn-table edit">✏️ Edit</button>
+                  <button (click)="deleteProgram(prog.id)" class="btn-table delete ml-5">🗑️ Delete</button>
                 </td>
               </tr>
             </tbody>
@@ -269,7 +380,7 @@
       <section *ngIf="activeTab === 'testimonials'" class="tab-section">
         <div class="section-title-bar">
           <h2>Parent Testimonials Manager</h2>
-          <button (click)="openTestimonialModal()" class="btn btn-primary">+ Add Testimonial</button>
+          <button (click)="openTestimonialModal()" class="btn btn-primary">➕ Add Testimonial</button>
         </div>
 
         <div class="table-card card">
@@ -296,8 +407,8 @@
                   </span>
                 </td>
                 <td>
-                  <button (click)="openTestimonialModal(test)" class="btn-table edit">Edit</button>
-                  <button (click)="deleteTestimonial(test.id)" class="btn-table delete ml-5">Delete</button>
+                  <button (click)="openTestimonialModal(test)" class="btn-table edit">✏️ Edit</button>
+                  <button (click)="deleteTestimonial(test.id)" class="btn-table delete ml-5">🗑️ Delete</button>
                 </td>
               </tr>
             </tbody>
@@ -309,7 +420,7 @@
       <section *ngIf="activeTab === 'gallery'" class="tab-section">
         <div class="section-title-bar">
           <h2>School Gallery Manager</h2>
-          <button (click)="openGalleryModal()" class="btn btn-primary">+ Add Gallery Photo</button>
+          <button (click)="openGalleryModal()" class="btn btn-primary">➕ Add Gallery Photo</button>
         </div>
 
         <div class="table-card card">
@@ -338,8 +449,8 @@
                   </span>
                 </td>
                 <td>
-                  <button (click)="openGalleryModal(item)" class="btn-table edit">Edit</button>
-                  <button (click)="deleteGallery(item.id)" class="btn-table delete ml-5">Delete</button>
+                  <button (click)="openGalleryModal(item)" class="btn-table edit">✏️ Edit</button>
+                  <button (click)="deleteGallery(item.id)" class="btn-table delete ml-5">🗑️ Delete</button>
                 </td>
               </tr>
             </tbody>
@@ -352,9 +463,9 @@
         <div class="section-title-bar">
           <h2>Form Submission Inquiries</h2>
           <div class="inquiry-selector">
-            <button [class.active]="inquiryFilter === 'contact'" (click)="inquiryFilter = 'contact'">Contact Forms ({{ contacts.length }})</button>
-            <button [class.active]="inquiryFilter === 'franchise'" (click)="inquiryFilter = 'franchise'">Franchise Forms ({{ franchises.length }})</button>
-            <button [class.active]="inquiryFilter === 'jobs'" (click)="inquiryFilter = 'jobs'">Job Apps ({{ applications.length }})</button>
+            <button [class.active]="inquiryFilter === 'contact'" (click)="inquiryFilter = 'contact'">✉️ Contact Forms ({{ contacts.length }})</button>
+            <button [class.active]="inquiryFilter === 'franchise'" (click)="inquiryFilter = 'franchise'">💼 Franchise Forms ({{ franchises.length }})</button>
+            <button [class.active]="inquiryFilter === 'jobs'" (click)="inquiryFilter = 'jobs'">📄 Job Apps ({{ applications.length }})</button>
           </div>
         </div>
 
@@ -388,7 +499,7 @@
                   </span>
                 </td>
                 <td>
-                  <button *ngIf="sub.status === 'NEW'" (click)="resolveContact(sub.id)" class="btn-table edit">Resolve</button>
+                  <button *ngIf="sub.status === 'NEW'" (click)="resolveContact(sub.id)" class="btn-table edit">✓ Resolve</button>
                 </td>
               </tr>
             </tbody>
@@ -427,7 +538,7 @@
                   </span>
                 </td>
                 <td>
-                  <button *ngIf="inq.status === 'NEW'" (click)="resolveFranchise(inq.id)" class="btn-table edit">Resolve</button>
+                  <button *ngIf="inq.status === 'NEW'" (click)="resolveFranchise(inq.id)" class="btn-table edit">✓ Resolve</button>
                 </td>
               </tr>
             </tbody>
@@ -517,14 +628,14 @@
         <h4>Program Bullet Highlights:</h4>
         <div class="highlight-input-row" *ngFor="let high of selectedProgram.highlights; let j = index">
           <input type="text" [(ngModel)]="selectedProgram.highlights[j]" name="highlight_{{j}}" class="form-control" placeholder="Highlight point" />
-          <button type="button" class="btn-remove" (click)="removeHighlight(j)">Remove</button>
+          <button type="button" class="btn-remove" (click)="removeHighlight(j)">❌ Remove</button>
         </div>
-        <button type="button" (click)="addHighlight()" class="btn btn-outline btn-sm mt-10">+ Add Point</button>
+        <button type="button" (click)="addHighlight()" class="btn btn-outline btn-sm mt-10">➕ Add Point</button>
       </div>
 
       <div class="modal-footer mt-20">
-        <button type="button" (click)="closeProgramModal()" class="btn btn-outline btn-sm">Cancel</button>
-        <button type="submit" class="btn btn-primary btn-sm ml-10">Save Program</button>
+        <button type="button" (click)="closeProgramModal()" class="btn btn-outline btn-sm">❌ Cancel</button>
+        <button type="submit" class="btn btn-primary btn-sm ml-10">💾 Save Program</button>
       </div>
     </form>
   </div>
@@ -579,8 +690,8 @@
       </div>
 
       <div class="modal-footer">
-        <button type="button" (click)="closeTestimonialModal()" class="btn btn-outline btn-sm">Cancel</button>
-        <button type="submit" class="btn btn-primary btn-sm ml-10">Save Testimonial</button>
+        <button type="button" (click)="closeTestimonialModal()" class="btn btn-outline btn-sm">❌ Cancel</button>
+        <button type="submit" class="btn btn-primary btn-sm ml-10">💾 Save Testimonial</button>
       </div>
     </form>
   </div>
@@ -631,8 +742,8 @@
       </div>
 
       <div class="modal-footer">
-        <button type="button" (click)="closeGalleryModal()" class="btn btn-outline btn-sm">Cancel</button>
-        <button type="submit" class="btn btn-primary btn-sm ml-10">Save Item</button>
+        <button type="button" (click)="closeGalleryModal()" class="btn btn-outline btn-sm">❌ Cancel</button>
+        <button type="submit" class="btn btn-primary btn-sm ml-10">💾 Save Item</button>
       </div>
     </form>
   </div>

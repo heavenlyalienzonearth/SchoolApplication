@@ -106,3 +106,80 @@ def get_job_applications(
     current_user: models.User = Depends(get_current_user)
 ):
     return db.query(models.JobApplication).order_by(models.JobApplication.created_at.desc()).all()
+
+
+# --- ANALYTICS DASHBOARD ---
+
+@router.get("/submissions/analytics")
+def get_dashboard_analytics(
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user)
+):
+    from datetime import datetime, timedelta
+    from sqlalchemy import or_
+    
+    now = datetime.utcnow()
+    today_start = datetime(now.year, now.month, now.day)
+    week_start = today_start - timedelta(days=7)
+    month_start = today_start - timedelta(days=30)
+    year_start = datetime(now.year, 1, 1)
+
+    # 1. Admissions Count (subject in ['Admissions Inquiries', 'Chatbot Lead'])
+    admissions_query = db.query(models.ContactSubmission).filter(
+        or_(
+            models.ContactSubmission.subject == "Admissions Inquiries",
+            models.ContactSubmission.subject == "Chatbot Lead"
+        )
+    )
+    
+    admissions_day = admissions_query.filter(models.ContactSubmission.created_at >= today_start).count()
+    admissions_week = admissions_query.filter(models.ContactSubmission.created_at >= week_start).count()
+    admissions_month = admissions_query.filter(models.ContactSubmission.created_at >= month_start).count()
+    admissions_year = admissions_query.filter(models.ContactSubmission.created_at >= year_start).count()
+
+    # 2. Transfer Certificates Count
+    tc_query = db.query(models.ContactSubmission).filter(
+        or_(
+            models.ContactSubmission.subject == "Transfer Certificate",
+            models.ContactSubmission.subject == "Transfer Certificate Request",
+            models.ContactSubmission.message.ilike("%transfer certificate%")
+        )
+    )
+    
+    tc_count = tc_query.count()
+    total_submissions = db.query(models.ContactSubmission).count()
+    other_submissions = max(0, total_submissions - tc_count)
+    
+    tc_percentage = 0
+    if total_submissions > 0:
+        tc_percentage = int((tc_count / total_submissions) * 100)
+
+    # 3. Parent Feedbacks (Testimonials table ratings)
+    good_feedback = db.query(models.Testimonial).filter(
+        models.Testimonial.rating >= 4
+    ).count()
+    
+    improvement_feedback = db.query(models.Testimonial).filter(
+        models.Testimonial.rating < 4
+    ).count()
+    
+    total_feedback = good_feedback + improvement_feedback
+
+    return {
+        "admissions": {
+            "day": admissions_day,
+            "week": admissions_week,
+            "month": admissions_month,
+            "year": admissions_year
+        },
+        "transfer_certificates": {
+            "requests": tc_count,
+            "other": other_submissions,
+            "percentage": tc_percentage
+        },
+        "feedback": {
+            "good": good_feedback,
+            "improvement_needed": improvement_feedback,
+            "total": total_feedback
+        }
+    }

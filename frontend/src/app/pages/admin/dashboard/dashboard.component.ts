@@ -13,7 +13,15 @@ import { ContentService } from '../../../core/services/content.service';
   styleUrls: ['./dashboard.component.css']
 })
 export class DashboardComponent implements OnInit {
-  activeTab = 'settings';
+  activeTab = 'analytics';
+  
+  // Analytics Tab
+  analytics: any = {
+    admissions: { day: 0, week: 0, month: 0, year: 0 },
+    transfer_certificates: { requests: 0, other: 0, percentage: 0 },
+    feedback: { good: 0, improvement_needed: 0, total: 0 }
+  };
+  analyticsLoading = false;
   
   // Settings Tab
   settings: any = {};
@@ -58,6 +66,7 @@ export class DashboardComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
+    this.loadAnalytics();
     this.loadSettings();
     this.loadHeroSection();
     this.loadPrograms();
@@ -69,6 +78,22 @@ export class DashboardComponent implements OnInit {
   // --- TAB TOGGLE ---
   setTab(tab: string): void {
     this.activeTab = tab;
+    if (tab === 'analytics') {
+      this.loadAnalytics();
+    }
+  }
+
+  loadAnalytics(): void {
+    this.analyticsLoading = true;
+    this.contentService.getAnalytics().subscribe({
+      next: (data) => {
+        this.analytics = data;
+        this.analyticsLoading = false;
+      },
+      error: () => {
+        this.analyticsLoading = false;
+      }
+    });
   }
 
   // --- LOGOUT ---
@@ -409,5 +434,10 @@ export class DashboardComponent implements OnInit {
       next: () => this.loadInquiries(),
       error: () => {}
     });
+  }
+
+  getPercentage(value: number, total: number): number {
+    if (!total || total === 0) return 0;
+    return Math.round((value / total) * 100);
   }
 }

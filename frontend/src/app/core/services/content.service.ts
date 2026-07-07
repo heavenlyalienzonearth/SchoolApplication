@@ -217,4 +217,8 @@ export class ContentService {
   getJobApplications(): Observable<any[]> {
     return this.apiService.get<any[]>('/careers/applications/admin');
   }
+
+  getAnalytics(): Observable<any> {
+    return this.apiService.get<any>('/submissions/analytics');
+  }
 }

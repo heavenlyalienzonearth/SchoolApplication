@@ -25,13 +25,6 @@ import { AuthService, User } from '../../../core/services/auth.service';
             </a>
           </div>
           <div class="top-right">
-            <div class="social-links">
-              <a *ngIf="settings.facebook_url" [href]="settings.facebook_url" target="_blank" aria-label="Facebook">FB</a>
-              <a *ngIf="settings.instagram_url" [href]="settings.instagram_url" target="_blank" aria-label="Instagram">IG</a>
-              <a *ngIf="settings.twitter_url" [href]="settings.twitter_url" target="_blank" aria-label="Twitter">TW</a>
-              <a *ngIf="settings.youtube_url" [href]="settings.youtube_url" target="_blank" aria-label="Youtube">YT</a>
-            </div>
-            
             <div class="auth-area">
               <div *ngIf="currentUser" class="user-pill">
                 <span class="user-avatar">👤</span>
@@ -167,35 +160,9 @@ import { AuthService, User } from '../../../core/services/auth.service';
       gap: 24px;
     }
 
-    .social-links {
-      display: flex;
-      gap: 8px;
-    }
-
-    .social-links a {
-      color: #94A3B8;
-      text-decoration: none;
-      background-color: rgba(255, 255, 255, 0.05);
-      width: 24px;
-      height: 24px;
+    .auth-area {
       display: flex;
       align-items: center;
-      justify-content: center;
-      border-radius: 50%;
-      font-size: 0.68rem;
-      font-weight: 700;
-      transition: var(--transition);
-    }
-
-    .social-links a:hover {
-      background-color: var(--primary);
-      color: var(--white);
-      transform: translateY(-2px) scale(1.08);
-    }
-
-    .auth-area {
-      border-left: 1px solid rgba(255, 255, 255, 0.1);
-      padding-left: 16px;
     }
 
     .login-link {

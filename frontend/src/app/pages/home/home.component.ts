@@ -68,10 +68,12 @@ export class HomeComponent implements OnInit, OnDestroy {
   formSubmitted = false;
   formSuccess = false;
   formError = '';
+  settings: any = {};
 
   constructor(private contentService: ContentService) {}
 
   ngOnInit(): void {
+    this.loadSettings();
     this.loadPageSections();
     this.loadPrograms();
     this.loadGallery();
@@ -79,6 +81,15 @@ export class HomeComponent implements OnInit, OnDestroy {
     this.loadEvents();
     this.loadBlogs();
     this.startHeroTimer();
+  }
+
+  loadSettings(): void {
+    this.contentService.getSettings().subscribe({
+      next: (data) => {
+        this.settings = data;
+      },
+      error: () => {}
+    });
   }
 
   ngOnDestroy(): void {
