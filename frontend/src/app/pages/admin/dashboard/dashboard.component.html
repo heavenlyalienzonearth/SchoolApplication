@@ -38,6 +38,18 @@
 
     <!-- Main Content Area -->
     <main class="dash-main">
+      <!-- Mobile Tab Navigation Dropdown -->
+      <div class="mobile-tab-nav">
+        <label class="form-label" for="mobileTabSelect">Dashboard Navigation:</label>
+        <select id="mobileTabSelect" [ngModel]="activeTab" (ngModelChange)="setTab($event)" class="form-control select-tab">
+          <option value="settings">⚙️ Site Settings</option>
+          <option value="hero">🖼️ Hero Banner</option>
+          <option value="programs">🎓 School Programs</option>
+          <option value="testimonials">💬 Parent Reviews</option>
+          <option value="gallery">📷 Gallery Items</option>
+          <option value="inquiries">📩 Form Inquiries</option>
+        </select>
+      </div>
       
       <!-- SITE SETTINGS TAB -->
       <section *ngIf="activeTab === 'settings'" class="tab-section">

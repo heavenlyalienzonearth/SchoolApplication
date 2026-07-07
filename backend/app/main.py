@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.core.config import settings
-from app.api.v1 import auth, settings as api_settings, content, submissions
+from app.api.v1 import auth, settings as api_settings, content, submissions, chatbot
 
 app = FastAPI(
     title="School Application API",
@@ -23,6 +23,7 @@ app.include_router(auth.router, prefix="/api/v1")
 app.include_router(api_settings.router, prefix="/api/v1")
 app.include_router(content.router, prefix="/api/v1")
 app.include_router(submissions.router, prefix="/api/v1")
+app.include_router(chatbot.router, prefix="/api/v1/chatbot", tags=["Chatbot"])
 
 @app.get("/")
 def read_root():
