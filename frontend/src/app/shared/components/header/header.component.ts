@@ -61,7 +61,16 @@ import { AuthService, User } from '../../../core/services/auth.service';
           <ul class="nav-menu" [class.active]="menuActive">
             <li><a routerLink="/" routerLinkActive="active-link" [routerLinkActiveOptions]="{exact: true}" (click)="closeMenu()">Home</a></li>
             <li><a routerLink="/about" routerLinkActive="active-link" (click)="closeMenu()">About</a></li>
-            <li><a routerLink="/programs" routerLinkActive="active-link" (click)="closeMenu()">Programs</a></li>
+            <!-- Programs Dropdown -->
+            <li class="dropdown-item" (mouseenter)="toggleProgramsDropdown(true)" (mouseleave)="toggleProgramsDropdown(false)">
+              <a class="dropdown-trigger" [class.active-link]="isProgramsActive()">
+                Program <span class="arrow-icon">▼</span>
+              </a>
+              <ul class="dropdown-menu" [class.show]="programsDropdownActive">
+                <li><a routerLink="/programs" routerLinkActive="active-link" [routerLinkActiveOptions]="{exact: true}" (click)="closeMenu()">All Programs</a></li>
+                <li><a routerLink="/programs/preschool" routerLinkActive="active-link" (click)="closeMenu()">PreSchooling</a></li>
+              </ul>
+            </li>
             <li><a routerLink="/admissions" routerLinkActive="active-link" (click)="closeMenu()">Admissions</a></li>
             
             <!-- Dynamic Dropdown -->
@@ -518,6 +527,7 @@ export class HeaderComponent implements OnInit {
   currentUser: User | null = null;
   menuActive = false;
   dropdownActive = false;
+  programsDropdownActive = false;
   isScrolled = false;
 
   constructor(
@@ -555,12 +565,14 @@ export class HeaderComponent implements OnInit {
     this.menuActive = !this.menuActive;
     if (!this.menuActive) {
       this.dropdownActive = false;
+      this.programsDropdownActive = false;
     }
   }
 
   closeMenu(): void {
     this.menuActive = false;
     this.dropdownActive = false;
+    this.programsDropdownActive = false;
   }
 
   toggleDropdown(state: boolean): void {
@@ -570,6 +582,23 @@ export class HeaderComponent implements OnInit {
       // Toggle for mobile
       this.dropdownActive = !this.dropdownActive;
     }
+  }
+
+  toggleProgramsDropdown(state: boolean): void {
+    if (typeof window !== 'undefined' && window.innerWidth > 1024) {
+      this.programsDropdownActive = state;
+    } else if (!state) {
+      // Toggle for mobile
+      this.programsDropdownActive = !this.programsDropdownActive;
+    }
+  }
+
+  isProgramsActive(): boolean {
+    const activeRoutes = ['/programs', '/programs/preschool'];
+    if (typeof window !== 'undefined') {
+      return activeRoutes.some(route => window.location.pathname === route);
+    }
+    return false;
   }
 
   isDropdownActive(): boolean {

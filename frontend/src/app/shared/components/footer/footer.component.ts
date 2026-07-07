@@ -48,6 +48,7 @@ import { ContentService } from '../../../core/services/content.service';
             <li><a routerLink="/about">About Us</a></li>
             <li><a routerLink="/why-us">Why Choose Us</a></li>
             <li><a routerLink="/programs">Our Programs</a></li>
+            <li><a routerLink="/programs/preschool">PreSchooling</a></li>
             <li><a routerLink="/curriculum">Curriculum</a></li>
             <li><a routerLink="/admissions">Admissions</a></li>
             <li><a routerLink="/centers">Our Centers</a></li>

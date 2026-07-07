@@ -18,6 +18,7 @@ export const routes: Routes = [
   { path: 'about', component: GeneralPageComponent, data: { pageCode: 'about', title: 'About Us' } },
   { path: 'why-us', component: GeneralPageComponent, data: { pageCode: 'why_us', title: 'Why Choose Us' } },
   { path: 'programs', component: GeneralPageComponent, data: { pageCode: 'programs_info', title: 'Our Programs' } },
+  { path: 'programs/preschool', component: GeneralPageComponent, data: { pageCode: 'preschool_program', title: 'PreSchooling' } },
   { path: 'curriculum', component: GeneralPageComponent, data: { pageCode: 'curriculum', title: 'Our Curriculum' } },
   { path: 'admissions', component: AdmissionsPageComponent },
   { path: 'centers', component: GeneralPageComponent, data: { pageCode: 'centers', title: 'Our Centers' } },
