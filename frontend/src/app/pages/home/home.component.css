@@ -51,10 +51,12 @@
 }
 
 .slide-title {
-  font-size: 3.8rem;
+  font-family: 'Baloo 2', cursive;
+  font-size: 3.4rem;
   font-weight: 800;
+  color: #FFD23F;
   margin-bottom: 20px;
-  text-shadow: 0 3px 6px rgba(0,0,0,0.5);
+  text-shadow: 0 3px 10px rgba(0, 0, 0, 0.45);
   line-height: 1.15;
 }
 
