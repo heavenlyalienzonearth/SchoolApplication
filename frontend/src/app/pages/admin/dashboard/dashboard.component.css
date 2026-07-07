@@ -149,15 +149,16 @@
   color: var(--primary);
 }
 
-/* Tables */
 .table-card {
   padding: 0;
-  overflow: hidden;
+  overflow-x: auto;
   border: 1px solid #E2E8F0;
 }
 
 .dash-table {
   width: 100%;
+  table-layout: fixed;
+  min-width: 750px;
   border-collapse: collapse;
   text-align: left;
 }
@@ -183,6 +184,14 @@
   background-color: #F8FAFC;
 }
 
+.clickable-row {
+  cursor: pointer;
+}
+
+.clickable-row:hover {
+  background-color: #F1F5F9 !important;
+}
+
 .font-bold {
   font-weight: 700;
 }
@@ -202,10 +211,12 @@
 }
 
 .message-cell {
-  max-width: 300px;
+  max-width: 200px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
   font-size: 0.9rem;
   color: var(--text-light);
-  line-height: 1.4;
 }
 
 .text-small { font-size: 0.82rem; }
@@ -221,6 +232,7 @@
   cursor: pointer;
   font-size: 0.85rem;
   transition: var(--transition);
+  flex-shrink: 0;
 }
 
 .btn-table.edit {
@@ -242,6 +254,22 @@
   background-color: #EF4444;
   color: var(--white);
 }
+
+.btn-table.resolved-btn {
+  border-color: #CBD5E1;
+  color: #94A3B8;
+  cursor: not-allowed;
+  background-color: #F8FAFC;
+}
+
+
+.actions-cell {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  white-space: nowrap;
+}
+
 
 .ml-5 { margin-left: 5px; }
 .ml-10 { margin-left: 10px; }

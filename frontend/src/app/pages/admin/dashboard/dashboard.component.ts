@@ -58,6 +58,9 @@ export class DashboardComponent implements OnInit {
   franchises: any[] = [];
   applications: any[] = [];
   inquiryFilter = 'contact'; // contact, franchise, jobs
+  selectedInquiry: any = null;
+  selectedInquiryType = 'contact'; // 'contact' | 'franchise'
+  inquiryModalOpen = false;
 
   constructor(
     private authService: AuthService,
@@ -439,5 +442,50 @@ export class DashboardComponent implements OnInit {
   getPercentage(value: number, total: number): number {
     if (!total || total === 0) return 0;
     return Math.round((value / total) * 100);
+  }
+
+  openInquiryModal(inquiry: any, type: string): void {
+    this.selectedInquiry = { ...inquiry };
+    this.selectedInquiryType = type;
+    this.inquiryModalOpen = true;
+  }
+
+  closeInquiryModal(): void {
+    this.selectedInquiry = null;
+    this.inquiryModalOpen = false;
+  }
+
+  resolveFromModal(): void {
+    if (!this.selectedInquiry) return;
+    const id = this.selectedInquiry.id;
+    if (this.selectedInquiryType === 'contact') {
+      this.resolveContact(id);
+    } else {
+      this.resolveFranchise(id);
+    }
+    this.closeInquiryModal();
+  }
+
+  formatSubmissionDate(dateStr: any): string {
+    if (!dateStr) return '';
+    const date = new Date(dateStr);
+    const day = date.getDate();
+    const months = [
+      'January', 'February', 'March', 'April', 'May', 'June',
+      'July', 'August', 'September', 'October', 'November', 'December'
+    ];
+    const month = months[date.getMonth()];
+    const year = date.getFullYear();
+    
+    let suffix = 'th';
+    if (day === 1 || day === 21 || day === 31) {
+      suffix = 'st';
+    } else if (day === 2 || day === 22) {
+      suffix = 'nd';
+    } else if (day === 3 || day === 23) {
+      suffix = 'rd';
+    }
+    
+    return `${day}${suffix} ${month} ${year}`;
   }
 }

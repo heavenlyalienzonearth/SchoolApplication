@@ -347,12 +347,12 @@
           <table class="dash-table">
             <thead>
               <tr>
-                <th>Title</th>
-                <th>Age Group</th>
-                <th>Duration</th>
-                <th>Order</th>
-                <th>Status</th>
-                <th>Actions</th>
+                <th style="width: 24%;">Title</th>
+                <th style="width: 12%;">Age Group</th>
+                <th style="width: 24%;">Duration</th>
+                <th style="width: 8%;">Order</th>
+                <th style="width: 12%;">Status</th>
+                <th style="width: 20%;">Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -367,8 +367,10 @@
                   </span>
                 </td>
                 <td>
-                  <button (click)="openProgramModal(prog)" class="btn-table edit">✏️ Edit</button>
-                  <button (click)="deleteProgram(prog.id)" class="btn-table delete ml-5">🗑️ Delete</button>
+                  <div class="actions-cell">
+                    <button (click)="openProgramModal(prog)" class="btn-table edit">✏️ Edit</button>
+                    <button (click)="deleteProgram(prog.id)" class="btn-table delete">🗑️ Delete</button>
+                  </div>
                 </td>
               </tr>
             </tbody>
@@ -387,12 +389,12 @@
           <table class="dash-table">
             <thead>
               <tr>
-                <th>Parent Name</th>
-                <th>Child Details</th>
-                <th>Rating</th>
-                <th>Quote Excerpt</th>
-                <th>Status</th>
-                <th>Actions</th>
+                <th style="width: 20%;">Parent Name</th>
+                <th style="width: 18%;">Child Details</th>
+                <th style="width: 15%;">Rating</th>
+                <th style="width: 25%;">Quote Excerpt</th>
+                <th style="width: 8%;">Status</th>
+                <th style="width: 14%;">Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -407,8 +409,10 @@
                   </span>
                 </td>
                 <td>
-                  <button (click)="openTestimonialModal(test)" class="btn-table edit">✏️ Edit</button>
-                  <button (click)="deleteTestimonial(test.id)" class="btn-table delete ml-5">🗑️ Delete</button>
+                  <div class="actions-cell">
+                    <button (click)="openTestimonialModal(test)" class="btn-table edit">✏️ Edit</button>
+                    <button (click)="deleteTestimonial(test.id)" class="btn-table delete">🗑️ Delete</button>
+                  </div>
                 </td>
               </tr>
             </tbody>
@@ -427,12 +431,12 @@
           <table class="dash-table">
             <thead>
               <tr>
-                <th>Preview</th>
-                <th>Title</th>
-                <th>Category</th>
-                <th>Order</th>
-                <th>Status</th>
-                <th>Actions</th>
+                <th style="width: 10%;">Preview</th>
+                <th style="width: 35%;">Title</th>
+                <th style="width: 15%;">Category</th>
+                <th style="width: 8%;">Order</th>
+                <th style="width: 12%;">Status</th>
+                <th style="width: 20%;">Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -449,8 +453,10 @@
                   </span>
                 </td>
                 <td>
-                  <button (click)="openGalleryModal(item)" class="btn-table edit">✏️ Edit</button>
-                  <button (click)="deleteGallery(item.id)" class="btn-table delete ml-5">🗑️ Delete</button>
+                  <div class="actions-cell">
+                    <button (click)="openGalleryModal(item)" class="btn-table edit">✏️ Edit</button>
+                    <button (click)="deleteGallery(item.id)" class="btn-table delete">🗑️ Delete</button>
+                  </div>
                 </td>
               </tr>
             </tbody>
@@ -474,32 +480,35 @@
           <table class="dash-table">
             <thead>
               <tr>
-                <th>Applicant Name</th>
-                <th>Email / Phone</th>
-                <th>Subject</th>
-                <th>Message</th>
-                <th>Submitted</th>
-                <th>Status</th>
-                <th>Actions</th>
+                <th style="width: 18%;">Applicant Name</th>
+                <th style="width: 20%;">Email / Phone</th>
+                <th style="width: 12%;">Subject</th>
+                <th style="width: 12%;">Message</th>
+                <th style="width: 12%;">Submitted</th>
+                <th style="width: 10%;">Status</th>
+                <th style="width: 16%;">Actions</th>
               </tr>
             </thead>
             <tbody>
-              <tr *ngFor="let sub of contacts">
+              <tr *ngFor="let sub of contacts" (click)="openInquiryModal(sub, 'contact')" class="clickable-row">
                 <td class="font-bold">{{ sub.name }}</td>
                 <td>
                   <div>{{ sub.email }}</div>
                   <div class="text-small text-light">{{ sub.phone }}</div>
                 </td>
                 <td><span class="badge badge-accent">{{ sub.subject }}</span></td>
-                <td class="message-cell">{{ sub.message }}</td>
-                <td>{{ sub.created_at | date:'short' }}</td>
+                <td class="message-cell" [title]="sub.message">{{ sub.message }}</td>
+                <td>{{ formatSubmissionDate(sub.created_at) }}</td>
                 <td>
                   <span class="badge" [class.badge-primary]="sub.status === 'NEW'" [class.badge-secondary]="sub.status === 'RESOLVED'">
                     {{ sub.status }}
                   </span>
                 </td>
                 <td>
-                  <button *ngIf="sub.status === 'NEW'" (click)="resolveContact(sub.id)" class="btn-table edit">✓ Resolve</button>
+                  <div class="actions-cell">
+                    <button *ngIf="sub.status === 'NEW'" (click)="resolveContact(sub.id); $event.stopPropagation()" class="btn-table edit">✓ Resolve</button>
+                    <button *ngIf="sub.status === 'RESOLVED'" [disabled]="true" class="btn-table resolved-btn">✓ Resolved</button>
+                  </div>
                 </td>
               </tr>
             </tbody>
@@ -511,18 +520,18 @@
           <table class="dash-table">
             <thead>
               <tr>
-                <th>Applicant Name</th>
-                <th>Email / Phone</th>
-                <th>Location</th>
-                <th>Budget Range</th>
-                <th>Inquiry Note</th>
-                <th>Submitted</th>
-                <th>Status</th>
-                <th>Actions</th>
+                <th style="width: 18%;">Applicant Name</th>
+                <th style="width: 20%;">Email / Phone</th>
+                <th style="width: 12%;">Location</th>
+                <th style="width: 12%;">Budget Range</th>
+                <th style="width: 10%;">Inquiry Note</th>
+                <th style="width: 12%;">Submitted</th>
+                <th style="width: 8%;">Status</th>
+                <th style="width: 16%;">Actions</th>
               </tr>
             </thead>
             <tbody>
-              <tr *ngFor="let inq of franchises">
+              <tr *ngFor="let inq of franchises" (click)="openInquiryModal(inq, 'franchise')" class="clickable-row">
                 <td class="font-bold">{{ inq.name }}</td>
                 <td>
                   <div>{{ inq.email }}</div>
@@ -530,15 +539,18 @@
                 </td>
                 <td>{{ inq.city }}, {{ inq.state }}</td>
                 <td>{{ inq.investment_range }}</td>
-                <td class="message-cell">{{ inq.message }}</td>
-                <td>{{ inq.created_at | date:'short' }}</td>
+                <td class="message-cell" [title]="inq.message">{{ inq.message }}</td>
+                <td>{{ formatSubmissionDate(inq.created_at) }}</td>
                 <td>
                   <span class="badge" [class.badge-primary]="inq.status === 'NEW'" [class.badge-secondary]="inq.status === 'RESOLVED'">
                     {{ inq.status }}
                   </span>
                 </td>
                 <td>
-                  <button *ngIf="inq.status === 'NEW'" (click)="resolveFranchise(inq.id)" class="btn-table edit">✓ Resolve</button>
+                  <div class="actions-cell">
+                    <button *ngIf="inq.status === 'NEW'" (click)="resolveFranchise(inq.id); $event.stopPropagation()" class="btn-table edit">✓ Resolve</button>
+                    <button *ngIf="inq.status === 'RESOLVED'" [disabled]="true" class="btn-table resolved-btn">✓ Resolved</button>
+                  </div>
                 </td>
               </tr>
             </tbody>
@@ -550,21 +562,21 @@
           <table class="dash-table">
             <thead>
               <tr>
-                <th>Applicant Name</th>
-                <th>Email / Phone</th>
-                <th>Cover Note</th>
-                <th>Application Date</th>
+                <th style="width: 25%;">Applicant Name</th>
+                <th style="width: 30%;">Email / Phone</th>
+                <th style="width: 25%;">Cover Note</th>
+                <th style="width: 20%;">Application Date</th>
               </tr>
             </thead>
             <tbody>
-              <tr *ngFor="let app of applications">
+              <tr *ngFor="let app of applications" (click)="openInquiryModal(app, 'jobs')" class="clickable-row">
                 <td class="font-bold">{{ app.applicant_name }}</td>
                 <td>
                   <div>{{ app.applicant_email }}</div>
                   <div class="text-small text-light">{{ app.applicant_phone }}</div>
                 </td>
-                <td class="message-cell">{{ app.cover_letter }}</td>
-                <td>{{ app.created_at | date:'short' }}</td>
+                <td class="message-cell" [title]="app.cover_letter">{{ app.cover_letter }}</td>
+                <td>{{ formatSubmissionDate(app.created_at) }}</td>
               </tr>
             </tbody>
           </table>
@@ -746,5 +758,74 @@
         <button type="submit" class="btn btn-primary btn-sm ml-10">💾 Save Item</button>
       </div>
     </form>
+  </div>
+</div>
+
+<!-- INQUIRY DETAILS MODAL -->
+<div class="dash-modal" *ngIf="inquiryModalOpen">
+  <div class="modal-content card" style="max-width: 600px;">
+    <div class="modal-header">
+      <h3>{{ selectedInquiryType === 'contact' ? '✉️ Contact Form Details' : selectedInquiryType === 'franchise' ? '💼 Franchise Inquiry Details' : '📄 Job Application Details' }}</h3>
+      <button class="modal-close" (click)="closeInquiryModal()">×</button>
+    </div>
+    
+    <div class="modal-body" *ngIf="selectedInquiry" style="padding: 24px; text-align: left;">
+      <div style="margin-bottom: 12px; display: flex; border-bottom: 1px solid #F1F5F9; padding-bottom: 8px;">
+        <span style="font-weight: 700; width: 140px; color: #475569;">Name:</span>
+        <span class="font-bold" style="color: #0F172A;">{{ selectedInquiry.name || selectedInquiry.applicant_name }}</span>
+      </div>
+      
+      <div style="margin-bottom: 12px; display: flex; border-bottom: 1px solid #F1F5F9; padding-bottom: 8px;">
+        <span style="font-weight: 700; width: 140px; color: #475569;">Email:</span>
+        <span style="color: #0F172A;">{{ selectedInquiry.email || selectedInquiry.applicant_email }}</span>
+      </div>
+      
+      <div style="margin-bottom: 12px; display: flex; border-bottom: 1px solid #F1F5F9; padding-bottom: 8px;">
+        <span style="font-weight: 700; width: 140px; color: #475569;">Phone:</span>
+        <span style="color: #0F172A;">{{ selectedInquiry.phone || selectedInquiry.applicant_phone }}</span>
+      </div>
+      
+      <!-- Contact specific -->
+      <div *ngIf="selectedInquiryType === 'contact'" style="margin-bottom: 12px; display: flex; border-bottom: 1px solid #F1F5F9; padding-bottom: 8px;">
+        <span style="font-weight: 700; width: 140px; color: #475569;">Subject:</span>
+        <span><span class="badge badge-accent">{{ selectedInquiry.subject }}</span></span>
+      </div>
+      
+      <!-- Franchise specific -->
+      <div *ngIf="selectedInquiryType === 'franchise'" style="margin-bottom: 12px; display: flex; border-bottom: 1px solid #F1F5F9; padding-bottom: 8px;">
+        <span style="font-weight: 700; width: 140px; color: #475569;">Location:</span>
+        <span style="color: #0F172A;">{{ selectedInquiry.city }}, {{ selectedInquiry.state }}</span>
+      </div>
+      <div *ngIf="selectedInquiryType === 'franchise'" style="margin-bottom: 12px; display: flex; border-bottom: 1px solid #F1F5F9; padding-bottom: 8px;">
+        <span style="font-weight: 700; width: 140px; color: #475569;">Budget Range:</span>
+        <span style="color: #0F172A;">{{ selectedInquiry.investment_range }}</span>
+      </div>
+
+      <div style="margin-bottom: 12px; display: flex; border-bottom: 1px solid #F1F5F9; padding-bottom: 8px;">
+        <span style="font-weight: 700; width: 140px; color: #475569;">Submitted:</span>
+        <span style="color: #0F172A;">{{ formatSubmissionDate(selectedInquiry.created_at) }}</span>
+      </div>
+
+      <div *ngIf="selectedInquiryType !== 'jobs'" style="margin-bottom: 12px; display: flex; border-bottom: 1px solid #F1F5F9; padding-bottom: 8px;">
+        <span style="font-weight: 700; width: 140px; color: #475569;">Status:</span>
+        <span>
+          <span class="badge" [class.badge-primary]="selectedInquiry.status === 'NEW'" [class.badge-secondary]="selectedInquiry.status === 'RESOLVED'">
+            {{ selectedInquiry.status }}
+          </span>
+        </span>
+      </div>
+
+      <div style="margin-top: 20px;">
+        <span style="font-weight: 700; color: #475569; display: block; margin-bottom: 8px;">Message / Note:</span>
+        <div style="background-color: #F8FAFC; border: 1px solid #E2E8F0; padding: 16px; border-radius: 8px; font-size: 0.95rem; color: #334155; line-height: 1.6; max-height: 250px; overflow-y: auto; white-space: pre-wrap;">
+          {{ selectedInquiry.message || selectedInquiry.cover_letter }}
+        </div>
+      </div>
+    </div>
+
+    <div class="modal-footer" style="padding-top: 15px; border-top: 1px solid #E2E8F0;">
+      <button *ngIf="selectedInquiry?.status === 'NEW'" (click)="resolveFromModal()" class="btn btn-primary btn-sm">✓ Resolve</button>
+      <button (click)="closeInquiryModal()" class="btn btn-outline btn-sm ml-10">❌ Cancel</button>
+    </div>
   </div>
 </div>
