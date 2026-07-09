@@ -673,3 +673,17 @@
   font-weight: 600;
   font-size: 0.95rem;
 }
+
+.holidays-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 30px;
+  align-items: start;
+  margin-bottom: 30px;
+}
+
+@media (max-width: 991px) {
+  .holidays-grid {
+    grid-template-columns: 1fr;
+  }
+}

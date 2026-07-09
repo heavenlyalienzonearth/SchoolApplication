@@ -88,6 +88,8 @@ class ProgramBase(BaseModel):
     duration: Optional[str] = None
     description: Optional[str] = None
     highlights_json: Optional[str] = None
+    weekly_plan_json: Optional[str] = None
+    uniform_items_json: Optional[str] = None
     image_url: Optional[str] = None
     is_active: bool = True
     sort_order: int = 0
@@ -285,3 +287,140 @@ class FranchiseInquiryResponse(FranchiseInquiryBase):
 
 class FranchiseInquiryStatusUpdate(BaseModel):
     status: str
+
+# --- STUDENT SCHEMAS ---
+class StudentBase(BaseModel):
+    name: str
+    parent_name: str
+    phone: str
+    program_id: int
+    allergies: Optional[str] = None
+    photo_url: Optional[str] = None
+    issued_items_json: Optional[str] = None
+    blood_group: Optional[str] = None
+    emergency_phone: Optional[str] = None
+    date_of_birth: Optional[str] = None
+    is_active: bool = True
+
+class StudentCreate(StudentBase):
+    pass
+
+class StudentResponse(StudentBase):
+    id: int
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
+
+# --- ATTENDANCE SCHEMAS ---
+class AttendanceBase(BaseModel):
+    student_id: int
+    date: str
+    status: str  # PRESENT, ABSENT, LATE
+    notes: Optional[str] = None
+
+class AttendanceCreate(AttendanceBase):
+    pass
+
+class AttendanceResponse(AttendanceBase):
+    id: int
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
+
+class AttendanceBulkItem(BaseModel):
+    student_id: int
+    status: str
+    notes: Optional[str] = None
+
+class AttendanceBulkSave(BaseModel):
+    program_id: int
+    date: str
+    records: List[AttendanceBulkItem]
+
+# --- VACCINATION SCHEMAS ---
+class VaccinationBase(BaseModel):
+    name: str
+    age_group: str
+
+class VaccinationResponse(VaccinationBase):
+    id: int
+
+    class Config:
+        from_attributes = True
+
+# --- ADMISSION SCHEMAS ---
+class AdmissionVaccinationCreate(BaseModel):
+    vaccination_id: int
+    administered_date: str
+
+class AdmissionVaccinationResponse(BaseModel):
+    id: int
+    vaccination_id: int
+    administered_date: str
+    vaccination: VaccinationResponse
+
+    class Config:
+        from_attributes = True
+
+class AdmissionCreate(BaseModel):
+    child_name: str
+    parent_name: str
+    email: str
+    phone: str
+    date_of_birth: str
+    program_id: int
+    allergies: Optional[str] = None
+    photo_url: Optional[str] = None
+    issued_items_json: Optional[str] = None
+    blood_group: Optional[str] = None
+    emergency_phone: Optional[str] = None
+    vaccinations: List[AdmissionVaccinationCreate] = []
+
+class AdmissionResponse(BaseModel):
+    id: int
+    child_name: str
+    parent_name: str
+    email: str
+    phone: str
+    date_of_birth: str
+    program_id: int
+    allergies: Optional[str] = None
+    photo_url: Optional[str] = None
+    issued_items_json: Optional[str] = None
+    blood_group: Optional[str] = None
+    emergency_phone: Optional[str] = None
+    status: str
+    created_at: datetime
+    vaccinations: List[AdmissionVaccinationResponse] = []
+
+    class Config:
+        from_attributes = True
+
+class AdmissionStatusUpdate(BaseModel):
+    status: str
+
+class HolidayBase(BaseModel):
+    title: str
+    description: Optional[str] = None
+    holiday_date: str  # YYYY-MM-DD
+    year: int
+    is_active: bool = True
+
+class HolidayCreate(HolidayBase):
+    send_email: Optional[bool] = False
+
+class HolidayResponse(HolidayBase):
+    id: int
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
+
+class CustomHolidayEmailRequest(BaseModel):
+    reason: str
+    start_date: str
+    end_date: str
+    reopen_date: str
+

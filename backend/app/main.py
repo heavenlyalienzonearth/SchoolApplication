@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.core.config import settings
-from app.api.v1 import auth, settings as api_settings, content, submissions, chatbot
+from app.api.v1 import auth, settings as api_settings, content, submissions, chatbot, attendance, admissions, holidays
 
 from fastapi.staticfiles import StaticFiles
 import os
@@ -26,7 +26,19 @@ app.include_router(auth.router, prefix="/api/v1")
 app.include_router(api_settings.router, prefix="/api/v1")
 app.include_router(content.router, prefix="/api/v1")
 app.include_router(submissions.router, prefix="/api/v1")
+app.include_router(attendance.router, prefix="/api/v1")
+app.include_router(admissions.router, prefix="/api/v1")
 app.include_router(chatbot.router, prefix="/api/v1/chatbot", tags=["Chatbot"])
+app.include_router(holidays.router, prefix="/api/v1/holidays", tags=["Holidays"])
+
+# Create and mount static directory
+static_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "static"))
+os.makedirs(static_dir, exist_ok=True)
+app.mount("/static", StaticFiles(directory=static_dir), name="static")
+
+photos_dir = os.path.join(static_dir, "photos")
+os.makedirs(photos_dir, exist_ok=True)
+app.mount("/photos", StaticFiles(directory=photos_dir), name="photos")
 
 # Mount static assets folder
 assets_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "frontend", "public", "assets"))

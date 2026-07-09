@@ -227,4 +227,81 @@ export class ContentService {
   getAnalytics(): Observable<any> {
     return this.apiService.get<any>('/submissions/analytics');
   }
+
+  // --- ATTENDANCE ---
+  getStudents(programId?: number): Observable<any[]> {
+    const url = programId ? `/attendance/students?program_id=${programId}` : '/attendance/students';
+    return this.apiService.get<any[]>(url);
+  }
+
+  createStudent(student: any): Observable<any> {
+    return this.apiService.post<any>('/attendance/students', student);
+  }
+
+  deleteStudent(id: number): Observable<any> {
+    return this.apiService.delete<any>(`/attendance/students/${id}`);
+  }
+
+  getAttendanceRecords(programId: number, date: string): Observable<any[]> {
+    return this.apiService.get<any[]>(`/attendance/records?program_id=${programId}&date=${date}`);
+  }
+
+  saveAttendanceRecords(data: any): Observable<any> {
+    return this.apiService.post<any>('/attendance/records', data);
+  }
+
+  getAttendanceStats(programId?: number): Observable<any[]> {
+    const url = programId ? `/attendance/stats?program_id=${programId}` : '/attendance/stats';
+    return this.apiService.get<any[]>(url);
+  }
+
+  // --- STUDENT ADMISSIONS ---
+  getVaccinations(): Observable<any[]> {
+    return this.apiService.get<any[]>('/admissions/vaccinations');
+  }
+
+  uploadVaccinationsExcel(formData: FormData): Observable<any> {
+    return this.apiService.post<any>('/admissions/vaccinations/upload', formData);
+  }
+
+  submitAdmission(data: any): Observable<any> {
+    return this.apiService.post<any>('/admissions/apply', data);
+  }
+
+  getAdmissionApplications(): Observable<any[]> {
+    return this.apiService.get<any[]>('/admissions/applications');
+  }
+
+  updateAdmissionStatus(id: number, status: string): Observable<any> {
+    return this.apiService.put<any>(`/admissions/applications/${id}/status`, { status });
+  }
+
+  uploadChildPhoto(formData: FormData): Observable<any> {
+    return this.apiService.post<any>('/admissions/upload-photo', formData);
+  }
+
+  emailStudentBadge(admissionId: number): Observable<any> {
+    return this.apiService.post<any>(`/admissions/applications/${admissionId}/email-badge`, {});
+  }
+
+  getHolidays(year?: number): Observable<any[]> {
+    const url = year ? `/holidays?year=${year}` : '/holidays';
+    return this.apiService.get<any[]>(url);
+  }
+
+  createHoliday(holiday: any): Observable<any> {
+    return this.apiService.post<any>('/holidays', holiday);
+  }
+
+  updateHoliday(id: number, holiday: any): Observable<any> {
+    return this.apiService.put<any>(`/holidays/${id}`, holiday);
+  }
+
+  deleteHoliday(id: number): Observable<any> {
+    return this.apiService.delete<any>(`/holidays/${id}`);
+  }
+
+  sendCustomHolidayEmail(payload: any): Observable<any> {
+    return this.apiService.post<any>('/holidays/send-custom-holiday-email', payload);
+  }
 }

@@ -15,6 +15,7 @@
           <div class="hero-actions">
             <a [routerLink]="slide.cta_link" class="btn btn-secondary btn-lg">{{ slide.cta_text }}</a>
             <a routerLink="/programs" class="btn btn-outline-white btn-lg">Our Programs</a>
+            <button type="button" (click)="openAdmissionsModal()" class="btn btn-primary btn-lg ml-10">🏫 Apply For Admission</button>
           </div>
         </div>
       </div>
@@ -76,7 +77,74 @@
           <ul class="prog-highlights" *ngIf="prog.highlights && prog.highlights.length > 0">
             <li *ngFor="let high of prog.highlights">{{ high }}</li>
           </ul>
-          <a routerLink="/admissions" class="btn btn-outline btn-sm learn-more-btn">Enroll Now</a>
+          <div style="display: flex; gap: 10px; margin-top: auto; padding-top: 15px;">
+            <a routerLink="/admissions" class="btn btn-primary btn-sm flex-1" style="text-align: center; border-radius: 8px;">Enroll Now</a>
+            <button (click)="toggleWeeklyPlan(prog.id)" class="btn btn-outline btn-sm flex-1" style="border-radius: 8px; font-weight: 700;">
+              📅 View Plan
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Expandable Weekly Schedule Table -->
+    <!-- WEEKLY PLAN MODAL POPUP -->
+    <div class="lightbox-modal" *ngIf="activeScheduleProgramId !== null" (click)="activeScheduleProgramId = null" style="background-color: rgba(0,0,0,0.6); display: flex; align-items: center; justify-content: center; z-index: 1100;">
+      <div class="animate-fade-in" style="background: white; border-radius: 16px; width: 100%; max-width: 900px; max-height: 90vh; overflow-y: auto; padding: 30px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); position: relative; text-align: left;" (click)="$event.stopPropagation()">
+        <button (click)="activeScheduleProgramId = null" style="position: absolute; top: 15px; right: 20px; border: none; background: none; font-size: 1.8rem; cursor: pointer; color: #64748B;">×</button>
+        
+        <div class="schedule-card" style="border: none; box-shadow: none; padding: 0;">
+          <div class="schedule-header" style="margin-bottom: 20px; padding: 0; border: none; display: flex; justify-content: space-between; align-items: center;">
+            <div class="schedule-title-area" style="display: flex; align-items: center; gap: 15px;">
+              <span class="schedule-icon" style="font-size: 2.2rem; background: rgba(255, 142, 99, 0.15); width: 60px; height: 60px; display: flex; align-items: center; justify-content: center; border-radius: 12px;">🥞</span>
+              <div>
+                <h3 style="color: var(--primary); font-size: 1.4rem; font-weight: 800; margin: 0;">Weekly Adventure Mission Plan</h3>
+                <p class="schedule-subtitle" style="font-size: 0.95rem; color: var(--text-light); margin: 4px 0 0 0; font-weight: 600;">Class: {{ getProgramTitleById(activeScheduleProgramId) }}</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="schedule-table-wrapper" style="border: 1px solid #E2E8F0; border-radius: 12px; overflow: hidden; margin-top: 10px;">
+            <table class="schedule-table" style="width: 100%; border-collapse: collapse;">
+              <thead>
+                <tr>
+                  <th style="background-color: #F8FAFC; color: var(--primary); font-weight: 700; padding: 12px 16px; border-bottom: 2px solid #E2E8F0; text-align: left;">Day</th>
+                  <th style="background-color: #F8FAFC; color: var(--primary); font-weight: 700; padding: 12px 16px; border-bottom: 2px solid #E2E8F0; text-align: left;">🧠 Study / Growth Mindset</th>
+                  <th style="background-color: #F8FAFC; color: var(--primary); font-weight: 700; padding: 12px 16px; border-bottom: 2px solid #E2E8F0; text-align: left;">🏃 Physical Activity</th>
+                  <th style="background-color: #F8FAFC; color: var(--primary); font-weight: 700; padding: 12px 16px; border-bottom: 2px solid #E2E8F0; text-align: left;">🤖 Games & Robotics</th>
+                  <th style="background-color: #F8FAFC; color: var(--primary); font-weight: 700; padding: 12px 16px; border-bottom: 2px solid #E2E8F0; text-align: left;">🥞 Breakfast Menu (Kids Only)</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let item of getProgramWeeklyPlanById(activeScheduleProgramId)" style="border-bottom: 1px solid #E2E8F0;">
+                  <td class="day-cell" style="font-weight: 700; color: var(--primary); padding: 14px 16px;">{{ item.day }}</td>
+                  <td class="activity-cell study-cell" style="padding: 14px 16px;">
+                    <span class="activity-icon">🧠</span>
+                    {{ item.study }}
+                  </td>
+                  <td class="activity-cell physical-cell" style="padding: 14px 16px;">
+                    <span class="activity-icon">🏃</span>
+                    {{ item.physical }}
+                  </td>
+                  <td class="activity-cell games-cell" style="padding: 14px 16px;">
+                    <span class="activity-icon">🤖</span>
+                    {{ item.games }}
+                  </td>
+                  <td class="activity-cell breakfast-cell" style="padding: 14px 16px; background-color: rgba(255, 142, 99, 0.03);">
+                    <span class="activity-icon">🥞</span>
+                    {{ item.breakfast }}
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div style="background-color: rgba(255, 142, 99, 0.08); border-left: 5px solid var(--secondary); padding: 12px 18px; border-radius: 8px; margin-top: 20px; display: flex; align-items: center; gap: 10px;">
+            <span style="font-size: 1.3rem;">🥞</span>
+            <span style="font-size: 0.95rem; font-weight: 600; color: #475569;">
+              Note: We provide a highly nutritious daily breakfast for kids <strong style="color: var(--primary);">ONLY</strong>. Vegetarian, egg, and allergy-friendly variations are available upon request.
+            </span>
+          </div>
         </div>
       </div>
     </div>
@@ -190,6 +258,50 @@
         </div>
       </div>
     </div>
+  </div>
+</section>
+
+<!-- HOLIDAYS SECTION -->
+<section class="section holidays-sec bg-white" style="padding: 70px 0;">
+  <div class="container">
+    <div class="section-header text-center" style="margin-bottom: 50px;">
+      <p class="subtitle" style="text-transform: uppercase; letter-spacing: 2px; font-weight: 700; color: var(--secondary); font-size: 0.95rem; margin-bottom: 8px;">Academic Calendar</p>
+      <h2 style="font-size: 2.25rem; font-weight: 800; color: var(--primary); margin: 0 0 15px 0;">📅 School Holidays</h2>
+      <p class="desc" style="max-width: 600px; margin: 0 auto; color: var(--text-light); line-height: 1.6;">Stay updated with the list of holidays and scheduled breaks for the current academic year.</p>
+    </div>
+
+    <!-- Year Filter Tabs -->
+    <div style="display: flex; justify-content: center; gap: 12px; margin-bottom: 40px; flex-wrap: wrap;">
+      <button *ngFor="let year of holidayYears" (click)="setHolidayYear(year)" [style.background-color]="selectedHolidayYear === year ? 'var(--primary)' : '#F1F5F9'" [style.color]="selectedHolidayYear === year ? 'white' : '#475569'" [style.border]="selectedHolidayYear === year ? 'none' : '1px solid #E2E8F0'" style="padding: 10px 24px; border-radius: 30px; font-weight: 700; font-size: 0.95rem; cursor: pointer; transition: all 0.3s ease; box-shadow: 0 4px 6px rgba(0,0,0,0.02);">
+        Year {{ year }}
+      </button>
+    </div>
+
+    <!-- Holidays Grid -->
+    <div class="grid-3" *ngIf="holidaysList.length > 0">
+      <div class="card holiday-card" *ngFor="let h of holidaysList" style="background: #F8FAFC; border-radius: 12px; border: 1px solid #E2E8F0; padding: 25px; transition: transform 0.3s ease, box-shadow: 0 6px 12px rgba(0,0,0,0.05); display: flex; flex-direction: column; justify-content: space-between; height: 100%; min-height: 160px;">
+        <div>
+          <!-- Date badge -->
+          <div style="background-color: var(--primary); color: white; display: inline-block; padding: 4px 10px; border-radius: 20px; font-size: 0.8rem; font-weight: 700; margin-bottom: 12px;">
+            {{ formatHolidayDate(h.holiday_date) }}
+          </div>
+          <h3 style="font-size: 1.15rem; font-weight: 800; color: var(--primary); margin: 0 0 8px 0; text-transform: capitalize;">
+            {{ h.title }}
+          </h3>
+          <p style="font-size: 0.85rem; color: #475569; line-height: 1.5; margin: 0;">
+            {{ h.description || 'National/State Festival celebration and official school holiday.' }}
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Empty State -->
+    <div *ngIf="holidaysList.length === 0" style="text-align: center; padding: 50px 20px; background: #F8FAFC; border-radius: 12px; border: 1px dashed #CBD5E1;">
+      <span style="font-size: 3rem; display: block; margin-bottom: 15px;">📅</span>
+      <h3 style="margin: 0; color: var(--primary); font-size: 1.15rem; font-weight: 700;">No Holidays Scheduled</h3>
+      <p style="margin: 5px 0 0 0; color: var(--text-light); font-size: 0.9rem;">There are no official holidays published for the year {{ selectedHolidayYear }} yet.</p>
+    </div>
+
   </div>
 </section>
 
@@ -358,6 +470,137 @@
   <div class="lightbox-content animate-fade-in" (click)="$event.stopPropagation()">
     <button class="lightbox-close" (click)="closeLightbox()">×</button>
     <img [src]="lightboxImage" alt="Gallery Zoom" class="lightbox-img" />
+  </div>
+</div>
+
+<!-- ADMISSIONS APPLICATION MODAL -->
+<div class="lightbox-modal" *ngIf="admissionsModalOpen" style="background-color: rgba(0,0,0,0.6); display: flex; align-items: center; justify-content: center; z-index: 1100;">
+  <div class="animate-fade-in" style="background: white; border-radius: 12px; width: 100%; max-width: 650px; max-height: 90vh; overflow-y: auto; padding: 30px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); position: relative; text-align: left;" (click)="$event.stopPropagation()">
+    <button (click)="closeAdmissionsModal()" style="position: absolute; top: 15px; right: 20px; border: none; background: none; font-size: 1.8rem; cursor: pointer; color: #64748B;">×</button>
+    
+    <!-- Success Screen -->
+    <div *ngIf="admissionsSuccess" style="text-align: center; padding: 40px 20px;">
+      <span style="font-size: 4rem; display: block; margin-bottom: 20px;">🎉</span>
+      <h3 style="color: #10B981; font-size: 1.5rem; margin-bottom: 12px;">Submission Successful!</h3>
+      <p style="color: #475569; font-size: 1.05rem;">
+        Your student admission application has been registered. Our counselor will contact you shortly to finalize the enrollment details.
+      </p>
+    </div>
+
+    <!-- Form Screen -->
+    <div *ngIf="!admissionsSuccess">
+      <h2 style="color: var(--primary); margin-bottom: 20px; font-size: 1.6rem; border-bottom: 2px solid #F1F5F9; padding-bottom: 10px;">🏫 Apply for Kid Admission</h2>
+      
+      <form (ngSubmit)="submitAdmission()">
+        <!-- STEP 1: General Info -->
+        <h4 style="color: var(--secondary); margin-bottom: 10px; font-weight: 700; font-size: 1.05rem;">👦 Step 1: Child & Parent Details</h4>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 20px;">
+          <div>
+            <label style="display: block; font-weight: 600; font-size: 0.85rem; color: #475569; margin-bottom: 6px;">Child Name *</label>
+            <input type="text" [(ngModel)]="admissionForm.child_name" name="c_name" required class="form-control" style="width: 100%; border: 1px solid #CBD5E1; border-radius: 6px; padding: 8px 12px; font-size: 0.95rem;" placeholder="Full Name" />
+          </div>
+          <div>
+            <label style="display: block; font-weight: 600; font-size: 0.85rem; color: #475569; margin-bottom: 6px;">Date of Birth *</label>
+            <input type="date" [(ngModel)]="admissionForm.date_of_birth" name="c_dob" required class="form-control" style="width: 100%; border: 1px solid #CBD5E1; border-radius: 6px; padding: 8px 12px; font-size: 0.95rem;" />
+          </div>
+          <div>
+            <label style="display: block; font-weight: 600; font-size: 0.85rem; color: #475569; margin-bottom: 6px;">Parent Name *</label>
+            <input type="text" [(ngModel)]="admissionForm.parent_name" name="p_name" required class="form-control" style="width: 100%; border: 1px solid #CBD5E1; border-radius: 6px; padding: 8px 12px; font-size: 0.95rem;" placeholder="Parent Name" />
+          </div>
+          <div>
+            <label style="display: block; font-weight: 600; font-size: 0.85rem; color: #475569; margin-bottom: 6px;">Contact Phone *</label>
+            <input type="text" [(ngModel)]="admissionForm.phone" name="p_phone" required class="form-control" style="width: 100%; border: 1px solid #CBD5E1; border-radius: 6px; padding: 8px 12px; font-size: 0.95rem;" placeholder="Phone Number" />
+          </div>
+          <div style="grid-column: span 2;">
+            <label style="display: block; font-weight: 600; font-size: 0.85rem; color: #475569; margin-bottom: 6px;">Email Address *</label>
+            <input type="email" [(ngModel)]="admissionForm.email" name="p_email" required class="form-control" style="width: 100%; border: 1px solid #CBD5E1; border-radius: 6px; padding: 8px 12px; font-size: 0.95rem;" placeholder="Email" />
+          </div>
+          <div style="grid-column: span 2;">
+            <label style="display: block; font-weight: 600; font-size: 0.85rem; color: #475569; margin-bottom: 6px;">Select Class / Program *</label>
+            <select [ngModel]="admissionForm.program_id" (ngModelChange)="onAdmissionProgramChange($event)" name="p_program" required class="form-control" style="width: 100%; border: 1px solid #CBD5E1; border-radius: 6px; padding: 8px 12px; font-size: 0.95rem; background-color: white;">
+              <option *ngFor="let prog of programs" [value]="prog.id">{{ prog.title }}</option>
+            </select>
+          </div>
+          <div>
+            <label style="display: block; font-weight: 600; font-size: 0.85rem; color: #475569; margin-bottom: 6px;">Blood Group</label>
+            <select [(ngModel)]="admissionForm.blood_group" name="c_blood" class="form-control" style="width: 100%; border: 1px solid #CBD5E1; border-radius: 6px; padding: 8px 12px; font-size: 0.95rem; background-color: white;">
+              <option value="">Select Blood Group</option>
+              <option value="A+">A+</option>
+              <option value="A-">A-</option>
+              <option value="B+">B+</option>
+              <option value="B-">B-</option>
+              <option value="AB+">AB+</option>
+              <option value="AB-">AB-</option>
+              <option value="O+">O+</option>
+              <option value="O-">O-</option>
+            </select>
+          </div>
+          <div>
+            <label style="display: block; font-weight: 600; font-size: 0.85rem; color: #475569; margin-bottom: 6px;">Emergency Phone *</label>
+            <input type="text" [(ngModel)]="admissionForm.emergency_phone" name="c_emergency" required class="form-control" style="width: 100%; border: 1px solid #CBD5E1; border-radius: 6px; padding: 8px 12px; font-size: 0.95rem;" placeholder="Emergency Contact No" />
+          </div>
+          <div style="grid-column: span 2;">
+            <label style="display: block; font-weight: 600; font-size: 0.85rem; color: #475569; margin-bottom: 6px;">Child Profile Photo (Optional)</label>
+            <input type="file" (change)="onPhotoSelected($event)" accept="image/*" class="form-control" style="width: 100%; border: 1px solid #CBD5E1; border-radius: 6px; padding: 6px 12px; font-size: 0.95rem; background-color: white;" />
+            <div *ngIf="uploadingPhoto" style="font-size: 0.8rem; color: var(--primary); margin-top: 4px; font-weight: 600;">⚡ Uploading photo...</div>
+            <div *ngIf="admissionForm.photo_url" style="font-size: 0.8rem; color: #10B981; margin-top: 4px; font-weight: 600;">✓ Photo uploaded successfully!</div>
+          </div>
+        </div>
+
+        <!-- STEP 2: Allergies -->
+        <h4 style="color: var(--secondary); margin-bottom: 10px; font-weight: 700; font-size: 1.05rem; border-top: 1px solid #F1F5F9; padding-top: 15px;">⚠️ Step 2: Food Allergies & Diet Restrictions</h4>
+        <div style="margin-bottom: 20px;">
+          <label style="display: block; font-weight: 600; font-size: 0.85rem; color: #475569; margin-bottom: 6px;">Allergies (e.g. Eggs, Peanuts, Strawberries)</label>
+          <input type="text" [(ngModel)]="admissionForm.allergies" name="allergies" class="form-control" style="width: 100%; border: 1px solid #CBD5E1; border-radius: 6px; padding: 8px 12px; font-size: 0.95rem;" placeholder="Describe allergies or write None" />
+        </div>
+
+        <!-- STEP 2.5: Uniform & Supplies Checklist -->
+        <h4 style="color: var(--secondary); margin-bottom: 10px; font-weight: 700; font-size: 1.05rem; border-top: 1px solid #F1F5F9; padding-top: 15px;">👕 Step 2.5: Uniform & Supplies Issued</h4>
+        <p style="font-size: 0.85rem; color: var(--text-light); margin-bottom: 12px;">
+          Select the uniform set and school items issued upon enrollment.
+        </p>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px; border: 1px solid #E2E8F0; border-radius: 8px; padding: 15px; background: #F8FAFC;">
+          <div *ngFor="let item of selectedUniforms; let idx = index" style="display: flex; align-items: center; gap: 8px;">
+            <input type="checkbox" [(ngModel)]="item.selected" name="uni_chk_{{idx}}" style="width: 16px; height: 16px; cursor: pointer;" />
+            <span style="font-weight: 600; font-size: 0.9rem; color: #334155;">{{ item.name }}</span>
+          </div>
+          <div *ngIf="selectedUniforms.length === 0" style="color: var(--text-light); font-style: italic; font-size: 0.9rem; grid-column: span 2; text-align: center;">
+            No uniform items configured for this class level.
+          </div>
+        </div>
+
+        <!-- STEP 3: Vaccination details -->
+        <h4 style="color: var(--secondary); margin-bottom: 10px; font-weight: 700; font-size: 1.05rem; border-top: 1px solid #F1F5F9; padding-top: 15px;">💉 Step 3: Health & Vaccination Checklist</h4>
+        <p style="font-size: 0.85rem; color: var(--text-light); margin-bottom: 12px;">
+          Tick checkmarks next to all vaccinations this child has received, and provide the date administered.
+        </p>
+        <div style="margin-bottom: 20px; border: 1px solid #E2E8F0; border-radius: 8px; padding: 15px; background: #F8FAFC; max-height: 200px; overflow-y: auto;">
+          <div *ngFor="let vac of selectedVaccines; let idx = index" style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; border-bottom: 1px solid #E2E8F0; padding-bottom: 8px; flex-wrap: wrap; gap: 10px;">
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <input type="checkbox" [(ngModel)]="vac.administered" name="vac_chk_{{idx}}" style="width: 18px; height: 18px; cursor: pointer;" />
+              <span style="font-weight: 600; font-size: 0.9rem; color: #334155;">{{ vac.name }}</span>
+            </div>
+            <div *ngIf="vac.administered" style="display: flex; align-items: center; gap: 5px;">
+              <span style="font-size: 0.8rem; color: #475569; font-weight: 600;">Date:</span>
+              <input type="date" [(ngModel)]="vac.date" name="vac_date_{{idx}}" required style="border: 1px solid #CBD5E1; border-radius: 4px; padding: 4px 8px; font-size: 0.85rem;" />
+            </div>
+          </div>
+          <div *ngIf="selectedVaccines.length === 0" style="color: var(--text-light); text-align: center; padding: 20px; font-style: italic; font-size: 0.9rem;">
+            No vaccinations required for this class selection.
+          </div>
+        </div>
+
+        <!-- Submission Feedback -->
+        <div *ngIf="admissionsError" style="background-color: #FEE2E2; color: #EF4444; border: 1px solid #FCA5A5; border-radius: 6px; padding: 10px 15px; margin-bottom: 15px; font-size: 0.9rem; font-weight: 600;">
+          ⚠️ {{ admissionsError }}
+        </div>
+
+        <div style="display: flex; justify-content: flex-end; gap: 10px; border-top: 1px solid #F1F5F9; padding-top: 15px;">
+          <button type="button" (click)="closeAdmissionsModal()" class="btn btn-outline btn-sm">❌ Cancel</button>
+          <button type="submit" class="btn btn-secondary btn-sm" style="background-color: var(--secondary); border: none;">🏫 Submit Admission Application</button>
+        </div>
+      </form>
+    </div>
   </div>
 </div>
 

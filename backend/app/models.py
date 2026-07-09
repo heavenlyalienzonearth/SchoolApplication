@@ -59,6 +59,8 @@ class Program(Base):
     duration = Column(String(100), nullable=True)
     description = Column(Text, nullable=True)
     highlights_json = Column(Text, nullable=True)  # JSON list of features / benefits
+    weekly_plan_json = Column(Text, nullable=True)  # JSON-encoded weekly schedule (study, physical, games)
+    uniform_items_json = Column(Text, nullable=True)  # JSON-encoded list of configurable supplies
     image_url = Column(String(500), nullable=True)
     is_active = Column(Boolean, default=True, nullable=False)
     sort_order = Column(Integer, default=0, nullable=False)
@@ -176,3 +178,86 @@ class FranchiseInquiry(Base):
     message = Column(Text, nullable=True)
     status = Column(String(50), default="NEW", nullable=False)  # NEW, IN_PROGRESS, RESOLVED
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+
+class Student(Base):
+    __tablename__ = "students"
+
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String(255), nullable=False)
+    parent_name = Column(String(255), nullable=False)
+    phone = Column(String(100), nullable=False)
+    program_id = Column(Integer, ForeignKey("programs.id", ondelete="CASCADE"), nullable=False)
+    allergies = Column(String(255), nullable=True) # e.g. "Dairy, Eggs, Peanuts"
+    photo_url = Column(String(255), nullable=True)
+    issued_items_json = Column(Text, nullable=True)
+    blood_group = Column(String(50), nullable=True)
+    emergency_phone = Column(String(100), nullable=True)
+    date_of_birth = Column(String(50), nullable=True)
+    is_active = Column(Boolean, default=True, nullable=False)
+    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+
+    program = relationship("Program")
+
+class Attendance(Base):
+    __tablename__ = "attendance"
+
+    id = Column(Integer, primary_key=True, index=True)
+    student_id = Column(Integer, ForeignKey("students.id", ondelete="CASCADE"), nullable=False)
+    date = Column(String(50), nullable=False)  # YYYY-MM-DD
+    status = Column(String(50), nullable=False)  # PRESENT, ABSENT, LATE
+    notes = Column(String(255), nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+
+    student = relationship("Student")
+
+class Vaccination(Base):
+    __tablename__ = "vaccinations"
+
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String(255), nullable=False)
+    age_group = Column(String(255), nullable=False)
+
+class Admission(Base):
+    __tablename__ = "admissions"
+
+    id = Column(Integer, primary_key=True, index=True)
+    child_name = Column(String(255), nullable=False)
+    parent_name = Column(String(255), nullable=False)
+    email = Column(String(255), nullable=False)
+    phone = Column(String(100), nullable=False)
+    date_of_birth = Column(String(100), nullable=False)
+    program_id = Column(Integer, ForeignKey("programs.id", ondelete="CASCADE"), nullable=False)
+    allergies = Column(String(255), nullable=True)
+    photo_url = Column(String(255), nullable=True)
+    issued_items_json = Column(Text, nullable=True)
+    blood_group = Column(String(50), nullable=True)
+    emergency_phone = Column(String(100), nullable=True)
+    status = Column(String(50), default="NEW", nullable=False)
+    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+
+    program = relationship("Program")
+
+class AdmissionVaccination(Base):
+    __tablename__ = "admission_vaccinations"
+
+    id = Column(Integer, primary_key=True, index=True)
+    admission_id = Column(Integer, ForeignKey("admissions.id", ondelete="CASCADE"), nullable=False)
+    vaccination_id = Column(Integer, ForeignKey("vaccinations.id", ondelete="CASCADE"), nullable=False)
+    administered_date = Column(String(100), nullable=False)
+
+    admission = relationship("Admission", back_populates="vaccinations")
+    vaccination = relationship("Vaccination")
+
+Admission.vaccinations = relationship("AdmissionVaccination", back_populates="admission", cascade="all, delete-orphan")
+
+class Holiday(Base):
+    __tablename__ = "holidays"
+
+    id = Column(Integer, primary_key=True, index=True)
+    title = Column(String(255), nullable=False)
+    description = Column(Text, nullable=True)
+    holiday_date = Column(String(50), nullable=False)  # YYYY-MM-DD
+    year = Column(Integer, nullable=False, index=True)
+    is_active = Column(Boolean, default=True, nullable=False)
+    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+

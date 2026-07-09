@@ -41,6 +41,7 @@ export class HomeComponent implements OnInit, OnDestroy {
 
   programsSection: any = {};
   programs: any[] = [];
+  activeScheduleProgramId: number | null = null;
 
   gallerySection: any = {};
   galleryItems: any[] = [];
@@ -73,6 +74,21 @@ export class HomeComponent implements OnInit, OnDestroy {
   formError = '';
   settings: any = {};
 
+  // Admissions Form State
+  admissionsModalOpen = false;
+  admissionForm = { child_name: '', parent_name: '', email: '', phone: '', date_of_birth: '', program_id: 0, allergies: '', photo_url: '', blood_group: '', emergency_phone: '' };
+  allVaccinations: any[] = [];
+  selectedVaccines: { vaccination_id: number, name: string, administered: boolean, date: string }[] = [];
+  selectedUniforms: { name: string, selected: boolean }[] = [];
+  uploadingPhoto = false;
+  admissionsSuccess = false;
+  admissionsError = '';
+
+  // Holidays State
+  holidaysList: any[] = [];
+  selectedHolidayYear = new Date().getFullYear();
+  holidayYears = [2025, 2026, 2027, 2028];
+
   constructor(private contentService: ContentService) {}
 
   ngOnInit(): void {
@@ -82,9 +98,15 @@ export class HomeComponent implements OnInit, OnDestroy {
     this.loadGallery();
     this.loadTestimonials();
     this.loadEvents();
+    this.loadHolidays();
     this.loadBlogs();
     this.startHeroTimer();
     this.startGalleryTimer();
+    this.contentService.getVaccinations().subscribe({
+      next: (data) => {
+        this.allVaccinations = data;
+      }
+    });
   }
 
   loadSettings(): void {
@@ -160,11 +182,39 @@ export class HomeComponent implements OnInit, OnDestroy {
           } else {
             p.highlights = [];
           }
+
+          if (p.weekly_plan_json) {
+            try {
+              p.weeklyPlan = JSON.parse(p.weekly_plan_json);
+            } catch (e) {
+              p.weeklyPlan = [];
+            }
+          } else {
+            p.weeklyPlan = [];
+          }
           return p;
         });
       },
       error: () => {}
     });
+  }
+
+  toggleWeeklyPlan(programId: number): void {
+    if (this.activeScheduleProgramId === programId) {
+      this.activeScheduleProgramId = null;
+    } else {
+      this.activeScheduleProgramId = programId;
+    }
+  }
+
+  getProgramTitleById(id: number): string {
+    const prog = this.programs.find(p => p.id === id);
+    return prog ? prog.title : '';
+  }
+
+  getProgramWeeklyPlanById(id: number): any[] {
+    const prog = this.programs.find(p => p.id === id);
+    return prog ? (prog.weeklyPlan || []) : [];
   }
 
   loadGallery(): void {
@@ -340,5 +390,167 @@ export class HomeComponent implements OnInit, OnDestroy {
         this.formSubmitted = false;
       }
     });
+  }
+
+  // --- ADMISSIONS ACTIONS ---
+  openAdmissionsModal(): void {
+    this.admissionsModalOpen = true;
+    this.admissionsSuccess = false;
+    this.admissionsError = '';
+    this.uploadingPhoto = false;
+    this.admissionForm = {
+      child_name: '',
+      parent_name: '',
+      email: '',
+      phone: '',
+      date_of_birth: '',
+      program_id: this.programs.length > 0 ? this.programs[0].id : 0,
+      allergies: '',
+      photo_url: '',
+      blood_group: '',
+      emergency_phone: ''
+    };
+    if (this.admissionForm.program_id) {
+      this.onAdmissionProgramChange(this.admissionForm.program_id);
+    }
+  }
+
+  closeAdmissionsModal(): void {
+    this.admissionsModalOpen = false;
+  }
+
+  onPhotoSelected(event: any): void {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    this.uploadingPhoto = true;
+    const formData = new FormData();
+    formData.append('file', file);
+
+    this.contentService.uploadChildPhoto(formData).subscribe({
+      next: (res) => {
+        this.admissionForm.photo_url = res.photo_url;
+        this.uploadingPhoto = false;
+      },
+      error: (err) => {
+        this.admissionsError = 'Photo upload failed: ' + (err.error?.detail || err.message);
+        this.uploadingPhoto = false;
+      }
+    });
+  }
+
+  onAdmissionProgramChange(programId: any): void {
+    const progId = Number(programId);
+    this.admissionForm.program_id = progId;
+    const prog = this.programs.find(p => p.id === progId);
+    if (!prog) return;
+
+    // Filter vaccinations that match the selected program's title or age group
+    const groupTitle = prog.title;
+    this.selectedVaccines = this.allVaccinations
+      .filter(v => v.age_group.toLowerCase().includes(groupTitle.toLowerCase()) || groupTitle.toLowerCase().includes(v.age_group.toLowerCase()))
+      .map(v => ({
+        vaccination_id: v.id,
+        name: v.name,
+        administered: false,
+        date: ''
+      }));
+
+    // Configure uniform items list
+    const uniformList = prog.uniform_items_json ? JSON.parse(prog.uniform_items_json) : [];
+    this.selectedUniforms = uniformList.map((item: string) => ({
+      name: item,
+      selected: true
+    }));
+  }
+
+  submitAdmission(): void {
+    this.admissionsError = '';
+    this.admissionsSuccess = false;
+
+    const f = this.admissionForm;
+    if (!f.child_name || !f.parent_name || !f.email || !f.phone || !f.date_of_birth || !f.program_id) {
+      this.admissionsError = 'Please fill out all required general fields.';
+      return;
+    }
+
+    // Map vaccinations checklist
+    const vList = this.selectedVaccines
+      .filter(v => v.administered)
+      .map(v => {
+        if (!v.date) {
+          v.date = new Date().toISOString().split('T')[0];
+        }
+        return {
+          vaccination_id: v.vaccination_id,
+          administered_date: v.date
+        };
+      });
+
+    // Map selected uniform items list
+    const selectedItems = this.selectedUniforms
+      .filter(u => u.selected)
+      .map(u => u.name);
+
+    const payload = {
+      child_name: f.child_name,
+      parent_name: f.parent_name,
+      email: f.email,
+      phone: f.phone,
+      date_of_birth: f.date_of_birth,
+      program_id: f.program_id,
+      allergies: f.allergies || null,
+      photo_url: f.photo_url || null,
+      issued_items_json: JSON.stringify(selectedItems),
+      blood_group: f.blood_group || null,
+      emergency_phone: f.emergency_phone || null,
+      vaccinations: vList
+    };
+
+    this.contentService.submitAdmission(payload).subscribe({
+      next: () => {
+        this.admissionsSuccess = true;
+        setTimeout(() => {
+          this.closeAdmissionsModal();
+        }, 3000);
+      },
+      error: (err) => {
+        this.admissionsError = err.error?.detail || 'Failed to submit admissions application. Please try again.';
+      }
+    });
+  }
+
+  loadHolidays(): void {
+    this.contentService.getHolidays(this.selectedHolidayYear).subscribe({
+      next: (data) => {
+        this.holidaysList = data;
+      },
+      error: () => {}
+    });
+  }
+
+  setHolidayYear(year: number): void {
+    this.selectedHolidayYear = year;
+    this.loadHolidays();
+  }
+
+  formatHolidayDate(dateStr: string): string {
+    if (!dateStr) return '';
+    const parts = dateStr.split('-');
+    if (parts.length !== 3) return dateStr;
+    
+    const year = parts[0];
+    const monthIndex = parseInt(parts[1], 10) - 1;
+    const day = parseInt(parts[2], 10);
+    
+    const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    const month = monthNames[monthIndex] || 'Jan';
+    
+    let suffix = 'th';
+    if (day === 1 || day === 21 || day === 31) suffix = 'st';
+    else if (day === 2 || day === 22) suffix = 'nd';
+    else if (day === 3 || day === 23) suffix = 'rd';
+    
+    return `${day}${suffix} ${month} ${year}`;
   }
 }

@@ -36,6 +36,15 @@
         <li [class.active]="activeTab === 'inquiries'" (click)="setTab('inquiries')">
           <span class="icon">📩</span> Form Inquiries
         </li>
+        <li [class.active]="activeTab === 'attendance'" (click)="setTab('attendance')">
+          <span class="icon">📅</span> Kid Attendance
+        </li>
+        <li [class.active]="activeTab === 'admissions'" (click)="setTab('admissions')">
+          <span class="icon">🏫</span> Student Admissions
+        </li>
+        <li [class.active]="activeTab === 'holidays'" (click)="setTab('holidays')">
+          <span class="icon">📅</span> School Holidays
+        </li>
       </ul>
     </aside>
 
@@ -52,6 +61,9 @@
           <option value="testimonials">💬 Parent Reviews</option>
           <option value="gallery">📷 Gallery Items</option>
           <option value="inquiries">📩 Form Inquiries</option>
+          <option value="attendance">📅 Kid Attendance</option>
+          <option value="admissions">🏫 Student Admissions</option>
+          <option value="holidays">📅 School Holidays</option>
         </select>
       </div>
       
@@ -226,6 +238,10 @@
           <div class="form-group">
             <label class="form-label">Working Hours</label>
             <input type="text" [(ngModel)]="settings.opening_hours" name="opening_hours" class="form-control" />
+          </div>
+          <div class="form-group">
+            <label class="form-label">Govt. of Karnataka Registration / Approval Details</label>
+            <input type="text" [(ngModel)]="settings.karnataka_govt_reg_no" name="karnataka_govt_reg_no" class="form-control" placeholder="e.g. Reg No: ED 45 ACT 2023 (Approved by Govt. of Karnataka)" />
           </div>
 
           <hr class="form-divider" />
@@ -589,6 +605,525 @@
           </table>
         </div>
       </section>
+
+      <!-- KID ATTENDANCE TAB -->
+      <section *ngIf="activeTab === 'attendance'" class="tab-section">
+        <div class="section-title-bar">
+          <h2>Kid Attendance Manager</h2>
+          <div class="inquiry-selector">
+            <button [class.active]="attendanceActiveSubTab === 'mark'" (click)="setAttendanceSubTab('mark')">📅 Mark Attendance</button>
+            <button [class.active]="attendanceActiveSubTab === 'roster'" (click)="setAttendanceSubTab('roster')">👦 Class Roster</button>
+            <button [class.active]="attendanceActiveSubTab === 'stats'" (click)="setAttendanceSubTab('stats')">📊 Roster Stats</button>
+          </div>
+        </div>
+
+        <!-- SUB-TAB 1: MARK ATTENDANCE -->
+        <div *ngIf="attendanceActiveSubTab === 'mark'">
+          <div class="card p-20 mb-20" style="background-color: var(--white); border-radius: var(--border-radius-sm); border: 1px solid #E2E8F0;">
+            <div class="form-grid" style="grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
+              <div class="form-group">
+                <label class="form-label" style="font-weight: 700;">Select Class:</label>
+                <select [ngModel]="attendanceProgramId" (ngModelChange)="onAttendanceClassChange($event)" class="form-control">
+                  <option *ngFor="let prog of programs" [value]="prog.id">{{ prog.title }}</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label class="form-label" style="font-weight: 700;">Select Date:</label>
+                <input type="date" [(ngModel)]="attendanceDate" (change)="loadStudentsForAttendance()" class="form-control" />
+              </div>
+            </div>
+          </div>
+
+          <div class="table-card card">
+            <table class="dash-table">
+              <thead>
+                <tr>
+                  <th style="width: 25%;">Student Name</th>
+                  <th style="width: 25%;">Parent Name</th>
+                  <th style="width: 35%;">Status Select</th>
+                  <th style="width: 15%;">Notes</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let kid of attendanceStudents">
+                  <td class="font-bold">
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                      <img *ngIf="kid.photo_url" [src]="'http://localhost:8000' + kid.photo_url" style="width: 35px; height: 35px; border-radius: 50%; object-fit: cover; border: 1.5px solid var(--primary);" alt="Student Photo" />
+                      <div *ngIf="!kid.photo_url" style="width: 35px; height: 35px; border-radius: 50%; background-color: #E2E8F0; display: flex; align-items: center; justify-content: center; font-size: 1rem; color: #94A3B8;">👦</div>
+                      <div>
+                        <div>{{ kid.name }}</div>
+                        <div *ngIf="kid.allergies" style="margin-top: 2px;" [title]="'Allergies: ' + kid.allergies">
+                          <span style="background-color: #FEE2E2; color: #EF4444; border: 1px solid #FCA5A5; border-radius: 4px; padding: 1px 4px; font-size: 0.7rem; font-weight: 700; display: inline-block;">
+                            ⚠️ Allergy: {{ kid.allergies }}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  </td>
+                  <td>{{ kid.parent_name }}</td>
+                  <td>
+                    <div style="display: flex; gap: 8px;">
+                      <button type="button" (click)="markKidStatus(kid.id, 'PRESENT')" 
+                              class="btn btn-sm btn-outline" 
+                              [style.background-color]="kid.status === 'PRESENT' ? '#10B981' : ''"
+                              [style.color]="kid.status === 'PRESENT' ? 'white' : ''"
+                              [style.border-color]="kid.status === 'PRESENT' ? '#10B981' : ''"
+                              style="border-radius: 20px; padding: 4px 12px; font-weight: 700;">
+                        Present
+                      </button>
+                      <button type="button" (click)="markKidStatus(kid.id, 'ABSENT')" 
+                              class="btn btn-sm btn-outline" 
+                              [style.background-color]="kid.status === 'ABSENT' ? '#EF4444' : ''"
+                              [style.color]="kid.status === 'ABSENT' ? 'white' : ''"
+                              [style.border-color]="kid.status === 'ABSENT' ? '#EF4444' : ''"
+                              style="border-radius: 20px; padding: 4px 12px; font-weight: 700;">
+                        Absent
+                      </button>
+                      <button type="button" (click)="markKidStatus(kid.id, 'LATE')" 
+                              class="btn btn-sm btn-outline" 
+                              [style.background-color]="kid.status === 'LATE' ? '#F59E0B' : ''"
+                              [style.color]="kid.status === 'LATE' ? 'white' : ''"
+                              [style.border-color]="kid.status === 'LATE' ? '#F59E0B' : ''"
+                              style="border-radius: 20px; padding: 4px 12px; font-weight: 700;">
+                        Late
+                      </button>
+                    </div>
+                  </td>
+                  <td>
+                    <input type="text" [(ngModel)]="kid.notes" class="form-control" style="padding: 4px 8px; font-size: 0.9rem;" placeholder="Add note..." />
+                  </td>
+                </tr>
+                <tr *ngIf="attendanceStudents.length === 0">
+                  <td colspan="4" style="text-align: center; color: var(--text-light); padding: 30px;">
+                    No kids found in this class roster. Go to "Class Roster" to add students!
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div *ngIf="attendanceStudents.length > 0" style="display: flex; justify-content: flex-end; margin-top: 20px;">
+            <button (click)="saveAttendance()" class="btn btn-primary btn-sm">💾 Save Daily Attendance</button>
+          </div>
+        </div>
+
+        <!-- SUB-TAB 2: CLASS ROSTER -->
+        <div *ngIf="attendanceActiveSubTab === 'roster'">
+          <div class="card p-20 mb-20" style="background-color: var(--white); border-radius: var(--border-radius-sm); border: 1px solid #E2E8F0;">
+            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px; margin-bottom: 20px;">
+              <div>
+                <label class="form-label" style="font-weight: 700;">Filter Class Roster:</label>
+                <select [ngModel]="rosterProgramId" (ngModelChange)="onRosterClassChange($event)" class="form-control" style="min-width: 200px;">
+                  <option *ngFor="let prog of programs" [value]="prog.id">{{ prog.title }}</option>
+                </select>
+              </div>
+            </div>
+
+            <!-- Add Kid Form -->
+            <form (ngSubmit)="addStudent()" style="border-top: 1px solid #E2E8F0; padding-top: 20px; margin-top: 10px;">
+              <h4 style="margin-bottom: 12px; color: var(--primary);">➕ Register New Student in Class:</h4>
+              <div class="form-grid" style="grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px;">
+                <div class="form-group">
+                  <label class="form-label">Kid Name</label>
+                  <input type="text" [(ngModel)]="newStudent.name" name="new_k_name" class="form-control" placeholder="Kid name" required />
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Parent Name</label>
+                  <input type="text" [(ngModel)]="newStudent.parent_name" name="new_k_parent" class="form-control" placeholder="Parent name" required />
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Parent Phone</label>
+                  <input type="text" [(ngModel)]="newStudent.phone" name="new_k_phone" class="form-control" placeholder="Phone number" required />
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Allergies (Optional)</label>
+                  <input type="text" [(ngModel)]="newStudent.allergies" name="new_k_allergies" class="form-control" placeholder="e.g. Peanuts, Milk" />
+                </div>
+                <div class="form-group" style="display: flex; align-items: flex-end;">
+                  <button type="submit" class="btn btn-primary btn-sm" style="width: 100%; height: 38px;">➕ Add Kid</button>
+                </div>
+              </div>
+            </form>
+          </div>
+
+          <div class="table-card card">
+            <table class="dash-table">
+              <thead>
+                <tr>
+                  <th style="width: 30%;">Kid Name</th>
+                  <th style="width: 25%;">Parent Name</th>
+                  <th style="width: 25%;">Phone Contact</th>
+                  <th style="width: 20%;">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let kid of rosterStudents">
+                  <td class="font-bold">
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                      <img *ngIf="kid.photo_url" [src]="'http://localhost:8000' + kid.photo_url" style="width: 38px; height: 38px; border-radius: 50%; object-fit: cover; border: 1.5px solid var(--primary);" alt="Student Photo" />
+                      <div *ngIf="!kid.photo_url" style="width: 38px; height: 38px; border-radius: 50%; background-color: #E2E8F0; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; color: #94A3B8;">👦</div>
+                      <div>
+                        <div>{{ kid.name }}</div>
+                        <div *ngIf="kid.allergies" style="margin-top: 2px;">
+                          <span style="background-color: #FEE2E2; color: #EF4444; border: 1px solid #FCA5A5; border-radius: 4px; padding: 1px 4px; font-size: 0.7rem; font-weight: 700; display: inline-block;">
+                            ⚠️ Allergy: {{ kid.allergies }}
+                          </span>
+                        </div>
+                        <div *ngIf="kid.issued_items_json && parseItemsJson(kid.issued_items_json).length > 0" style="margin-top: 4px; display: flex; flex-wrap: wrap; gap: 2px;">
+                          <span *ngFor="let item of parseItemsJson(kid.issued_items_json)" style="background-color: #E0F2FE; color: #0369A1; font-size: 0.65rem; border-radius: 3px; padding: 1px 4px; display: inline-block;">
+                            {{ item }}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  </td>
+                  <td>{{ kid.parent_name }}</td>
+                  <td>{{ kid.phone }}</td>
+                  <td>
+                    <div style="display: flex; gap: 6px; flex-wrap: wrap;">
+                      <button (click)="openPromoModal(kid)" class="btn btn-sm" style="background-color: var(--primary); color: white; border: none; border-radius: 6px; font-weight: 600; padding: 4px 8px; font-size: 0.8rem;">
+                        📜 Promotion Cert
+                      </button>
+                      <button (click)="openTcModal(kid)" class="btn btn-sm" style="background-color: var(--secondary); color: white; border: none; border-radius: 6px; font-weight: 600; padding: 4px 8px; font-size: 0.8rem;">
+                        📄 Print TC
+                      </button>
+                      <button (click)="deleteStudent(kid.id)" class="btn btn-sm btn-outline" style="border-color: #EF4444; color: #EF4444; border-radius: 6px; padding: 4px 8px; font-size: 0.8rem;">
+                        🗑️ Remove
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+                <tr *ngIf="rosterStudents.length === 0">
+                  <td colspan="4" style="text-align: center; color: var(--text-light); padding: 30px;">
+                    No kids registered. Use the form above to add students to this class!
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- SUB-TAB 3: ROSTER STATS -->
+        <div *ngIf="attendanceActiveSubTab === 'stats'">
+          <div class="card p-20 mb-20" style="background-color: var(--white); border-radius: var(--border-radius-sm); border: 1px solid #E2E8F0;">
+            <label class="form-label" style="font-weight: 700;">Select Class Roster Statistics:</label>
+            <select [ngModel]="attendanceProgramId" (ngModelChange)="onAttendanceClassChange($event)" class="form-control" style="max-width: 250px;">
+              <option *ngFor="let prog of programs" [value]="prog.id">{{ prog.title }}</option>
+            </select>
+          </div>
+
+          <div class="table-card card">
+            <table class="dash-table">
+              <thead>
+                <tr>
+                  <th style="width: 25%;">Student Name</th>
+                  <th style="width: 20%;">Attendance Rate</th>
+                  <th style="width: 55%;">Term Days Breakdown (Present / Late / Absent)</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let stat of attendanceStats">
+                  <td class="font-bold">{{ stat.student_name }}</td>
+                  <td>
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                      <span class="font-bold" [style.color]="stat.presence_rate >= 85 ? '#10B981' : stat.presence_rate >= 70 ? '#F59E0B' : '#EF4444'">
+                        {{ stat.presence_rate }}%
+                      </span>
+                    </div>
+                  </td>
+                  <td>
+                    <div style="display: flex; align-items: center; gap: 15px; width: 100%;">
+                      <div style="flex: 1; height: 10px; background-color: #E2E8F0; border-radius: 5px; overflow: hidden; display: flex; min-width: 150px;">
+                        <div [style.width.%]="stat.total_days > 0 ? (stat.present_days / stat.total_days * 100) : 0" style="background-color: #10B981; height: 100%;"></div>
+                        <div [style.width.%]="stat.total_days > 0 ? (stat.late_days / stat.total_days * 100) : 0" style="background-color: #F59E0B; height: 100%;"></div>
+                        <div [style.width.%]="stat.total_days > 0 ? (stat.absent_days / stat.total_days * 100) : 0" style="background-color: #EF4444; height: 100%;"></div>
+                      </div>
+                      <span class="text-small text-light" style="font-weight: 600;">
+                        ✔️ {{ stat.present_days }} Pres | 🟡 {{ stat.late_days }} Late | ❌ {{ stat.absent_days }} Abs (Out of {{ stat.total_days }} days)
+                      </span>
+                    </div>
+                  </td>
+                </tr>
+                <tr *ngIf="attendanceStats.length === 0">
+                  <td colspan="3" style="text-align: center; color: var(--text-light); padding: 30px;">
+                    No statistics compiled. Mark attendance records first to generate rates!
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- STUDENT ADMISSIONS TAB -->
+      <section *ngIf="activeTab === 'admissions'" class="tab-section">
+        <div class="section-title-bar">
+          <h2>Student Admissions Management</h2>
+        </div>
+
+        <!-- Excel Vaccination Upload Card -->
+        <div class="card p-20 mb-20" style="background-color: var(--white); border-radius: var(--border-radius-sm); border: 1px solid #E2E8F0;">
+          <h3 style="margin-bottom: 8px; color: var(--primary); font-size: 1.2rem;">📤 Import Vaccination List via Excel / CSV</h3>
+          <p style="font-size: 0.9rem; color: var(--text-light); margin-bottom: 15px;">
+            Upload an Excel sheet (.xlsx) or CSV containing age-group specific vaccinations. The sheet should contain two columns: <strong>Name</strong> (e.g. MMR) and <strong>Age Group</strong> (e.g. Preschool Engineers (Junior Coders)).
+          </p>
+          <div style="display: flex; gap: 15px; align-items: center; flex-wrap: wrap;">
+            <input type="file" id="vaccineFileInput" (change)="onFileSelected($event)" accept=".xlsx, .csv" class="form-control" style="max-width: 300px; padding: 6px;" />
+            <button type="button" (click)="uploadVaccinations()" class="btn btn-primary btn-sm">📤 Upload Vaccination List</button>
+            <a href="http://localhost:8000/static/sample_vaccinations.xlsx" download class="btn btn-outline btn-sm" style="border-color: var(--secondary); color: var(--secondary); text-decoration: none; border-radius: 8px; font-weight: 700; height: 38px; display: inline-flex; align-items: center; padding: 0 16px; font-size: 0.85rem;">
+              📥 Download Sample Excel Template
+            </a>
+          </div>
+        </div>
+
+        <!-- Applications Table -->
+        <div class="table-card card">
+          <div style="padding: 15px 20px; border-bottom: 1px solid #F1F5F9;">
+            <h3 style="font-size: 1.1rem; color: var(--text-dark);">Submitted Admission Applications</h3>
+          </div>
+          <table class="dash-table">
+            <thead>
+              <tr>
+                <th style="width: 25%;">Child Details</th>
+                <th style="width: 20%;">Parent Contacts</th>
+                <th style="width: 15%;">Food Allergies</th>
+                <th style="width: 25%;">Vaccinations & Uniforms</th>
+                <th style="width: 15%;">Status & Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let app of admissions">
+                <td>
+                  <div style="display: flex; align-items: center; gap: 12px;">
+                    <img *ngIf="app.photo_url" [src]="'http://localhost:8000' + app.photo_url" style="width: 50px; height: 50px; border-radius: 50%; object-fit: cover; border: 2px solid var(--primary);" alt="Child Photo" />
+                    <div *ngIf="!app.photo_url" style="width: 50px; height: 50px; border-radius: 50%; background-color: #E2E8F0; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; color: #94A3B8;">👦</div>
+                    <div>
+                      <div class="font-bold" style="font-size: 1rem; color: var(--primary);">{{ app.child_name }}</div>
+                      <div style="font-size: 0.85rem; color: var(--text-light); margin-top: 2px;">
+                        📅 DOB: {{ app.date_of_birth }}
+                      </div>
+                      <div style="margin-top: 4px;">
+                        <span class="badge badge-accent" style="font-size: 0.7rem; padding: 2px 6px;">{{ getProgramTitleById(app.program_id) }}</span>
+                      </div>
+                    </div>
+                  </div>
+                </td>
+                <td>
+                  <div class="font-bold">{{ app.parent_name }}</div>
+                  <div style="font-size: 0.85rem; color: var(--text-light); margin-top: 4px;">✉️ {{ app.email }}</div>
+                  <div style="font-size: 0.85rem; color: var(--text-light);">📞 {{ app.phone }}</div>
+                </td>
+                <td>
+                  <div *ngIf="app.allergies">
+                    <span style="background-color: #FEE2E2; color: #EF4444; border: 1px solid #FCA5A5; border-radius: 4px; padding: 2px 6px; font-size: 0.8rem; font-weight: 700; display: inline-block;">
+                      ⚠️ {{ app.allergies }}
+                    </span>
+                  </div>
+                  <div *ngIf="!app.allergies" style="color: var(--text-light); font-style: italic; font-size: 0.85rem;">
+                    None noted
+                  </div>
+                </td>
+                <td>
+                  <!-- Vaccinations -->
+                  <div *ngIf="app.vaccinations && app.vaccinations.length > 0" style="margin-bottom: 8px;">
+                    <div style="font-weight: 700; font-size: 0.75rem; text-transform: uppercase; color: #64748B; margin-bottom: 4px;">💉 Vaccinations:</div>
+                    <ul style="padding-left: 15px; margin: 0; font-size: 0.85rem;">
+                      <li *ngFor="let v of app.vaccinations" style="margin-bottom: 2px;">
+                        <strong>{{ v.vaccination.name }}</strong> ({{ v.administered_date }})
+                      </li>
+                    </ul>
+                  </div>
+                  
+                  <!-- Uniforms -->
+                  <div *ngIf="app.issued_items_json && parseItemsJson(app.issued_items_json).length > 0">
+                    <div style="font-weight: 700; font-size: 0.75rem; text-transform: uppercase; color: #64748B; margin-bottom: 4px;">👕 Kit / Uniform Issued:</div>
+                    <div style="display: flex; flex-wrap: wrap; gap: 4px;">
+                      <span *ngFor="let item of parseItemsJson(app.issued_items_json)" class="badge" style="background-color: #E0F2FE; color: #0369A1; font-size: 0.75rem; border-radius: 4px; padding: 2px 6px;">
+                        {{ item }}
+                      </span>
+                    </div>
+                  </div>
+                </td>
+                <td>
+                  <div style="display: flex; flex-direction: column; gap: 8px; align-items: flex-start;">
+                    <!-- Status Badge -->
+                    <span class="badge" 
+                          [class.badge-primary]="app.status === 'NEW'" 
+                          [class.badge-secondary]="app.status === 'APPROVED'" 
+                          [style.background-color]="app.status === 'REJECTED' ? '#EF4444' : ''"
+                          [style.color]="app.status === 'REJECTED' ? 'white' : ''"
+                          style="font-weight: 700; padding: 4px 10px; border-radius: 20px;">
+                      {{ app.status }}
+                    </span>
+                    <!-- Action Buttons -->
+                    <div *ngIf="app.status === 'NEW'" style="display: flex; gap: 5px;">
+                      <button (click)="updateAdmissionStatus(app.id, 'APPROVED')" class="btn btn-sm" style="background-color: #10B981; color: white; border: none; padding: 4px 8px; border-radius: 4px; cursor: pointer; font-weight: 600;">
+                        Approve
+                      </button>
+                      <button (click)="updateAdmissionStatus(app.id, 'REJECTED')" class="btn btn-sm btn-outline" style="border-color: #EF4444; color: #EF4444; padding: 4px 8px; border-radius: 4px; cursor: pointer; font-weight: 600;">
+                        Reject
+                      </button>
+                    </div>
+                    
+                    <button *ngIf="app.status === 'APPROVED'" (click)="openBadgeModal(app)" class="btn btn-sm btn-outline" style="border-color: var(--secondary); color: var(--secondary); padding: 4px 8px; border-radius: 4px; cursor: pointer; font-weight: 600; font-size: 0.8rem;">
+                      📇 View ID Badge
+                    </button>
+                  </div>
+                </td>
+              </tr>
+              <tr *ngIf="admissions.length === 0">
+                <td colspan="5" style="text-align: center; color: var(--text-light); padding: 30px;">
+                  No student admission applications found.
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- Holidays Tab -->
+      <section *ngIf="activeTab === 'holidays'" class="tab-section animate-fade-in">
+        <div class="tab-header" style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #E2E8F0; padding-bottom: 15px; margin-bottom: 20px;">
+          <div>
+            <h2 style="margin: 0; color: var(--primary);">📅 School Holidays Management</h2>
+            <p style="margin: 3px 0 0 0; color: var(--text-light); font-size: 0.9rem;">Publish, configure, and manage holidays on a year-on-year basis.</p>
+          </div>
+          <div style="display: flex; align-items: center; gap: 10px;">
+            <label style="font-weight: 700; color: #475569; font-size: 0.9rem;">Select Year:</label>
+            <select [(ngModel)]="selectedHolidayYear" (change)="loadHolidays()" class="form-control" style="width: 120px; background-color: white; border: 1px solid #CBD5E1; border-radius: 6px; padding: 6px 12px; font-weight: 600;">
+              <option *ngFor="let y of holidayYears" [value]="y">{{ y }}</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="holidays-grid">
+          <!-- Add / Edit Holiday Form Card -->
+          <div class="card" style="background: white; border-radius: 12px; border: 1px solid #E2E8F0; padding: 25px; box-shadow: 0 4px 6px rgba(0,0,0,0.02);">
+            <h3 style="margin-top: 0; color: var(--primary); margin-bottom: 20px; font-size: 1.15rem; font-weight: 700; border-bottom: 1px solid #F1F5F9; padding-bottom: 10px;">
+              {{ editingHolidayId ? '✏️ Edit Holiday Details' : '➕ Add New Holiday' }}
+            </h3>
+            
+            <form (ngSubmit)="saveHoliday()">
+              <div class="form-group" style="margin-bottom: 15px;">
+                <label class="form-label" style="display: block; font-weight: 600; font-size: 0.85rem; color: #475569; margin-bottom: 6px;">Holiday Title *</label>
+                <input type="text" [(ngModel)]="newHoliday.title" name="h_title" required class="form-control" style="width: 100%; border: 1px solid #CBD5E1; border-radius: 6px; padding: 8px 12px;" placeholder="e.g. Ugadi Festival" />
+              </div>
+
+              <div class="form-group" style="margin-bottom: 15px;">
+                <label class="form-label" style="display: block; font-weight: 600; font-size: 0.85rem; color: #475569; margin-bottom: 6px;">Holiday Date *</label>
+                <input type="date" [(ngModel)]="newHoliday.holiday_date" name="h_date" required class="form-control" style="width: 100%; border: 1px solid #CBD5E1; border-radius: 6px; padding: 8px 12px;" />
+              </div>
+
+              <div class="form-group" style="margin-bottom: 15px;">
+                <label class="form-label" style="display: block; font-weight: 600; font-size: 0.85rem; color: #475569; margin-bottom: 6px;">Description / Details</label>
+                <textarea [(ngModel)]="newHoliday.description" name="h_desc" class="form-control" style="width: 100%; border: 1px solid #CBD5E1; border-radius: 6px; padding: 8px 12px; min-height: 80px;" placeholder="Details about this holiday..."></textarea>
+              </div>
+
+              <div class="form-group" style="margin-bottom: 15px; display: flex; gap: 20px;">
+                <div style="display: flex; align-items: center; gap: 8px;">
+                  <input type="checkbox" [(ngModel)]="newHoliday.is_active" name="h_active" id="h_active" style="width: 16px; height: 16px; cursor: pointer;" />
+                  <label for="h_active" style="font-weight: 600; font-size: 0.85rem; color: #475569; cursor: pointer; user-select: none;">Published & Active</label>
+                </div>
+                <div style="display: flex; align-items: center; gap: 8px;">
+                  <input type="checkbox" [(ngModel)]="newHoliday.send_email" name="h_send_email" id="h_send_email" style="width: 16px; height: 16px; cursor: pointer;" />
+                  <label for="h_send_email" style="font-weight: 600; font-size: 0.85rem; color: #475569; cursor: pointer; user-select: none;">📧 Bulk Email Parents</label>
+                </div>
+              </div>
+
+              <div style="display: flex; gap: 10px;">
+                <button type="submit" class="btn btn-primary" style="flex: 1; padding: 10px; font-weight: 700; border-radius: 6px; border: none; background-color: var(--primary); color: white;">
+                  {{ editingHolidayId ? '💾 Update Holiday' : '💾 Save Holiday' }}
+                </button>
+                <button *ngIf="editingHolidayId" type="button" (click)="resetHolidayForm()" class="btn btn-outline" style="border: 1px solid #CBD5E1; color: #64748B; padding: 10px; font-weight: 600; border-radius: 6px; background: white;">
+                  Cancel
+                </button>
+              </div>
+            </form>
+          </div>
+
+          <!-- Unscheduled / Custom Holiday Bulk Mailer Card -->
+          <div class="card" style="background: white; border-radius: 12px; border: 1px solid #E2E8F0; padding: 25px; box-shadow: 0 4px 6px rgba(0,0,0,0.02); margin-top: 20px;">
+            <h3 style="margin-top: 0; color: var(--primary); margin-bottom: 20px; font-size: 1.15rem; font-weight: 700; border-bottom: 1px solid #F1F5F9; padding-bottom: 10px;">
+              📢 Custom Holiday Bulk Mailer
+            </h3>
+            <p style="font-size: 0.82rem; color: var(--text-light); margin-bottom: 15px; line-height: 1.4;">
+              Send an immediate, beautifully styled HTML holiday announcement to all registered parent contacts.
+            </p>
+            
+            <form (ngSubmit)="sendBulkHolidayEmail()">
+              <div class="form-group" style="margin-bottom: 12px;">
+                <label class="form-label" style="display: block; font-weight: 600; font-size: 0.85rem; color: #475569; margin-bottom: 6px;">Reason for Holiday *</label>
+                <input type="text" [(ngModel)]="customHolidayEmail.reason" name="c_reason" required class="form-control" style="width: 100%; border: 1px solid #CBD5E1; border-radius: 6px; padding: 8px 12px;" placeholder="e.g. Extreme weather red alert" />
+              </div>
+
+              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px;">
+                <div class="form-group">
+                  <label class="form-label" style="display: block; font-weight: 600; font-size: 0.85rem; color: #475569; margin-bottom: 6px;">From Date *</label>
+                  <input type="date" [(ngModel)]="customHolidayEmail.start_date" name="c_start" required class="form-control" style="width: 100%; border: 1px solid #CBD5E1; border-radius: 6px; padding: 8px 12px;" />
+                </div>
+                <div class="form-group">
+                  <label class="form-label" style="display: block; font-weight: 600; font-size: 0.85rem; color: #475569; margin-bottom: 6px;">To Date *</label>
+                  <input type="date" [(ngModel)]="customHolidayEmail.end_date" name="c_end" required class="form-control" style="width: 100%; border: 1px solid #CBD5E1; border-radius: 6px; padding: 8px 12px;" />
+                </div>
+              </div>
+
+              <div class="form-group" style="margin-bottom: 20px;">
+                <label class="form-label" style="display: block; font-weight: 600; font-size: 0.85rem; color: #475569; margin-bottom: 6px;">School Reopening Date *</label>
+                <input type="date" [(ngModel)]="customHolidayEmail.reopen_date" name="c_reopen" required class="form-control" style="width: 100%; border: 1px solid #CBD5E1; border-radius: 6px; padding: 8px 12px;" />
+              </div>
+
+              <button type="submit" [disabled]="sendingBulkEmail" class="btn" style="width: 100%; padding: 10px; font-weight: 700; border-radius: 6px; border: none; background-color: var(--secondary); color: white; cursor: pointer;">
+                {{ sendingBulkEmail ? '⏳ Dispatching Emails...' : '📧 Send Bulk Holiday Email' }}
+              </button>
+            </form>
+          </div>
+        </div>
+
+        <!-- Holidays Table Card -->
+        <div class="card" style="background: white; border-radius: 12px; border: 1px solid #E2E8F0; padding: 25px; box-shadow: 0 4px 6px rgba(0,0,0,0.02); min-height: 400px; width: 100%;">
+            <h3 style="margin-top: 0; color: var(--primary); margin-bottom: 20px; font-size: 1.15rem; font-weight: 700; border-bottom: 1px solid #F1F5F9; padding-bottom: 10px;">
+              Holidays List for {{ selectedHolidayYear }}
+            </h3>
+
+            <div class="table-responsive">
+              <table class="table" style="width: 100%; border-collapse: collapse; text-align: left;">
+                <thead>
+                  <tr style="border-bottom: 2px solid #CBD5E1; color: #475569; font-weight: 700; font-size: 0.9rem;">
+                    <th style="padding: 10px; width: 25%;">Date</th>
+                    <th style="padding: 10px; width: 30%;">Holiday Title</th>
+                    <th style="padding: 10px; width: 30%;">Description</th>
+                    <th style="padding: 10px; width: 15%;">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr *ngFor="let h of holidaysList" style="border-bottom: 1px solid #E2E8F0;">
+                    <td style="padding: 12px 10px; font-weight: 700; color: #1E293B;">
+                      📅 {{ formatHolidayDate(h.holiday_date) }}
+                    </td>
+                    <td style="padding: 12px 10px;">
+                      <div style="font-weight: 700; color: var(--primary);">{{ h.title }}</div>
+                      <span *ngIf="!h.is_active" class="badge" style="background-color: #F3F4F6; color: #9CA3AF; font-size: 0.7rem; border-radius: 4px; padding: 2px 4px;">Draft</span>
+                    </td>
+                    <td style="padding: 12px 10px; color: #475569; font-size: 0.85rem;">
+                      {{ h.description || '--' }}
+                    </td>
+                    <td>
+                      <div class="actions-cell">
+                        <button (click)="editHoliday(h)" class="btn-table edit">✏️ Edit</button>
+                        <button (click)="deleteHolidayFromRoster(h.id)" class="btn-table delete">🗑️ Delete</button>
+                      </div>
+                    </td>
+                  </tr>
+                  <tr *ngIf="holidaysList.length === 0">
+                    <td colspan="4" style="text-align: center; color: var(--text-light); padding: 40px; font-style: italic;">
+                      No holidays scheduled for year {{ selectedHolidayYear }}.
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+      </section>
     </main>
   </div>
 </div>
@@ -632,6 +1167,11 @@
         <input type="text" [(ngModel)]="selectedProgram.image_url" name="prog_img" class="form-control" />
       </div>
 
+      <div class="form-group">
+        <label class="form-label">Available Uniform & Supplies (Comma-separated)</label>
+        <input type="text" [(ngModel)]="selectedProgram.uniform_items" name="prog_uniform" class="form-control" placeholder="Books, School Blazer, School Shorts, Pants, Kangaroo Shoes, Girls Dress, School Tie" />
+      </div>
+
       <div class="form-grid-3">
         <div class="form-group">
           <label class="form-label">Sort Order</label>
@@ -650,6 +1190,40 @@
           <button type="button" class="btn-remove" (click)="removeHighlight(j)">❌ Remove</button>
         </div>
         <button type="button" (click)="addHighlight()" class="btn btn-outline btn-sm mt-10">➕ Add Point</button>
+      </div>
+
+      <div class="weekly-plan-section mt-20" style="border-top: 1px solid #E2E8F0; padding-top: 20px;">
+        <h4 style="margin-bottom: 15px; color: var(--primary); font-size: 1.15rem; font-weight: 700;">📅 Weekly Study, Physical & Games Plan:</h4>
+        <div style="overflow-x: auto; border: 1px solid #E2E8F0; border-radius: 8px;">
+          <table style="width: 100%; border-collapse: collapse; min-width: 850px;">
+            <thead>
+              <tr style="border-bottom: 2px solid #E2E8F0; background-color: #F8FAFC; text-align: left;">
+                <th style="padding: 12px; font-weight: 700; color: var(--primary); width: 120px; font-size: 0.95rem;">Day</th>
+                <th style="padding: 12px; font-weight: 700; color: var(--primary); font-size: 0.95rem;">🧠 Study / Mindset</th>
+                <th style="padding: 12px; font-weight: 700; color: var(--primary); font-size: 0.95rem;">🏃 Physical Activity</th>
+                <th style="padding: 12px; font-weight: 700; color: var(--primary); font-size: 0.95rem;">🤖 Games & Robotics</th>
+                <th style="padding: 12px; font-weight: 700; color: var(--primary); font-size: 0.95rem;">🥞 Breakfast Menu</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let item of selectedProgram.weeklyPlan; let idx = index" style="border-bottom: 1px solid #E2E8F0;">
+                <td style="padding: 15px 12px; font-weight: 700; color: var(--primary); font-size: 1rem; background-color: #F8FAFC;">{{ item.day }}</td>
+                <td style="padding: 10px;">
+                  <textarea [(ngModel)]="item.study" name="study_{{idx}}" class="form-control" style="padding: 8px 12px; font-size: 0.95rem; min-height: 60px; border-radius: 6px; width: 100%; border: 1px solid #CBD5E1; resize: vertical; line-height: 1.4;" placeholder="Study theme"></textarea>
+                </td>
+                <td style="padding: 10px;">
+                  <textarea [(ngModel)]="item.physical" name="physical_{{idx}}" class="form-control" style="padding: 8px 12px; font-size: 0.95rem; min-height: 60px; border-radius: 6px; width: 100%; border: 1px solid #CBD5E1; resize: vertical; line-height: 1.4;" placeholder="Physical exercise"></textarea>
+                </td>
+                <td style="padding: 10px;">
+                  <textarea [(ngModel)]="item.games" name="games_{{idx}}" class="form-control" style="padding: 8px 12px; font-size: 0.95rem; min-height: 60px; border-radius: 6px; width: 100%; border: 1px solid #CBD5E1; resize: vertical; line-height: 1.4;" placeholder="Robo games & logic"></textarea>
+                </td>
+                <td style="padding: 10px; background-color: rgba(255, 142, 99, 0.02);">
+                  <textarea [(ngModel)]="item.breakfast" name="breakfast_{{idx}}" class="form-control" style="padding: 8px 12px; font-size: 0.95rem; min-height: 60px; border-radius: 6px; width: 100%; border: 1px solid #CBD5E1; font-weight: 600; color: var(--secondary); resize: vertical; line-height: 1.4;" placeholder="🥞 Breakfast item"></textarea>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
       </div>
 
       <div class="modal-footer mt-20">
@@ -841,6 +1415,319 @@
       <button *ngIf="selectedInquiry?.status === 'NEW'" (click)="resolveFromModal()" class="btn btn-primary btn-sm">✓ Resolve</button>
       <button (click)="closeInquiryModal()" class="btn btn-outline btn-sm ml-10">❌ Cancel</button>
     </div>
+  </div>
+</div>
+
+<!-- ID BADGE MODAL PREVIEW -->
+<div class="modal" *ngIf="badgeModalOpen" (click)="closeBadgeModal()" style="display: flex; align-items: center; justify-content: center; z-index: 1050; background: rgba(0,0,0,0.5); position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;">
+  <div class="modal-content animate-fade-in" style="max-width: 720px; border-radius: 16px; padding: 25px; text-align: center; background: #F1F5F9; box-shadow: 0 20px 40px rgba(0,0,0,0.3);" (click)="$event.stopPropagation()">
+    
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 1px solid #E2E8F0; padding-bottom: 10px;">
+      <h3 style="margin: 0; color: var(--primary); font-size: 1.25rem;">📇 Student ID Badge Preview (Front & Back)</h3>
+      <button (click)="closeBadgeModal()" style="border: none; background: none; font-size: 1.5rem; cursor: pointer; color: #64748B;">×</button>
+    </div>
+
+    <!-- Flex Row Cards Wrapper -->
+    <div style="display: flex; gap: 20px; justify-content: center; flex-wrap: wrap; margin-bottom: 25px;">
+      
+      <!-- FRONT CARD -->
+      <div id="studentIdCard" style="width: 290px; min-height: 460px; height: auto; background: white; border-radius: 12px; box-shadow: 0 10px 20px rgba(0,0,0,0.15); border: 1px solid #CBD5E1; overflow: hidden; display: flex; flex-direction: column; position: relative;">
+        <!-- Card Header -->
+        <div style="background: linear-gradient(135deg, var(--primary) 0%, #1E293B 100%); color: white; padding: 15px 10px; text-align: center; border-bottom: 3px solid var(--secondary);">
+          <div style="font-weight: 800; font-size: 0.95rem; letter-spacing: 1px; text-transform: uppercase;">Kangaroo Kids</div>
+          <div style="font-size: 0.65rem; font-weight: 600; opacity: 0.9; margin-top: 2px;">School of Future Engineers</div>
+        </div>
+
+        <!-- Card Body -->
+        <div style="flex: 1; display: flex; flex-direction: column; align-items: center; padding: 20px 15px; text-align: center;">
+          <!-- Profile Photo -->
+          <div style="width: 100px; height: 100px; border-radius: 50%; border: 3px solid var(--secondary); overflow: hidden; margin-bottom: 15px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); background-color: #F8FAFC; display: flex; align-items: center; justify-content: center;">
+            <img *ngIf="badgeApp?.photo_url" [src]="'http://localhost:8000' + badgeApp.photo_url" style="width: 100%; height: 100%; object-fit: cover;" alt="Child Photo" />
+            <div *ngIf="!badgeApp?.photo_url" style="font-size: 3rem; color: #94A3B8;">👦</div>
+          </div>
+
+          <!-- Student Name -->
+          <h2 style="font-size: 1.25rem; font-weight: 800; color: var(--primary); margin: 0 0 5px 0; text-transform: capitalize;">
+            {{ badgeApp?.child_name }}
+          </h2>
+          <!-- Class Badge -->
+          <span style="background-color: rgba(255, 142, 99, 0.15); color: var(--secondary); border: 1px solid var(--secondary); border-radius: 4px; padding: 2px 8px; font-size: 0.75rem; font-weight: 700; margin-bottom: 18px; text-transform: uppercase;">
+            {{ getProgramTitleById(badgeApp?.program_id) }} - {{ currentDateString.substring(0, 4) }}
+          </span>
+
+          <!-- ID Information Grid -->
+          <div style="width: 100%; text-align: left; font-size: 0.8rem; border-top: 1px dashed #CBD5E1; padding-top: 15px; display: grid; grid-template-columns: 1fr; gap: 8px;">
+            <div style="display: flex; justify-content: space-between;">
+              <span style="font-weight: 700; color: #64748B;">BLOOD GROUP:</span>
+              <span style="font-weight: 800; color: #EF4444;">{{ badgeApp?.blood_group || 'Not Specified' }}</span>
+            </div>
+            <div style="display: flex; justify-content: space-between;">
+              <span style="font-weight: 700; color: #64748B;">EMERGENCY:</span>
+              <span style="font-weight: 800; color: #0284C7;">{{ badgeApp?.emergency_phone || badgeApp?.phone }}</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Card Footer -->
+        <link href="https://fonts.googleapis.com/css2?family=Libre+Barcode+39&display=swap" rel="stylesheet">
+        <div style="background-color: #FFFFFF; border-top: 1px solid #E2E8F0; padding: 15px 10px; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 80px;">
+          <span style="font-family: 'Libre Barcode 39', cursive; font-size: 4.2rem; line-height: 1.2; color: #000000; display: block; height: 50px; overflow: visible;">*KK-{{ badgeApp?.id }}-ID*</span>
+        </div>
+      </div>
+
+      <!-- BACK CARD -->
+      <div id="studentIdCardBack" style="width: 290px; min-height: 460px; height: auto; background: white; border-radius: 12px; box-shadow: 0 10px 20px rgba(0,0,0,0.15); border: 1px solid #CBD5E1; overflow: hidden; display: flex; flex-direction: column; position: relative; text-align: center;">
+        <!-- Card Header -->
+        <div style="background: linear-gradient(135deg, var(--primary) 0%, #1E293B 100%); color: white; padding: 15px 10px; text-align: center; border-bottom: 3px solid var(--secondary);">
+          <div style="font-weight: 800; font-size: 0.95rem; letter-spacing: 1px; text-transform: uppercase;">Kangaroo Kids</div>
+          <div style="font-size: 0.65rem; font-weight: 600; opacity: 0.9; margin-top: 2px;">School ID Badge - Back</div>
+        </div>
+
+        <!-- Card Body -->
+        <div style="flex: 1; padding: 25px 20px; display: flex; flex-direction: column; justify-content: space-between; text-align: left;">
+          <div>
+            <h4 style="color: var(--primary); font-size: 0.85rem; font-weight: 700; text-transform: uppercase; margin: 0 0 10px 0; border-bottom: 1px dashed #CBD5E1; padding-bottom: 6px; letter-spacing: 0.5px;">Terms of Use</h4>
+            <p style="font-size: 0.72rem; color: #475569; line-height: 1.5; text-align: justify; margin: 0;">
+              This card remains the property of Kangaroo Kids School. It must be returned upon graduation, transfer, or withdrawal. 
+            </p>
+            <p style="font-size: 0.72rem; color: #475569; line-height: 1.5; text-align: justify; margin: 8px 0 0 0;">
+              If found, please hand it to the school office or mail it back to the official school address listed below.
+            </p>
+          </div>
+
+          <div style="margin-top: 25px; border-top: 1px dashed #CBD5E1; padding-top: 20px; font-size: 0.78rem; display: flex; flex-direction: column; gap: 8px;">
+            <h4 style="color: var(--primary); font-size: 0.82rem; font-weight: 700; text-transform: uppercase; margin: 0 0 4px 0;">Official School Address</h4>
+            
+            <div style="display: flex; gap: 8px; align-items: flex-start;">
+              <span style="font-size: 0.9rem; line-height: 1;">📍</span>
+              <span style="color: #334155; line-height: 1.3; font-weight: 600;">
+                {{ settings?.address || '123 Learning Lane, Creative Valley, Tech Land' }}
+              </span>
+            </div>
+
+            <div style="display: flex; gap: 8px; align-items: center;">
+              <span style="font-size: 0.9rem; line-height: 1;">📞</span>
+              <span style="color: #334155; font-weight: 600;">
+                {{ settings?.contact_phone || '+1 555 123 4567' }}
+              </span>
+            </div>
+
+            <div style="display: flex; gap: 8px; align-items: center;">
+              <span style="font-size: 0.9rem; line-height: 1;">✉️</span>
+              <span style="color: #334155; font-weight: 600; font-size: 0.75rem;">
+                {{ settings?.contact_email || 'contact@kangarookids.com' }}
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Card Footer -->
+        <div style="background-color: #F8FAFC; border-top: 1px solid #E2E8F0; padding: 10px; font-weight: 700; color: var(--primary); font-size: 0.75rem; letter-spacing: 0.5px;">
+          ★ SHAPING FUTURE INNOVATORS ★
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Action Button -->
+    <div style="display: flex; justify-content: center; gap: 10px;">
+      <button type="button" (click)="closeBadgeModal()" class="btn btn-outline btn-sm">❌ Close</button>
+      <button type="button" (click)="sendBadgeToPrinter()" class="btn btn-primary btn-sm" [disabled]="emailSending" style="background-color: var(--secondary); border: none; font-weight: 700;">
+        {{ emailSending ? '⚡ Sending Request...' : '📧 Send to ID Printer' }}
+      </button>
+    </div>
+
+  </div>
+</div>
+
+<!-- PROMOTION CERTIFICATE MODAL -->
+<div class="modal" *ngIf="promoModalOpen" (click)="closePromoModal()" style="display: flex; align-items: center; justify-content: center; z-index: 1050; background: rgba(0,0,0,0.5); position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; overflow-y: auto;">
+  <div class="modal-content animate-fade-in" style="max-width: 780px; border-radius: 12px; padding: 20px; background: #f8fafc;" (click)="$event.stopPropagation()">
+    
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; border-bottom: 1px solid #cbd5e1; padding-bottom: 10px;">
+      <h3 style="margin: 0; color: var(--primary); font-size: 1.25rem;">📜 Promotion Certificate Preview</h3>
+      <button (click)="closePromoModal()" style="border: none; background: none; font-size: 1.5rem; cursor: pointer; color: #64748B;">×</button>
+    </div>
+
+    <!-- Printable Certificate Area -->
+    <div id="promoCertificatePrint" style="background: white; border: 15px double var(--primary); padding: 40px; text-align: center; position: relative; font-family: 'Cinzel', serif; box-shadow: 0 4px 6px rgba(0,0,0,0.05); color: #1e293b;">
+      <!-- Corner decorations -->
+      <div style="position: absolute; top: 10px; left: 10px; font-size: 1.5rem; color: var(--secondary);">❖</div>
+      <div style="position: absolute; top: 10px; right: 10px; font-size: 1.5rem; color: var(--secondary);">❖</div>
+      <div style="position: absolute; bottom: 10px; left: 10px; font-size: 1.5rem; color: var(--secondary);">❖</div>
+      <div style="position: absolute; bottom: 10px; right: 10px; font-size: 1.5rem; color: var(--secondary);">❖</div>
+
+      <!-- Govt header -->
+      <div style="margin-bottom: 25px; text-align: center; border-bottom: 2px solid #cbd5e1; padding-bottom: 15px;">
+        <h4 style="margin: 0; font-family: 'Inter', sans-serif; font-size: 0.85rem; color: #64748b; font-weight: 700; text-transform: uppercase; letter-spacing: 2px;">Department of School Education & Literacy</h4>
+        <h3 style="margin: 3px 0; font-family: 'Inter', sans-serif; font-size: 1.05rem; color: #334155; font-weight: 800; letter-spacing: 1px;">GOVERNMENT OF KARNATAKA</h3>
+        <p style="margin: 0; font-family: 'Inter', sans-serif; font-size: 0.72rem; color: #EF4444; font-weight: 700; letter-spacing: 0.5px;">
+          {{ settings?.karnataka_govt_reg_no || 'Reg No: ED 45 ACT 2023 (Approved by Govt. of Karnataka)' }}
+        </p>
+      </div>
+
+      <!-- School logo/header -->
+      <div style="margin-bottom: 25px;">
+        <h1 style="font-size: 2.2rem; font-weight: 800; color: var(--primary); margin: 0; font-family: 'Cinzel', serif; letter-spacing: 2px;">KANGAROO KIDS</h1>
+        <p style="margin: 2px 0 0 0; font-family: 'Playfair Display', serif; font-style: italic; font-size: 0.95rem; color: var(--secondary);">School of Future Innovators & Engineers</p>
+      </div>
+
+      <h2 style="font-size: 1.8rem; font-weight: 700; color: #0f172a; font-family: 'Cinzel', serif; margin: 30px 0 20px 0; letter-spacing: 3px; border-bottom: 1px solid #e2e8f0; display: inline-block; padding-bottom: 5px;">CERTIFICATE OF PROMOTION</h2>
+
+      <!-- Certificate Content -->
+      <div style="font-family: 'Playfair Display', serif; font-size: 1.05rem; line-height: 1.8; color: #334155; max-width: 600px; margin: 0 auto 40px auto; text-align: center;">
+        This is to certify that <br />
+        <span style="font-family: 'Inter', sans-serif; font-size: 1.4rem; font-weight: 800; color: var(--primary); text-transform: capitalize; border-bottom: 1px solid #64748b; padding: 2px 20px; display: inline-block; margin: 10px 0;">
+          {{ promoKid?.name }}
+        </span> <br />
+        son/daughter of <span style="font-weight: 700; text-transform: capitalize;">{{ promoKid?.parent_name }}</span>, <br />
+        has successfully completed the course of study for the academic year and is promoted from <br />
+        <strong style="color: #0f172a; text-transform: uppercase;">{{ getProgramTitleById(promoKid?.program_id) }}</strong> to the next higher grade.
+      </div>
+
+      <!-- Signatures footer -->
+      <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-top: 60px; font-family: 'Inter', sans-serif; font-size: 0.85rem; color: #475569;">
+        <div style="text-align: center; width: 150px;">
+          <div style="border-bottom: 1px solid #cbd5e1; height: 35px; width: 100%;"></div>
+          <span style="font-weight: 600; display: block; margin-top: 5px;">Date of Issue</span>
+        </div>
+        
+        <!-- Seal symbol -->
+        <div style="width: 80px; height: 80px; border-radius: 50%; border: 3px double var(--secondary); display: flex; align-items: center; justify-content: center; font-size: 0.65rem; color: var(--secondary); font-weight: 800; text-transform: uppercase; line-height: 1.2;">
+          Official<br />Seal
+        </div>
+
+        <div style="text-align: center; width: 150px;">
+          <div style="border-bottom: 1px solid #cbd5e1; height: 35px; width: 100%; font-family: 'Playfair Display', serif; font-style: italic; font-size: 1rem; color: var(--primary); line-height: 35px; font-weight: 700;">Principal</div>
+          <span style="font-weight: 600; display: block; margin-top: 5px;">Principal Signature</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal footer actions -->
+    <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px;">
+      <button type="button" (click)="closePromoModal()" class="btn btn-outline btn-sm">❌ Close</button>
+      <button type="button" (click)="printCertificate('promoCertificatePrint')" class="btn btn-primary btn-sm" style="background-color: var(--primary); border: none; font-weight: 700;">
+        🖨️ Print Certificate
+      </button>
+    </div>
+
+  </div>
+</div>
+
+<!-- TRANSFER CERTIFICATE MODAL -->
+<div class="modal" *ngIf="tcModalOpen" (click)="closeTcModal()" style="display: flex; align-items: center; justify-content: center; z-index: 1050; background: rgba(0,0,0,0.5); position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; overflow-y: auto;">
+  <div class="modal-content animate-fade-in" style="max-width: 780px; border-radius: 12px; padding: 20px; background: #f8fafc;" (click)="$event.stopPropagation()">
+    
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; border-bottom: 1px solid #cbd5e1; padding-bottom: 10px;">
+      <h3 style="margin: 0; color: var(--primary); font-size: 1.25rem;">📄 Transfer Certificate Preview</h3>
+      <button (click)="closeTcModal()" style="border: none; background: none; font-size: 1.5rem; cursor: pointer; color: #64748B;">×</button>
+    </div>
+
+    <!-- Printable TC Area -->
+    <div id="tcCertificatePrint" style="background: white; border: 4px solid var(--primary); padding: 35px; font-family: 'Inter', sans-serif; box-shadow: 0 4px 6px rgba(0,0,0,0.05); color: #1e293b; font-size: 0.85rem;">
+      
+      <!-- Karnataka Govt Approval details -->
+      <div style="text-align: center; border-bottom: 2px solid #000; padding-bottom: 15px; margin-bottom: 20px;">
+        <h4 style="margin: 0; font-size: 0.8rem; color: #64748b; font-weight: 700; text-transform: uppercase; letter-spacing: 1px;">Department of School Education & Literacy</h4>
+        <h3 style="margin: 3px 0; font-size: 1rem; color: #1e293b; font-weight: 800;">GOVERNMENT OF KARNATAKA</h3>
+        <p style="margin: 2px 0 0 0; font-size: 0.72rem; color: #EF4444; font-weight: 700; letter-spacing: 0.5px;">
+          {{ settings?.karnataka_govt_reg_no || 'Reg No: ED 45 ACT 2023 (Approved by Govt. of Karnataka)' }}
+        </p>
+      </div>
+
+      <!-- School Details -->
+      <div style="text-align: center; margin-bottom: 25px;">
+        <h2 style="font-family: 'Cinzel', serif; font-size: 1.8rem; font-weight: 800; color: var(--primary); margin: 0;">KANGAROO KIDS SCHOOL</h2>
+        <p style="margin: 3px 0; font-size: 0.78rem; color: #475569; font-weight: 600;">
+          {{ settings?.address || '123 Learning Lane, Creative Valley, Tech Land' }}
+        </p>
+        <p style="margin: 2px 0 0 0; font-size: 0.78rem; color: #475569; font-weight: 600;">
+          Phone: {{ settings?.contact_phone }} | Email: {{ settings?.contact_email }}
+        </p>
+      </div>
+
+      <h3 style="text-align: center; font-size: 1.3rem; font-weight: 800; color: #0f172a; text-transform: uppercase; text-decoration: underline; margin-bottom: 25px; letter-spacing: 2px;">
+        TRANSFER CERTIFICATE (T.C.)
+      </h3>
+
+      <!-- TC Tabular Grid -->
+      <div style="display: grid; grid-template-columns: 1fr; gap: 15px; max-width: 660px; margin: 0 auto 35px auto; border-top: 1px solid #e2e8f0; padding-top: 15px;">
+        
+        <div style="display: grid; grid-template-columns: 240px 1fr; border-bottom: 1px solid #f1f5f9; padding-bottom: 8px;">
+          <span style="font-weight: 700; color: #475569;">1. Admission / TC Registration No:</span>
+          <span style="font-weight: 700; color: #1e293b;">KK-TC-{{ tcKid?.id }}</span>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 240px 1fr; border-bottom: 1px solid #f1f5f9; padding-bottom: 8px;">
+          <span style="font-weight: 700; color: #475569;">2. Name of the Pupil (in block letters):</span>
+          <span style="font-weight: 800; color: #1e293b; text-transform: uppercase;">{{ tcKid?.name }}</span>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 240px 1fr; border-bottom: 1px solid #f1f5f9; padding-bottom: 8px;">
+          <span style="font-weight: 700; color: #475569;">3. Parent or Guardian Name:</span>
+          <span style="font-weight: 700; color: #1e293b; text-transform: capitalize;">{{ tcKid?.parent_name }}</span>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 240px 1fr; border-bottom: 1px solid #f1f5f9; padding-bottom: 8px;">
+          <span style="font-weight: 700; color: #475569;">4. Contact Phone No:</span>
+          <span style="font-weight: 700; color: #1e293b;">{{ tcKid?.phone }}</span>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 240px 1fr; border-bottom: 1px solid #f1f5f9; padding-bottom: 8px;">
+          <span style="font-weight: 700; color: #475569;">5. Date of Birth (as per records):</span>
+          <span style="font-weight: 700; color: #1e293b;">{{ tcKid?.date_of_birth || 'Not Specified' }}</span>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 240px 1fr; border-bottom: 1px solid #f1f5f9; padding-bottom: 8px;">
+          <span style="font-weight: 700; color: #475569;">6. Class in which the pupil was studying:</span>
+          <span style="font-weight: 700; color: #1e293b; text-transform: uppercase;">{{ getProgramTitleById(tcKid?.program_id) }}</span>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 240px 1fr; border-bottom: 1px solid #f1f5f9; padding-bottom: 8px;">
+          <span style="font-weight: 700; color: #475569;">7. Blood Group of the student:</span>
+          <span style="font-weight: 800; color: #EF4444;">{{ tcKid?.blood_group || 'Not Specified' }}</span>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 240px 1fr; border-bottom: 1px solid #f1f5f9; padding-bottom: 8px;">
+          <span style="font-weight: 700; color: #475569;">8. Date of leaving the school:</span>
+          <span style="font-weight: 700; color: #1e293b;">{{ currentDateString }}</span>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 240px 1fr; border-bottom: 1px solid #f1f5f9; padding-bottom: 8px;">
+          <span style="font-weight: 700; color: #475569;">9. Reason for leaving the school:</span>
+          <span style="font-weight: 700; color: #1e293b; font-style: italic;">Program / Course Completed</span>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 240px 1fr; border-bottom: 1px solid #cbd5e1; padding-bottom: 8px;">
+          <span style="font-weight: 700; color: #475569;">10. General Conduct & Character:</span>
+          <span style="font-weight: 700; color: #16A34A;">Excellent / Good</span>
+        </div>
+
+      </div>
+
+      <!-- Signature section -->
+      <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-top: 50px; font-weight: 600; font-size: 0.85rem; color: #475569; padding: 0 15px;">
+        <div style="text-align: center; width: 180px;">
+          <div style="border-bottom: 1px solid #cbd5e1; height: 35px; width: 100%;"></div>
+          <span style="display: block; margin-top: 5px;">Clerk Signature</span>
+        </div>
+        
+        <div style="text-align: center; width: 180px;">
+          <div style="border-bottom: 1px solid #cbd5e1; height: 35px; width: 100%;"></div>
+          <span style="display: block; margin-top: 5px;">Principal (with seal)</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal footer actions -->
+    <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px;">
+      <button type="button" (click)="closeTcModal()" class="btn btn-outline btn-sm">❌ Close</button>
+      <button type="button" (click)="printCertificate('tcCertificatePrint')" class="btn btn-primary btn-sm" style="background-color: var(--secondary); border: none; color: white; font-weight: 700;">
+        🖨️ Print Transfer Certificate
+      </button>
+    </div>
+
   </div>
 </div>
 

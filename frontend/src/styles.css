@@ -5,14 +5,14 @@
   --font-body: 'Nunito', sans-serif;
 
   /* Theme variables matching the DB configurations */
-  --primary: #EE5A24;
-  --primary-rgb: 238, 90, 36;
-  --secondary: #FFD23F;
-  --secondary-rgb: 255, 210, 63;
-  --accent: #0652DD;
-  --accent-rgb: 6, 82, 221;
-  --bg-cream: #FFFDF9;
-  --text-dark: #2C3A47;
+  --primary: #4B73FF;
+  --primary-rgb: 75, 115, 255;
+  --secondary: #FF8E63;
+  --secondary-rgb: 255, 142, 99;
+  --accent: #FF7EB0;
+  --accent-rgb: 255, 126, 176;
+  --bg-cream: #FCFBF8;
+  --text-dark: #1C1C1C;
   --text-light: #57606F;
   --card-bg: #FFFFFF;
   --white: #FFFFFF;
@@ -22,7 +22,7 @@
   --border-radius-lg: 32px;
   --transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
   --box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
-  --box-shadow-hover: 0 20px 40px rgba(238, 90, 36, 0.15);
+  --box-shadow-hover: 0 20px 40px rgba(75, 115, 255, 0.15);
 }
 
 * {
