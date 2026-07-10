@@ -45,6 +45,12 @@
         <li [class.active]="activeTab === 'holidays'" (click)="setTab('holidays')">
           <span class="icon">📅</span> School Holidays
         </li>
+        <li [class.active]="activeTab === 'users'" (click)="setTab('users')" *ngIf="currentUser?.role?.toUpperCase() === 'ADMIN'">
+          <span class="icon">👥</span> User Management
+        </li>
+        <li [class.active]="activeTab === 'stationary'" (click)="setTab('stationary')">
+          <span class="icon">✏️</span> Stationery Center
+        </li>
       </ul>
     </aside>
 
@@ -64,6 +70,8 @@
           <option value="attendance">📅 Kid Attendance</option>
           <option value="admissions">🏫 Student Admissions</option>
           <option value="holidays">📅 School Holidays</option>
+          <option value="users" *ngIf="currentUser?.role?.toUpperCase() === 'ADMIN'">👥 User Management</option>
+          <option value="stationary">✏️ Stationery Center</option>
         </select>
       </div>
       
@@ -277,6 +285,82 @@
             💾 {{ settingsLoading ? 'Saving Settings...' : 'Save Settings' }}
           </button>
         </form>
+
+        <!-- 2FA Settings Card -->
+        <div class="card" style="background: white; border-radius: 12px; border: 1px solid #E2E8F0; padding: 25px; box-shadow: 0 4px 6px rgba(0,0,0,0.02); margin-top: 30px;">
+          <h3 style="margin-top: 0; color: var(--primary); margin-bottom: 20px; font-size: 1.15rem; font-weight: 700; border-bottom: 1px solid #F1F5F9; padding-bottom: 10px;">
+            🔒 Two-Factor Authentication (2FA) Security
+          </h3>
+
+          <div class="alert alert-success" *ngIf="tfaSuccess" style="margin-bottom: 20px; background-color: #ECFDF5; color: #065F46; border: 1px solid #A7F3D0; padding: 12px; border-radius: 6px; font-weight: 600; font-size: 0.9rem;">
+            🎉 {{ tfaSuccess }}
+          </div>
+          <div class="alert alert-danger" *ngIf="tfaError" style="margin-bottom: 20px; background-color: #FEE2E2; color: #991B1B; border: 1px solid #FCA5A5; padding: 12px; border-radius: 6px; font-weight: 600; font-size: 0.9rem;">
+            ⚠️ {{ tfaError }}
+          </div>
+
+          <!-- Enabled State -->
+          <div *ngIf="currentUser?.two_factor_enabled" style="margin-top: 10px;">
+            <div style="display: inline-flex; align-items: center; gap: 8px; background-color: #ECFDF5; color: #065F46; font-weight: 700; padding: 6px 12px; border-radius: 9999px; font-size: 0.85rem; margin-bottom: 20px;">
+              🛡️ Google Authenticator (2FA) is Active & Enabled
+            </div>
+            
+            <form (ngSubmit)="disable2FA()" style="max-width: 400px; border: 1px solid #F1F5F9; padding: 20px; border-radius: 8px; background-color: #FAFAFA;">
+              <h4 style="margin-top: 0; margin-bottom: 15px; color: var(--primary); font-size: 1rem; font-weight: 700;">Disable 2FA</h4>
+              <div class="form-group" style="margin-bottom: 15px;">
+                <label class="form-label" style="display: block; font-weight: 600; font-size: 0.85rem; color: #475569; margin-bottom: 6px;">Verification Code from Authenticator App *</label>
+                <input type="text" [(ngModel)]="tfaDisableCode" name="tfa_disable_code" required class="form-control" placeholder="123456" maxlength="6" autocomplete="off" style="width: 100%; border: 1px solid #CBD5E1; border-radius: 6px; padding: 8px 12px; font-weight: bold; letter-spacing: 2px;" />
+              </div>
+              <button type="submit" class="btn" style="background-color: #EF4444; color: white; border: none; padding: 10px 15px; border-radius: 6px; cursor: pointer; font-weight: 700;" [disabled]="tfaLoading">
+                Disable 2FA
+              </button>
+            </form>
+          </div>
+
+          <!-- Disabled State -->
+          <div *ngIf="!currentUser?.two_factor_enabled">
+            <div style="display: inline-flex; align-items: center; gap: 8px; background-color: #F3F4F6; color: #4B5563; font-weight: 700; padding: 6px 12px; border-radius: 9999px; font-size: 0.85rem; margin-bottom: 20px;">
+              🔓 Two-Factor Authentication is currently Disabled
+            </div>
+
+            <!-- Trigger Button -->
+            <div *ngIf="!tfaSetupData" style="margin-top: 5px;">
+              <button type="button" (click)="init2FASetup()" class="btn btn-primary" [disabled]="tfaLoading" style="font-weight: 700; padding: 10px 20px; border-radius: 6px;">
+                Setup Google Authenticator
+              </button>
+            </div>
+
+            <!-- Setup Form -->
+            <div *ngIf="tfaSetupData" style="border: 1px solid #E2E8F0; padding: 25px; border-radius: 8px; background-color: #FAFAFA; margin-top: 10px;">
+              <h4 style="margin-top: 0; margin-bottom: 15px; color: var(--primary); font-size: 1.05rem; font-weight: 700;">Enable Google Authenticator 2FA</h4>
+              
+              <ol style="margin: 0 0 20px 0; padding-left: 20px; color: #475569; font-size: 0.9rem; line-height: 1.6;">
+                <li>Scan the QR code below using your Google Authenticator or compatible 2FA mobile app.</li>
+                <li>If you cannot scan, manually enter this secret setup key: <strong style="font-family: monospace; font-size: 1rem; color: var(--secondary);">{{ tfaSetupData.secret }}</strong></li>
+                <li>Enter the 6-digit confirmation code generated by your app below to enable 2FA.</li>
+              </ol>
+
+              <div style="text-align: center; margin-bottom: 20px;">
+                <img [src]="tfaSetupData.qr_code_url" alt="2FA QR Code" style="background: white; padding: 10px; border: 1px solid #E2E8F0; border-radius: 8px; display: inline-block;" />
+              </div>
+
+              <form (ngSubmit)="verify2FASetup()" style="max-width: 400px; margin: 0 auto;">
+                <div class="form-group" style="margin-bottom: 15px;">
+                  <label class="form-label" style="display: block; font-weight: 600; font-size: 0.85rem; color: #475569; margin-bottom: 6px;">6-digit Verification Code *</label>
+                  <input type="text" [(ngModel)]="tfaSetupCode" name="tfa_setup_code" required class="form-control" placeholder="123456" maxlength="6" autocomplete="off" style="width: 100%; border: 1px solid #CBD5E1; border-radius: 6px; padding: 8px 12px; font-weight: bold; letter-spacing: 2px; text-align: center;" />
+                </div>
+                <div style="display: flex; gap: 10px;">
+                  <button type="submit" class="btn btn-primary" style="flex: 1; padding: 10px; border-radius: 6px; font-weight: 700;" [disabled]="tfaLoading">
+                    Verify & Enable
+                  </button>
+                  <button type="button" (click)="cancel2FASetup()" class="btn" style="flex: 1; padding: 10px; border-radius: 6px; border: 1px solid #CBD5E1; background: white; font-weight: 700; cursor: pointer;">
+                    Cancel
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
       </section>
 
       <!-- HERO SLIDES TAB -->
@@ -1123,6 +1207,394 @@
               </table>
             </div>
           </div>
+      </section>
+
+      <!-- User Management Tab (Admin Only) -->
+      <section *ngIf="activeTab === 'users' && currentUser?.role?.toUpperCase() === 'ADMIN'" class="tab-section animate-fade-in">
+        <div class="tab-header" style="border-bottom: 2px solid #E2E8F0; padding-bottom: 15px; margin-bottom: 20px;">
+          <h2 style="margin: 0; color: var(--primary);">👥 User Accounts Manager</h2>
+          <p style="margin: 3px 0 0 0; color: var(--text-light); font-size: 0.9rem;">Manage school portal access roles (Admins, Principals, Teachers) and toggle account activation statuses.</p>
+        </div>
+
+        <div class="alert alert-success" *ngIf="usersSuccess">
+          🎉 {{ usersSuccess }}
+        </div>
+        <div class="alert alert-danger" *ngIf="usersError">
+          ⚠️ {{ usersError }}
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1.5fr; gap: 30px; align-items: start;">
+          <!-- User Create / Edit Card -->
+          <div class="card" style="background: white; border-radius: 12px; border: 1px solid #E2E8F0; padding: 25px; box-shadow: 0 4px 6px rgba(0,0,0,0.02);">
+            <h3 style="margin-top: 0; color: var(--primary); margin-bottom: 20px; font-size: 1.15rem; font-weight: 700; border-bottom: 1px solid #F1F5F9; padding-bottom: 10px;">
+              {{ editingUserId ? '✏️ Modify User Account' : '➕ Register New User' }}
+            </h3>
+
+            <form (ngSubmit)="saveUser()">
+              <div class="form-group" style="margin-bottom: 15px;">
+                <label class="form-label" style="display: block; font-weight: 600; font-size: 0.85rem; color: #475569; margin-bottom: 6px;">Full Name *</label>
+                <input type="text" [(ngModel)]="newUser.full_name" name="u_name" required class="form-control" placeholder="e.g. Principal Jane Doe" style="width: 100%; border: 1px solid #CBD5E1; border-radius: 6px; padding: 8px 12px;" />
+              </div>
+
+              <div class="form-group" style="margin-bottom: 15px;">
+                <label class="form-label" style="display: block; font-weight: 600; font-size: 0.85rem; color: #475569; margin-bottom: 6px;">Email Address *</label>
+                <input type="email" [(ngModel)]="newUser.email" name="u_email" required class="form-control" placeholder="user@school.com" style="width: 100%; border: 1px solid #CBD5E1; border-radius: 6px; padding: 8px 12px;" />
+              </div>
+
+              <div class="form-group" style="margin-bottom: 15px;">
+                <label class="form-label" style="display: block; font-weight: 600; font-size: 0.85rem; color: #475569; margin-bottom: 6px;">
+                  Password {{ editingUserId ? '(Leave blank to keep current)' : '*' }}
+                </label>
+                <input type="password" [(ngModel)]="newUser.password" name="u_pass" [required]="!editingUserId" class="form-control" placeholder="••••••••" style="width: 100%; border: 1px solid #CBD5E1; border-radius: 6px; padding: 8px 12px;" />
+              </div>
+
+              <div class="form-group" style="margin-bottom: 20px;">
+                <label class="form-label" style="display: block; font-weight: 600; font-size: 0.85rem; color: #475569; margin-bottom: 6px;">Access Role *</label>
+                <select [(ngModel)]="newUser.role" name="u_role" required class="form-control" style="width: 100%; border: 1px solid #CBD5E1; border-radius: 6px; padding: 8px 12px; background: white;">
+                  <option value="Admin">Admin (Full Authority)</option>
+                  <option value="Principal">Principal</option>
+                  <option value="Teacher">Teacher</option>
+                </select>
+              </div>
+
+              <div style="display: flex; gap: 10px;">
+                <button type="submit" class="btn btn-primary" style="flex: 1; padding: 10px; border-radius: 6px; font-weight: 700;" [disabled]="usersLoading">
+                  {{ editingUserId ? 'Save Changes' : 'Create User' }}
+                </button>
+                <button type="button" class="btn" *ngIf="editingUserId" (click)="resetUserForm()" style="flex: 1; padding: 10px; border-radius: 6px; border: 1px solid #CBD5E1; background: white; font-weight: 700; cursor: pointer;">
+                  Cancel
+                </button>
+              </div>
+            </form>
+          </div>
+
+          <!-- Users List Table Card -->
+          <div class="card" style="background: white; border-radius: 12px; border: 1px solid #E2E8F0; padding: 25px; box-shadow: 0 4px 6px rgba(0,0,0,0.02);">
+            <h3 style="margin-top: 0; color: var(--primary); margin-bottom: 20px; font-size: 1.15rem; font-weight: 700; border-bottom: 1px solid #F1F5F9; padding-bottom: 10px;">
+              📋 User Accounts List
+            </h3>
+            
+            <div style="overflow-x: auto;">
+              <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 0.9rem;">
+                <thead>
+                  <tr style="border-bottom: 2px solid #E2E8F0; color: #475569; font-weight: 700;">
+                    <th style="padding: 10px 5px;">User Info</th>
+                    <th style="padding: 10px 5px;">Role</th>
+                    <th style="padding: 10px 5px;">Status</th>
+                    <th style="padding: 10px 5px; text-align: right;">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr *ngFor="let u of usersList" style="border-bottom: 1px solid #F1F5F9;">
+                    <td style="padding: 12px 5px;">
+                      <div style="font-weight: 700; color: #1E293B;">{{ u.full_name }}</div>
+                      <div style="font-size: 0.8rem; color: var(--text-light);">{{ u.email }}</div>
+                    </td>
+                    <td style="padding: 12px 5px;">
+                      <span class="badge" [style.background-color]="u.role === 'Admin' ? '#FEE2E2' : u.role === 'Principal' ? '#E0F2FE' : '#ECFDF5'" [style.color]="u.role === 'Admin' ? '#991B1B' : u.role === 'Principal' ? '#0369A1' : '#065F46'" style="border-radius: 4px; padding: 2px 6px; font-size: 0.75rem; font-weight: 700;">
+                        {{ u.role }}
+                      </span>
+                    </td>
+                    <td style="padding: 12px 5px;">
+                      <span class="badge" [style.background-color]="u.is_active ? '#D1FAE5' : '#F3F4F6'" [style.color]="u.is_active ? '#065F46' : '#9CA3AF'" style="border-radius: 4px; padding: 2px 6px; font-size: 0.75rem; font-weight: 700;">
+                        {{ u.is_active ? 'Active' : 'Inactive' }}
+                      </span>
+                    </td>
+                    <td style="padding: 12px 5px; text-align: right;">
+                      <div style="display: inline-flex; gap: 6px;">
+                        <button (click)="editUser(u)" class="btn-table edit" style="padding: 4px 8px; font-size: 0.8rem;">✏️ Edit</button>
+                        <button (click)="toggleUserStatus(u)" class="btn-table" [style.background-color]="u.is_active ? '#F3F4F6' : '#ECFDF5'" [style.color]="u.is_active ? '#4B5563' : '#065F46'" style="padding: 4px 8px; font-size: 0.8rem; border: none; border-radius: 4px; cursor: pointer; font-weight: 600;" [disabled]="u.id === currentUser?.id">
+                          {{ u.is_active ? 'Deactivate' : 'Activate' }}
+                        </button>
+                        <button (click)="deleteUser(u.id)" class="btn-table delete" style="padding: 4px 8px; font-size: 0.8rem;" [disabled]="u.id === currentUser?.id">🗑️ Delete</button>
+                      </div>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Stationery Center Tab -->
+      <section *ngIf="activeTab === 'stationary'" class="tab-section animate-fade-in">
+        <div class="tab-header" style="border-bottom: 2px solid #E2E8F0; padding-bottom: 15px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center;">
+          <div>
+            <h2 style="margin: 0; color: var(--primary);">✏️ Stationery Hub</h2>
+            <p style="margin: 3px 0 0 0; color: var(--text-light); font-size: 0.9rem;">Manage school supplies stock and place orders for classes and student requirements.</p>
+          </div>
+        </div>
+
+        <div class="alert alert-success" *ngIf="stationarySuccess" style="margin-bottom: 20px; background-color: #ECFDF5; color: #065F46; border: 1px solid #A7F3D0; padding: 12px; border-radius: 6px; font-weight: 600; font-size: 0.9rem;">
+          🎉 {{ stationarySuccess }}
+        </div>
+        <div class="alert alert-danger" *ngIf="stationaryError" style="margin-bottom: 20px; background-color: #FEE2E2; color: #991B1B; border: 1px solid #FCA5A5; padding: 12px; border-radius: 6px; font-weight: 600; font-size: 0.9rem;">
+          ⚠️ {{ stationaryError }}
+        </div>
+
+        <!-- Admin Inventory Panel -->
+        <div *ngIf="currentUser?.role?.toUpperCase() === 'ADMIN'" style="margin-bottom: 30px;">
+          <div style="display: grid; grid-template-columns: 1fr 1.5fr; gap: 30px; align-items: start;">
+            <!-- Inventory Item Add/Edit Form -->
+            <div class="card" style="background: white; border-radius: 12px; border: 1px solid #E2E8F0; padding: 25px; box-shadow: 0 4px 6px rgba(0,0,0,0.02);">
+              <h3 style="margin-top: 0; color: var(--primary); margin-bottom: 20px; font-size: 1.15rem; font-weight: 700; border-bottom: 1px solid #F1F5F9; padding-bottom: 10px;">
+                {{ editingStationaryItemId ? '✏️ Edit Supply Item' : '➕ Add Supply Item' }}
+              </h3>
+
+              <form (ngSubmit)="saveStationaryItem()">
+                <div class="form-group" style="margin-bottom: 15px;">
+                  <label class="form-label" style="display: block; font-weight: 600; font-size: 0.85rem; color: #475569; margin-bottom: 6px;">Item Name *</label>
+                  <input type="text" [(ngModel)]="newStationaryItem.name" name="s_name" required class="form-control" placeholder="e.g. Drawbook A4" style="width: 100%; border: 1px solid #CBD5E1; border-radius: 6px; padding: 8px 12px;" />
+                </div>
+
+                <div class="form-group" style="margin-bottom: 15px;">
+                  <label class="form-label" style="display: block; font-weight: 600; font-size: 0.85rem; color: #475569; margin-bottom: 6px;">Description</label>
+                  <textarea [(ngModel)]="newStationaryItem.description" name="s_desc" class="form-control" placeholder="Item dimensions or specifications" style="width: 100%; border: 1px solid #CBD5E1; border-radius: 6px; padding: 8px 12px;" rows="2"></textarea>
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px;">
+                  <div class="form-group">
+                    <label class="form-label" style="display: block; font-weight: 600; font-size: 0.85rem; color: #475569; margin-bottom: 6px;">Unit Price (₹) *</label>
+                    <input type="number" [(ngModel)]="newStationaryItem.price" name="s_price" step="0.01" min="0.01" required class="form-control" style="width: 100%; border: 1px solid #CBD5E1; border-radius: 6px; padding: 8px 12px;" />
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label" style="display: block; font-weight: 600; font-size: 0.85rem; color: #475569; margin-bottom: 6px;">Stock Quantity *</label>
+                    <input type="number" [(ngModel)]="newStationaryItem.stock" name="s_stock" min="0" required class="form-control" style="width: 100%; border: 1px solid #CBD5E1; border-radius: 6px; padding: 8px 12px;" />
+                  </div>
+                </div>
+
+                <div class="form-group" style="margin-bottom: 20px;">
+                  <label class="form-label" style="display: block; font-weight: 600; font-size: 0.85rem; color: #475569; margin-bottom: 6px;">Supply Category *</label>
+                  <select [(ngModel)]="newStationaryItem.category" name="s_cat" required class="form-control" style="width: 100%; border: 1px solid #CBD5E1; border-radius: 6px; padding: 8px 12px; background: white;">
+                    <option value="Books">Books & Notebooks</option>
+                    <option value="Writing">Pens, Pencils & Cases</option>
+                    <option value="Uniforms">School Uniforms & Bags</option>
+                    <option value="Art">Craft & Painting Supplies</option>
+                    <option value="Office">Office & Classroom Stationery</option>
+                  </select>
+                </div>
+
+                <div style="display: flex; gap: 10px;">
+                  <button type="submit" class="btn btn-primary" style="flex: 1; padding: 10px; border-radius: 6px; font-weight: 700;" [disabled]="stationaryLoading">
+                    {{ editingStationaryItemId ? 'Update Item' : 'Add Item' }}
+                  </button>
+                  <button type="button" class="btn" *ngIf="editingStationaryItemId" (click)="resetStationaryForm()" style="flex: 1; padding: 10px; border-radius: 6px; border: 1px solid #CBD5E1; background: white; font-weight: 700; cursor: pointer;">
+                    Cancel
+                  </button>
+                </div>
+              </form>
+            </div>
+
+            <!-- Inventory Items List Table -->
+            <div class="card" style="background: white; border-radius: 12px; border: 1px solid #E2E8F0; padding: 25px; box-shadow: 0 4px 6px rgba(0,0,0,0.02);">
+              <h3 style="margin-top: 0; color: var(--primary); margin-bottom: 20px; font-size: 1.15rem; font-weight: 700; border-bottom: 1px solid #F1F5F9; padding-bottom: 10px;">
+                📋 Supply Inventory List
+              </h3>
+              
+              <div style="overflow-x: auto;">
+                <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 0.9rem;">
+                  <thead>
+                    <tr style="border-bottom: 2px solid #E2E8F0; color: #475569; font-weight: 700;">
+                      <th style="padding: 10px 5px;">Item Details</th>
+                      <th style="padding: 10px 5px;">Category</th>
+                      <th style="padding: 10px 5px;">Price</th>
+                      <th style="padding: 10px 5px;">Stock</th>
+                      <th style="padding: 10px 5px; text-align: right;">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr *ngFor="let item of stationaryItems" style="border-bottom: 1px solid #F1F5F9;">
+                      <td style="padding: 12px 5px;">
+                        <div style="font-weight: 700; color: #1E293B;">{{ item.name }}</div>
+                        <div style="font-size: 0.8rem; color: var(--text-light);">{{ item.description || '--' }}</div>
+                      </td>
+                      <td style="padding: 12px 5px; color: #475569; font-size: 0.85rem;">
+                        {{ item.category }}
+                      </td>
+                      <td style="padding: 12px 5px; font-weight: 700; color: #1E293B;">
+                        ₹{{ item.price }}
+                      </td>
+                      <td style="padding: 12px 5px;">
+                        <span class="badge" [style.background-color]="item.stock === 0 ? '#FEE2E2' : item.stock < 10 ? '#FEF3C7' : '#D1FAE5'" [style.color]="item.stock === 0 ? '#991B1B' : item.stock < 10 ? '#D97706' : '#065F46'" style="border-radius: 4px; padding: 2px 6px; font-size: 0.75rem; font-weight: 700;">
+                          {{ item.stock }} units
+                        </span>
+                      </td>
+                      <td style="padding: 12px 5px; text-align: right;">
+                        <div style="display: inline-flex; gap: 6px;">
+                          <button (click)="editStationaryItem(item)" class="btn-table edit" style="padding: 4px 8px; font-size: 0.8rem;">✏️ Edit</button>
+                          <button (click)="deleteStationaryItem(item.id)" class="btn-table delete" style="padding: 4px 8px; font-size: 0.8rem;">🗑️ Delete</button>
+                        </div>
+                      </td>
+                    </tr>
+                    <tr *ngIf="stationaryItems.length === 0">
+                      <td colspan="5" style="text-align: center; color: var(--text-light); padding: 30px;">
+                        No supply items found in inventory.
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Placing Orders Grid (Visible to Admins, Principals, Teachers) -->
+        <div style="display: grid; grid-template-columns: 1.5fr 1fr; gap: 30px; align-items: start;">
+          <!-- Shop Items List -->
+          <div class="card" style="background: white; border-radius: 12px; border: 1px solid #E2E8F0; padding: 25px; box-shadow: 0 4px 6px rgba(0,0,0,0.02);">
+            <h3 style="margin-top: 0; color: var(--primary); margin-bottom: 20px; font-size: 1.15rem; font-weight: 700; border-bottom: 1px solid #F1F5F9; padding-bottom: 10px;">
+              🛍️ Available Supplies & Stationery
+            </h3>
+            
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+              <div *ngFor="let item of stationaryItems" style="border: 1px solid #E2E8F0; border-radius: 8px; padding: 15px; background: #FAFAFA; display: flex; flex-direction: column; justify-content: space-between; min-height: 140px;">
+                <div>
+                  <div style="display: flex; justify-content: space-between; align-items: start;">
+                    <strong style="color: #1E293B; font-size: 0.95rem;">{{ item.name }}</strong>
+                    <span style="font-size: 0.75rem; background: #F1F5F9; color: #475569; padding: 2px 6px; border-radius: 4px; font-weight: 600;">{{ item.category }}</span>
+                  </div>
+                  <p style="font-size: 0.8rem; color: #64748B; margin: 4px 0 10px 0; line-height: 1.4;">{{ item.description || 'No description available.' }}</p>
+                </div>
+                
+                <div>
+                  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                    <span style="font-weight: 800; color: var(--primary); font-size: 1.1rem;">₹{{ item.price }}</span>
+                    <span style="font-size: 0.75rem; font-weight: 600; color: #64748B;">Stock: {{ item.stock }}</span>
+                  </div>
+                  
+                  <!-- Add Action -->
+                  <div style="display: flex; gap: 8px;" *ngIf="item.stock > 0">
+                    <input type="number" value="1" min="1" [max]="item.stock" #qtyInput style="width: 55px; border: 1px solid #CBD5E1; border-radius: 4px; padding: 4px 6px; text-align: center; font-weight: 700;" />
+                    <button type="button" (click)="addToCart(item, qtyInput)" style="flex: 1; background: var(--secondary); color: white; border: none; padding: 5px 10px; border-radius: 4px; font-weight: 700; font-size: 0.8rem; cursor: pointer; transition: all 0.2s;">
+                      🛒 Add
+                    </button>
+                  </div>
+                  <div *ngIf="item.stock === 0" style="text-align: center; color: #EF4444; font-weight: 700; font-size: 0.85rem; padding: 5px 0;">
+                    🚫 Out of Stock
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <div *ngIf="stationaryItems.length === 0" style="text-align: center; color: var(--text-light); padding: 40px;">
+              No stationery items available in the catalog.
+            </div>
+          </div>
+
+          <!-- Checkout Cart Panel -->
+          <div style="display: flex; flex-direction: column; gap: 30px;">
+            <!-- Cart Box -->
+            <div class="card" style="background: white; border-radius: 12px; border: 1px solid #E2E8F0; padding: 25px; box-shadow: 0 4px 6px rgba(0,0,0,0.02);">
+              <h3 style="margin-top: 0; color: var(--primary); margin-bottom: 20px; font-size: 1.15rem; font-weight: 700; border-bottom: 1px solid #F1F5F9; padding-bottom: 10px;">
+                🛒 Order Checkout Cart
+              </h3>
+
+              <div *ngIf="stationaryCart.length === 0" style="text-align: center; color: var(--text-light); padding: 30px 0;">
+                Your shopping cart is empty. Add items from the supplies catalog.
+              </div>
+
+              <div *ngIf="stationaryCart.length > 0">
+                <div style="display: flex; flex-direction: column; gap: 10px; max-height: 200px; overflow-y: auto; margin-bottom: 20px; padding-right: 5px;">
+                  <div *ngFor="let c of stationaryCart; let i = index" style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #F1F5F9; padding-bottom: 8px;">
+                    <div>
+                      <strong style="color: #1E293B; font-size: 0.85rem; display: block;">{{ c.item.name }}</strong>
+                      <span style="font-size: 0.8rem; color: #64748B;">₹{{ c.item.price }} × {{ c.quantity }}</span>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                      <span style="font-weight: 700; color: #1E293B; font-size: 0.9rem;">₹{{ c.item.price * c.quantity }}</span>
+                      <button type="button" (click)="removeFromCart(i)" style="background: none; border: none; color: #EF4444; font-size: 1.1rem; cursor: pointer;" title="Remove">×</button>
+                    </div>
+                  </div>
+                </div>
+
+                <div style="border-top: 2px solid #E2E8F0; padding-top: 15px; margin-bottom: 20px;">
+                  <div style="display: flex; justify-content: space-between; align-items: center; font-weight: 800; font-size: 1.1rem; color: #1E293B;">
+                    <span>Grand Total:</span>
+                    <span style="color: var(--primary);">₹{{ getCartTotal() }}</span>
+                  </div>
+                </div>
+
+                <!-- Order Placement Metadata Details -->
+                <div class="alert alert-success" *ngIf="orderSuccess" style="margin-bottom: 15px;">
+                  🎉 {{ orderSuccess }}
+                </div>
+                <div class="alert alert-danger" *ngIf="orderError" style="margin-bottom: 15px;">
+                  ⚠️ {{ orderError }}
+                </div>
+
+                <form (ngSubmit)="checkoutOrder()">
+                  <div class="form-group" style="margin-bottom: 12px;">
+                    <label class="form-label" style="display: block; font-weight: 600; font-size: 0.8rem; color: #475569; margin-bottom: 4px;">Student Name (Optional)</label>
+                    <input type="text" [(ngModel)]="orderStudentName" name="o_student" class="form-control" placeholder="e.g. Rahul Kumar" style="width: 100%; border: 1px solid #CBD5E1; border-radius: 6px; padding: 6px 10px;" />
+                  </div>
+                  
+                  <div class="form-group" style="margin-bottom: 20px;">
+                    <label class="form-label" style="display: block; font-weight: 600; font-size: 0.85rem; color: #475569; margin-bottom: 4px;">Class Name (Optional)</label>
+                    <input type="text" [(ngModel)]="orderClassName" name="o_class" class="form-control" placeholder="e.g. Class 1A" style="width: 100%; border: 1px solid #CBD5E1; border-radius: 6px; padding: 6px 10px;" />
+                  </div>
+
+                  <button type="submit" class="btn btn-primary btn-block" style="padding: 10px; border-radius: 6px; font-weight: 700;" [disabled]="stationaryLoading">
+                    Place Supply Order
+                  </button>
+                </form>
+              </div>
+            </div>
+
+            <!-- Orders List / History -->
+            <div class="card" style="background: white; border-radius: 12px; border: 1px solid #E2E8F0; padding: 25px; box-shadow: 0 4px 6px rgba(0,0,0,0.02);">
+              <h3 style="margin-top: 0; color: var(--primary); margin-bottom: 20px; font-size: 1.15rem; font-weight: 700; border-bottom: 1px solid #F1F5F9; padding-bottom: 10px;">
+                📜 Supply Orders History
+              </h3>
+
+              <div style="overflow-y: auto; max-height: 350px;">
+                <div *ngFor="let order of stationaryOrders" style="border: 1px solid #E2E8F0; border-radius: 8px; padding: 12px; background: #FAFAFA; margin-bottom: 12px; font-size: 0.85rem;">
+                  <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 6px;">
+                    <div>
+                      <strong style="color: var(--primary);">Order #{{ order.id }}</strong>
+                      <span style="color: #64748B; font-size: 0.75rem; margin-left: 8px;">{{ order.order_date | date:'short' }}</span>
+                    </div>
+                    
+                    <span class="badge" [style.background-color]="order.status === 'Delivered' ? '#D1FAE5' : order.status === 'Dispatched' ? '#E0F2FE' : '#FEF3C7'" [style.color]="order.status === 'Delivered' ? '#065F46' : order.status === 'Dispatched' ? '#0369A1' : '#D97706'" style="border-radius: 4px; padding: 2px 6px; font-weight: 700; font-size: 0.75rem;">
+                      {{ order.status }}
+                    </span>
+                  </div>
+
+                  <div style="color: #475569; margin-bottom: 8px; line-height: 1.4;">
+                    <div *ngIf="order.student_name"><strong>Student:</strong> {{ order.student_name }} ({{ order.class_name || 'N/A' }})</div>
+                    <div><strong>Ordered By:</strong> {{ order.created_by?.full_name || 'User ' + order.created_by_id }}</div>
+                  </div>
+
+                  <!-- Order Items -->
+                  <div style="border-top: 1px solid #E2E8F0; padding-top: 6px; margin-bottom: 10px;">
+                    <div *ngFor="let item of order.items" style="display: flex; justify-content: space-between; color: #64748B; font-size: 0.8rem; margin-bottom: 3px;">
+                      <span>{{ item.item?.name || 'Supply Item' }} × {{ item.quantity }}</span>
+                      <span>₹{{ item.unit_price * item.quantity }}</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; font-weight: 800; font-size: 0.85rem; color: #1E293B; margin-top: 6px; border-top: 1px dashed #E2E8F0; padding-top: 4px;">
+                      <span>Total:</span>
+                      <span>₹{{ order.total_price }}</span>
+                    </div>
+                  </div>
+
+                  <!-- Status Actions for Admin -->
+                  <div *ngIf="currentUser?.role?.toUpperCase() === 'ADMIN' && order.status !== 'Delivered'" style="display: flex; gap: 8px; justify-content: flex-end;">
+                    <button type="button" *ngIf="order.status === 'Pending'" (click)="updateOrderStatus(order.id, 'Dispatched')" style="background: #0284C7; color: white; border: none; padding: 3px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: 600; cursor: pointer;">
+                      🚚 Dispatch
+                    </button>
+                    <button type="button" *ngIf="order.status === 'Dispatched'" (click)="updateOrderStatus(order.id, 'Delivered')" style="background: #059669; color: white; border: none; padding: 3px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: 600; cursor: pointer;">
+                      ✅ Deliver
+                    </button>
+                  </div>
+                </div>
+
+                <div *ngIf="stationaryOrders.length === 0" style="text-align: center; color: var(--text-light); padding: 20px 0;">
+                  No supply orders placed yet.
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
       </section>
     </main>
   </div>

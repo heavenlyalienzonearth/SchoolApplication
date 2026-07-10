@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
 import { AuthService } from '../../../core/services/auth.service';
 import { ContentService } from '../../../core/services/content.service';
+import { StationaryService, StationaryItem, StationaryOrder } from '../../../core/services/stationary.service';
 
 @Component({
   selector: 'app-admin-dashboard',
@@ -105,6 +106,39 @@ export class DashboardComponent implements OnInit {
   customHolidayEmail = { reason: '', start_date: '', end_date: '', reopen_date: '' };
   sendingBulkEmail = false;
 
+  // Two-Factor Authentication (2FA) State
+  currentUser: any = null;
+  tfaSetupData: any = null;
+  tfaSetupCode = '';
+  tfaDisableCode = '';
+  tfaSuccess = '';
+  tfaError = '';
+  tfaLoading = false;
+
+  // User Management State
+  usersList: any[] = [];
+  newUser = { full_name: '', email: '', password: '', role: 'Teacher' };
+  editingUserId: number | null = null;
+  usersLoading = false;
+  usersError = '';
+  usersSuccess = '';
+
+  // Stationery Management State
+  stationaryItems: StationaryItem[] = [];
+  stationaryOrders: StationaryOrder[] = [];
+  newStationaryItem = { name: '', description: '', category: 'Books', price: 0, stock: 0 };
+  editingStationaryItemId: number | null = null;
+  stationaryLoading = false;
+  stationaryError = '';
+  stationarySuccess = '';
+
+  // Stationery Shopping Cart
+  stationaryCart: { item: StationaryItem; quantity: number }[] = [];
+  orderStudentName = '';
+  orderClassName = '';
+  orderError = '';
+  orderSuccess = '';
+
   // Toast Notification
   toastMessage = '';
   toastType: 'success' | 'error' = 'success';
@@ -113,10 +147,14 @@ export class DashboardComponent implements OnInit {
   constructor(
     private authService: AuthService,
     private contentService: ContentService,
-    private router: Router
+    private router: Router,
+    private stationaryService: StationaryService
   ) {}
 
   ngOnInit(): void {
+    this.authService.currentUser$.subscribe(user => {
+      this.currentUser = user;
+    });
     this.loadAnalytics();
     this.loadSettings();
     this.loadHeroSection();
@@ -137,6 +175,10 @@ export class DashboardComponent implements OnInit {
       this.loadAdmissions();
     } else if (tab === 'holidays') {
       this.loadHolidays();
+    } else if (tab === 'users') {
+      this.loadUsers();
+    } else if (tab === 'stationary') {
+      this.loadStationary();
     }
   }
 
@@ -1099,5 +1141,364 @@ export class DashboardComponent implements OnInit {
     else if (day === 3 || day === 23) suffix = 'rd';
     
     return `${day}${suffix} ${month} ${year}`;
+  }
+
+  // --- TWO-FACTOR AUTHENTICATION (2FA) METHODS ---
+  init2FASetup(): void {
+    this.tfaLoading = true;
+    this.tfaSuccess = '';
+    this.tfaError = '';
+    this.authService.get2faSetup().subscribe({
+      next: (res) => {
+        this.tfaSetupData = res;
+        this.tfaLoading = false;
+      },
+      error: (err) => {
+        this.tfaLoading = false;
+        this.tfaError = err.error?.detail || 'Failed to initialize 2FA setup.';
+      }
+    });
+  }
+
+  verify2FASetup(): void {
+    if (!this.tfaSetupCode || this.tfaSetupCode.length !== 6) {
+      this.tfaError = 'Please enter a valid 6-digit verification code.';
+      return;
+    }
+    this.tfaLoading = true;
+    this.tfaSuccess = '';
+    this.tfaError = '';
+    this.authService.verify2faSetup(this.tfaSetupData.secret, this.tfaSetupCode).subscribe({
+      next: (user) => {
+        this.tfaLoading = false;
+        this.tfaSetupData = null;
+        this.tfaSetupCode = '';
+        this.tfaSuccess = 'Two-Factor Authentication has been successfully enabled!';
+      },
+      error: (err) => {
+        this.tfaLoading = false;
+        this.tfaError = err.error?.detail || 'Failed to verify verification code.';
+      }
+    });
+  }
+
+  cancel2FASetup(): void {
+    this.tfaSetupData = null;
+    this.tfaSetupCode = '';
+    this.tfaSuccess = '';
+    this.tfaError = '';
+  }
+
+  disable2FA(): void {
+    if (!this.tfaDisableCode || this.tfaDisableCode.length !== 6) {
+      this.tfaError = 'Please enter a valid 6-digit verification code.';
+      return;
+    }
+    this.tfaLoading = true;
+    this.tfaSuccess = '';
+    this.tfaError = '';
+    this.authService.disable2fa(this.tfaDisableCode).subscribe({
+      next: (user) => {
+        this.tfaLoading = false;
+        this.tfaDisableCode = '';
+        this.tfaSuccess = 'Two-Factor Authentication has been successfully disabled.';
+      },
+      error: (err) => {
+        this.tfaLoading = false;
+        this.tfaError = err.error?.detail || 'Failed to disable Two-Factor Authentication.';
+      }
+    });
+  }
+
+  // --- USER MANAGEMENT ---
+  loadUsers(): void {
+    this.usersLoading = true;
+    this.usersError = '';
+    this.authService.getUsers().subscribe({
+      next: (users) => {
+        this.usersList = users;
+        this.usersLoading = false;
+      },
+      error: (err) => {
+        this.usersLoading = false;
+        this.usersError = err.error?.detail || 'Failed to load users list.';
+      }
+    });
+  }
+
+  saveUser(): void {
+    if (!this.newUser.email || !this.newUser.full_name || (!this.editingUserId && !this.newUser.password)) {
+      this.usersError = 'Please fill in all required fields.';
+      return;
+    }
+
+    this.usersLoading = true;
+    this.usersError = '';
+    this.usersSuccess = '';
+
+    if (this.editingUserId) {
+      const updateData: any = {
+        full_name: this.newUser.full_name,
+        email: this.newUser.email,
+        role: this.newUser.role
+      };
+      if (this.newUser.password) {
+        updateData.password = this.newUser.password;
+      }
+      this.authService.updateUser(this.editingUserId, updateData).subscribe({
+        next: () => {
+          this.usersLoading = false;
+          this.usersSuccess = 'User account updated successfully!';
+          this.resetUserForm();
+          this.loadUsers();
+        },
+        error: (err) => {
+          this.usersLoading = false;
+          this.usersError = err.error?.detail || 'Failed to update user account.';
+        }
+      });
+    } else {
+      this.authService.createUser(this.newUser).subscribe({
+        next: () => {
+          this.usersLoading = false;
+          this.usersSuccess = 'New user account created successfully!';
+          this.resetUserForm();
+          this.loadUsers();
+        },
+        error: (err) => {
+          this.usersLoading = false;
+          this.usersError = err.error?.detail || 'Failed to create user account.';
+        }
+      });
+    }
+  }
+
+  editUser(user: any): void {
+    this.editingUserId = user.id;
+    this.newUser = {
+      full_name: user.full_name,
+      email: user.email,
+      password: '',
+      role: user.role
+    };
+    this.usersError = '';
+    this.usersSuccess = '';
+  }
+
+  toggleUserStatus(user: any): void {
+    this.usersLoading = true;
+    this.usersError = '';
+    this.usersSuccess = '';
+    this.authService.updateUser(user.id, { is_active: !user.is_active }).subscribe({
+      next: () => {
+        this.usersLoading = false;
+        this.usersSuccess = `User account ${user.is_active ? 'deactivated' : 'activated'} successfully!`;
+        this.loadUsers();
+      },
+      error: (err) => {
+        this.usersLoading = false;
+        this.usersError = err.error?.detail || 'Failed to change user status.';
+      }
+    });
+  }
+
+  deleteUser(userId: number): void {
+    if (!confirm('Are you sure you want to delete this user account permanently?')) return;
+    this.usersLoading = true;
+    this.usersError = '';
+    this.usersSuccess = '';
+    this.authService.deleteUser(userId).subscribe({
+      next: () => {
+        this.usersLoading = false;
+        this.usersSuccess = 'User account deleted successfully!';
+        this.loadUsers();
+      },
+      error: (err) => {
+        this.usersLoading = false;
+        this.usersError = err.error?.detail || 'Failed to delete user account.';
+      }
+    });
+  }
+
+  resetUserForm(): void {
+    this.editingUserId = null;
+    this.newUser = { full_name: '', email: '', password: '', role: 'Teacher' };
+  }
+
+  // --- STATIONERY CENTER ---
+  loadStationary(): void {
+    this.stationaryLoading = true;
+    this.stationaryError = '';
+    
+    this.stationaryService.getItems().subscribe({
+      next: (items) => {
+        this.stationaryItems = items;
+        this.stationaryLoading = false;
+      },
+      error: (err) => {
+        this.stationaryLoading = false;
+        this.stationaryError = err.error?.detail || 'Failed to load stationery inventory.';
+      }
+    });
+
+    this.stationaryService.getOrders().subscribe({
+      next: (orders) => {
+        this.stationaryOrders = orders;
+      },
+      error: () => {}
+    });
+  }
+
+  saveStationaryItem(): void {
+    if (!this.newStationaryItem.name || !this.newStationaryItem.category || this.newStationaryItem.price <= 0) {
+      this.stationaryError = 'Please fill in item details correctly.';
+      return;
+    }
+
+    this.stationaryLoading = true;
+    this.stationaryError = '';
+    this.stationarySuccess = '';
+
+    if (this.editingStationaryItemId) {
+      this.stationaryService.updateItem(this.editingStationaryItemId, this.newStationaryItem).subscribe({
+        next: () => {
+          this.stationaryLoading = false;
+          this.stationarySuccess = 'Stationery item updated successfully!';
+          this.resetStationaryForm();
+          this.loadStationary();
+        },
+        error: (err) => {
+          this.stationaryLoading = false;
+          this.stationaryError = err.error?.detail || 'Failed to update stationery item.';
+        }
+      });
+    } else {
+      this.stationaryService.createItem(this.newStationaryItem).subscribe({
+        next: () => {
+          this.stationaryLoading = false;
+          this.stationarySuccess = 'New stationery item added successfully!';
+          this.resetStationaryForm();
+          this.loadStationary();
+        },
+        error: (err) => {
+          this.stationaryLoading = false;
+          this.stationaryError = err.error?.detail || 'Failed to add stationery item.';
+        }
+      });
+    }
+  }
+
+  editStationaryItem(item: StationaryItem): void {
+    this.editingStationaryItemId = item.id;
+    this.newStationaryItem = {
+      name: item.name,
+      description: item.description || '',
+      category: item.category,
+      price: item.price,
+      stock: item.stock
+    };
+    this.stationaryError = '';
+    this.stationarySuccess = '';
+  }
+
+  deleteStationaryItem(itemId: number): void {
+    if (!confirm('Are you sure you want to delete this stationery item?')) return;
+    this.stationaryLoading = true;
+    this.stationaryError = '';
+    this.stationarySuccess = '';
+    this.stationaryService.deleteItem(itemId).subscribe({
+      next: () => {
+        this.stationaryLoading = false;
+        this.stationarySuccess = 'Stationery item deleted successfully!';
+        this.loadStationary();
+      },
+      error: (err) => {
+        this.stationaryLoading = false;
+        this.stationaryError = err.error?.detail || 'Failed to delete stationery item.';
+      }
+    });
+  }
+
+  resetStationaryForm(): void {
+    this.editingStationaryItemId = null;
+    this.newStationaryItem = { name: '', description: '', category: 'Uniforms', price: 0, stock: 0 };
+  }
+
+  // --- SHOPPING CART ---
+  addToCart(item: StationaryItem, qtyInput: any): void {
+    const qty = parseInt(qtyInput.value, 10);
+    if (isNaN(qty) || qty <= 0) return;
+    if (qty > item.stock) {
+      alert(`Only ${item.stock} items are in stock.`);
+      return;
+    }
+
+    const existingCartIdx = this.stationaryCart.findIndex(c => c.item.id === item.id);
+    if (existingCartIdx > -1) {
+      const newQty = this.stationaryCart[existingCartIdx].quantity + qty;
+      if (newQty > item.stock) {
+        alert(`Cannot add more. Max stock available: ${item.stock}`);
+        return;
+      }
+      this.stationaryCart[existingCartIdx].quantity = newQty;
+    } else {
+      this.stationaryCart.push({ item, quantity: qty });
+    }
+    
+    qtyInput.value = '1';
+  }
+
+  removeFromCart(idx: number): void {
+    this.stationaryCart.splice(idx, 1);
+  }
+
+  getCartTotal(): number {
+    return this.stationaryCart.reduce((acc, curr) => acc + (curr.item.price * curr.quantity), 0);
+  }
+
+  checkoutOrder(): void {
+    if (this.stationaryCart.length === 0) return;
+    
+    this.orderError = '';
+    this.orderSuccess = '';
+    this.stationaryLoading = true;
+
+    const itemsPayload = this.stationaryCart.map(c => ({
+      item_id: c.item.id,
+      quantity: c.quantity
+    }));
+
+    this.stationaryService.placeOrder({
+      student_name: this.orderStudentName || undefined,
+      class_name: this.orderClassName || undefined,
+      items: itemsPayload
+    }).subscribe({
+      next: () => {
+        this.stationaryLoading = false;
+        this.stationaryCart = [];
+        this.orderStudentName = '';
+        this.orderClassName = '';
+        this.orderSuccess = 'Order placed successfully! Stock has been updated.';
+        this.loadStationary();
+      },
+      error: (err) => {
+        this.stationaryLoading = false;
+        this.orderError = err.error?.detail || 'Failed to place stationary order.';
+      }
+    });
+  }
+
+  updateOrderStatus(orderId: number, status: string): void {
+    this.stationaryLoading = true;
+    this.stationaryService.updateOrderStatus(orderId, status).subscribe({
+      next: () => {
+        this.stationaryLoading = false;
+        this.loadStationary();
+      },
+      error: (err) => {
+        this.stationaryLoading = false;
+        alert(err.error?.detail || 'Failed to update order status.');
+      }
+    });
   }
 }

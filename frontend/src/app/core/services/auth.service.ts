@@ -11,13 +11,26 @@ export interface User {
   role: string;
   is_active: boolean;
   created_at: string;
+  two_factor_enabled?: boolean;
 }
 
 export interface AuthResponse {
-  access_token: string;
-  refresh_token: string;
+  access_token: string | null;
+  refresh_token: string | null;
   token_type: string;
-  user: User;
+  user: User | null;
+  two_factor_required?: boolean;
+  two_factor_token?: string;
+}
+
+export interface CaptchaResponse {
+  captcha_id: string;
+  captcha_svg: string;
+}
+
+export interface TwoFactorSetupResponse {
+  secret: string;
+  qr_code_url: string;
 }
 
 @Injectable({
@@ -57,15 +70,67 @@ export class AuthService {
     return this.isBrowser ? localStorage.getItem('refresh_token') : null;
   }
 
-  login(email: string, password: string): Observable<AuthResponse> {
-    return this.apiService.post<AuthResponse>('/auth/login', { email, password }).pipe(
+  getCaptcha(): Observable<CaptchaResponse> {
+    return this.apiService.get<CaptchaResponse>('/auth/captcha?t=' + Date.now());
+  }
+
+  login(email: string, password: string, captchaId: string, captchaCode: string): Observable<AuthResponse> {
+    return this.apiService.post<AuthResponse>('/auth/login', {
+      email,
+      password,
+      captcha_id: captchaId,
+      captcha_code: captchaCode
+    }).pipe(
       tap(res => {
-        if (this.isBrowser) {
-          localStorage.setItem('access_token', res.access_token);
-          localStorage.setItem('refresh_token', res.refresh_token);
-          localStorage.setItem('school_user', JSON.stringify(res.user));
+        if (!res.two_factor_required && res.access_token && res.user) {
+          if (this.isBrowser) {
+            localStorage.setItem('access_token', res.access_token!);
+            localStorage.setItem('refresh_token', res.refresh_token!);
+            localStorage.setItem('school_user', JSON.stringify(res.user));
+          }
+          this.currentUserSubject.next(res.user);
         }
-        this.currentUserSubject.next(res.user);
+      })
+    );
+  }
+
+  get2faSetup(): Observable<TwoFactorSetupResponse> {
+    return this.apiService.get<TwoFactorSetupResponse>('/auth/2fa/setup');
+  }
+
+  verify2faSetup(secret: string, code: string): Observable<User> {
+    return this.apiService.post<User>('/auth/2fa/setup/verify', { secret, code }).pipe(
+      tap(updatedUser => {
+        if (this.isBrowser) {
+          localStorage.setItem('school_user', JSON.stringify(updatedUser));
+        }
+        this.currentUserSubject.next(updatedUser);
+      })
+    );
+  }
+
+  disable2fa(code: string): Observable<User> {
+    return this.apiService.post<User>('/auth/2fa/disable', { code }).pipe(
+      tap(updatedUser => {
+        if (this.isBrowser) {
+          localStorage.setItem('school_user', JSON.stringify(updatedUser));
+        }
+        this.currentUserSubject.next(updatedUser);
+      })
+    );
+  }
+
+  twoFactorLogin(twoFactorToken: string, code: string): Observable<AuthResponse> {
+    return this.apiService.post<AuthResponse>('/auth/2fa/login', { two_factor_token: twoFactorToken, code }).pipe(
+      tap(res => {
+        if (res.access_token && res.user) {
+          if (this.isBrowser) {
+            localStorage.setItem('access_token', res.access_token!);
+            localStorage.setItem('refresh_token', res.refresh_token!);
+            localStorage.setItem('school_user', JSON.stringify(res.user));
+          }
+          this.currentUserSubject.next(res.user);
+        }
       })
     );
   }
@@ -78,11 +143,11 @@ export class AuthService {
     return this.apiService.post<AuthResponse>('/auth/refresh', { refresh_token: refreshToken }).pipe(
       tap(res => {
         if (this.isBrowser) {
-          localStorage.setItem('access_token', res.access_token);
-          localStorage.setItem('refresh_token', res.refresh_token);
-          localStorage.setItem('school_user', JSON.stringify(res.user));
+          localStorage.setItem('access_token', res.access_token!);
+          localStorage.setItem('refresh_token', res.refresh_token!);
+          localStorage.setItem('school_user', JSON.stringify(res.user!));
         }
-        this.currentUserSubject.next(res.user);
+        this.currentUserSubject.next(res.user!);
       }),
       catchError(err => {
         this.logout();
@@ -113,5 +178,29 @@ export class AuthService {
 
   isLoggedIn(): boolean {
     return this.currentUserValue !== null;
+  }
+
+  getUsers(): Observable<User[]> {
+    return this.apiService.get<User[]>('/auth/users');
+  }
+
+  createUser(userData: any): Observable<User> {
+    return this.apiService.post<User>('/auth/users', userData);
+  }
+
+  updateUser(userId: number, userData: any): Observable<User> {
+    return this.apiService.put<User>(`/auth/users/${userId}`, userData);
+  }
+
+  deleteUser(userId: number): Observable<any> {
+    return this.apiService.delete<any>(`/auth/users/${userId}`);
+  }
+
+  forgotPassword(email: string): Observable<any> {
+    return this.apiService.post<any>('/auth/forgot-password', { email });
+  }
+
+  resetPassword(token: string, newPassword: string): Observable<any> {
+    return this.apiService.post<any>('/auth/reset-password', { token, new_password: newPassword });
   }
 }

@@ -156,6 +156,7 @@ def update_admission_status(
             models.Student.parent_name == db_admission.parent_name
         ).first()
         
+        student = existing_student
         if not existing_student:
             student = models.Student(
                 name=db_admission.child_name,
@@ -171,6 +172,54 @@ def update_admission_status(
                 is_active=True
             )
             db.add(student)
+            db.flush()  # flush to populate student.id
+
+        # Auto-create parent user account
+        existing_user = db.query(models.User).filter(models.User.email == db_admission.email).first()
+        if not existing_user:
+            import random
+            temp_pin = random.randint(1000, 9999)
+            temp_password = f"Parent@{temp_pin}"
+            
+            from app.core import security
+            hashed_pwd = security.get_password_hash(temp_password)
+            
+            parent_user = models.User(
+                email=db_admission.email,
+                hashed_password=hashed_pwd,
+                full_name=db_admission.parent_name,
+                role="PARENT",
+                student_id=student.id,
+                is_active=True
+            )
+            db.add(parent_user)
+            
+            # Print mock email containing temporary credentials
+            program_title = db_admission.program.title if db_admission.program else "Preschool"
+            email_body = f"""
+============================================================
+MOCK EMAIL DISPATCHED TO PARENT
+============================================================
+From: Kangaroo Kids Portal <admissions@kangarookids.com>
+To: {db_admission.email}
+Subject: Welcome to Kangaroo Kids! Your Parent Portal Account
+
+Dear {db_admission.parent_name},
+
+Congratulations! Your child, {db_admission.child_name}, has been admitted to Kangaroo Kids for the program '{program_title}'.
+
+We have created a temporary parent account for you to access the portal:
+- Portal URL: http://localhost:4200/admin/login
+- Login Email: {db_admission.email}
+- Temporary Password: {temp_password}
+
+Please log in and update your password under Site Settings.
+
+Best regards,
+Kangaroo Kids Administration
+============================================================
+"""
+            print(email_body)
             
     db.commit()
     db.refresh(db_admission)

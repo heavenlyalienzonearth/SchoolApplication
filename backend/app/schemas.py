@@ -16,6 +16,8 @@ class UserResponse(UserBase):
     id: int
     is_active: bool
     created_at: datetime
+    two_factor_enabled: bool
+    student_id: Optional[int] = None
 
     class Config:
         from_attributes = True
@@ -23,18 +25,55 @@ class UserResponse(UserBase):
 class LoginRequest(BaseModel):
     email: EmailStr
     password: str
+    captcha_id: str
+    captcha_code: str
+
+class CaptchaResponse(BaseModel):
+    captcha_id: str
+    captcha_svg: str
 
 class RefreshRequest(BaseModel):
     refresh_token: str
 
 class Token(BaseModel):
-    access_token: str
-    refresh_token: str
+    access_token: Optional[str] = None
+    refresh_token: Optional[str] = None
     token_type: str = "bearer"
-    user: UserResponse
+    user: Optional[UserResponse] = None
+    two_factor_required: bool = False
+    two_factor_token: Optional[str] = None
+
+class TwoFactorSetupResponse(BaseModel):
+    secret: str
+    qr_code_url: str
+
+class TwoFactorVerifySetupRequest(BaseModel):
+    secret: str
+    code: str
+
+class TwoFactorDisableRequest(BaseModel):
+    code: str
+
+class TwoFactorLoginRequest(BaseModel):
+    two_factor_token: str
+    code: str
 
 class TokenData(BaseModel):
     email: Optional[str] = None
+
+class UserUpdate(BaseModel):
+    full_name: Optional[str] = None
+    email: Optional[EmailStr] = None
+    role: Optional[str] = None
+    is_active: Optional[bool] = None
+    password: Optional[str] = None
+
+class ForgotPasswordRequest(BaseModel):
+    email: EmailStr
+
+class ResetPasswordRequest(BaseModel):
+    token: str
+    new_password: str
 
 # --- SETTINGS SCHEMAS ---
 
@@ -424,3 +463,63 @@ class CustomHolidayEmailRequest(BaseModel):
     end_date: str
     reopen_date: str
 
+# --- STATIONERY SCHEMAS ---
+
+from decimal import Decimal
+
+class StationaryItemBase(BaseModel):
+    name: str
+    description: Optional[str] = None
+    category: str
+    price: Decimal
+    stock: int
+    is_active: bool = True
+
+class StationaryItemCreate(StationaryItemBase):
+    pass
+
+class StationaryItemResponse(StationaryItemBase):
+    id: int
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
+
+class StationaryOrderItemBase(BaseModel):
+    item_id: int
+    quantity: int
+
+class StationaryOrderItemCreate(StationaryOrderItemBase):
+    pass
+
+class StationaryOrderItemResponse(BaseModel):
+    id: int
+    item_id: int
+    quantity: int
+    unit_price: Decimal
+    item: Optional[StationaryItemResponse] = None
+
+    class Config:
+        from_attributes = True
+
+class StationaryOrderBase(BaseModel):
+    student_name: Optional[str] = None
+    class_name: Optional[str] = None
+
+class StationaryOrderCreate(StationaryOrderBase):
+    items: List[StationaryOrderItemCreate]
+
+class StationaryOrderResponse(StationaryOrderBase):
+    id: int
+    order_date: datetime
+    status: str
+    total_price: Decimal
+    created_by_id: int
+    created_by: Optional[UserResponse] = None
+    items: List[StationaryOrderItemResponse] = []
+
+    class Config:
+        from_attributes = True
+
+class StationaryOrderStatusUpdate(BaseModel):
+    status: str

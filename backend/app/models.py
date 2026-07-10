@@ -1,5 +1,5 @@
 from datetime import datetime
-from sqlalchemy import Column, Integer, String, Text, Boolean, DateTime, ForeignKey
+from sqlalchemy import Column, Integer, String, Text, Boolean, DateTime, ForeignKey, Numeric
 from sqlalchemy.orm import relationship
 from app.core.database import Base
 
@@ -13,8 +13,12 @@ class User(Base):
     role = Column(String(50), default="ADMIN", nullable=False)
     is_active = Column(Boolean, default=True, nullable=False)
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    two_factor_secret = Column(String(100), nullable=True)
+    two_factor_enabled = Column(Boolean, default=False, nullable=False)
+    student_id = Column(Integer, ForeignKey("students.id", ondelete="SET NULL"), nullable=True)
 
     refresh_tokens = relationship("RefreshToken", back_populates="user", cascade="all, delete-orphan")
+    student = relationship("Student")
 
 class RefreshToken(Base):
     __tablename__ = "refresh_tokens"
@@ -261,3 +265,40 @@ class Holiday(Base):
     is_active = Column(Boolean, default=True, nullable=False)
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
 
+class StationaryItem(Base):
+    __tablename__ = "stationary_items"
+
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String(255), nullable=False)
+    description = Column(Text, nullable=True)
+    category = Column(String(100), nullable=False)
+    price = Column(Numeric(10, 2), nullable=False)
+    stock = Column(Integer, default=0, nullable=False)
+    is_active = Column(Boolean, default=True, nullable=False)
+    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+
+class StationaryOrder(Base):
+    __tablename__ = "stationary_orders"
+
+    id = Column(Integer, primary_key=True, index=True)
+    student_name = Column(String(255), nullable=True)
+    class_name = Column(String(100), nullable=True)
+    order_date = Column(DateTime, default=datetime.utcnow, nullable=False)
+    status = Column(String(50), default="Pending", nullable=False)  # Pending, Dispatched, Delivered
+    total_price = Column(Numeric(10, 2), nullable=False)
+    created_by_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+
+    created_by = relationship("User")
+    items = relationship("StationaryOrderItem", back_populates="order", cascade="all, delete-orphan")
+
+class StationaryOrderItem(Base):
+    __tablename__ = "stationary_order_items"
+
+    id = Column(Integer, primary_key=True, index=True)
+    order_id = Column(Integer, ForeignKey("stationary_orders.id", ondelete="CASCADE"), nullable=False)
+    item_id = Column(Integer, ForeignKey("stationary_items.id"), nullable=False)
+    quantity = Column(Integer, nullable=False)
+    unit_price = Column(Numeric(10, 2), nullable=False)
+
+    order = relationship("StationaryOrder", back_populates="items")
+    item = relationship("StationaryItem")
