@@ -284,6 +284,49 @@ export class ContentService {
     return this.apiService.put<any>(`/attendance/leaves/${leaveId}/status`, { status });
   }
 
+  // --- ADMIN FINANCE & BILLING ---
+  getFeeStructures(): Observable<any[]> {
+    return this.apiService.get<any[]>('/finance/fee-structures');
+  }
+
+  createFeeStructure(data: any): Observable<any> {
+    return this.apiService.post<any>('/finance/fee-structures', data);
+  }
+
+  deleteFeeStructure(id: number): Observable<any> {
+    return this.apiService.delete<any>(`/finance/fee-structures/${id}`);
+  }
+
+  getInvoices(filters?: { status?: string; program_id?: number; search?: string }): Observable<any> {
+    let url = '/finance/invoices?';
+    if (filters) {
+      if (filters.status) url += `status=${filters.status}&`;
+      if (filters.program_id) url += `program_id=${filters.program_id}&`;
+      if (filters.search) url += `search=${encodeURIComponent(filters.search)}&`;
+    }
+    return this.apiService.get<any>(url);
+  }
+
+  generateTermInvoices(data: any): Observable<any> {
+    return this.apiService.post<any>('/finance/invoices/generate', data);
+  }
+
+  recordInvoicePayment(invoiceId: number, data: any): Observable<any> {
+    return this.apiService.post<any>(`/finance/invoices/${invoiceId}/pay`, data);
+  }
+
+  issueInvoiceWaiver(invoiceId: number, data: any): Observable<any> {
+    return this.apiService.post<any>(`/finance/invoices/${invoiceId}/waiver`, data);
+  }
+
+  sendInvoiceReminder(invoiceId: number): Observable<any> {
+    return this.apiService.post<any>(`/finance/invoices/${invoiceId}/remind`, {});
+  }
+
+  sendBulkInvoiceReminders(): Observable<any> {
+    return this.apiService.post<any>('/finance/invoices/remind-all', {});
+  }
+
   // --- STUDENT ADMISSIONS ---
   getVaccinations(): Observable<any[]> {
     return this.apiService.get<any[]>('/admissions/vaccinations');

@@ -158,12 +158,31 @@ export class DashboardComponent implements OnInit {
   selectedMilestoneStudentName = '';
   studentMilestones: any[] = [];
   savingStudentMilestones = false;
+  milestoneStudentSearchQuery = '';
   
   // Printing Progress booklet
   printBookletStudent: any = null;
   printBookletMilestones: any[] = [];
   printBookletOpen = false;
   printBookletProgramTitle = '';
+  schoolManagementExpanded = false;
+  publicSettingsExpanded = false;
+  financeExpanded = false;
+
+  feeStructures: any[] = [];
+  invoices: any[] = [];
+  outstandingCollectionsTotal = 0;
+  financeLoading = false;
+  invoiceFilters = { status: '', program_id: 0, search: '' };
+  newFeeStructure = { name: '', category: 'Tuition', amount: 0, frequency: 'Termly', program_id: 0 };
+  invoiceGeneration = { term_name: 'Term 1 - 2026', program_id: 0, due_date: '' };
+  genInvoiceModalOpen = false;
+  selectedInvoice: any = null;
+  paymentModalOpen = false;
+  paymentMethod = 'Cash';
+  waiverModalOpen = false;
+  waiverAmount = 0;
+  waiverReason = '';
 
   constructor(
     private authService: AuthService,
@@ -173,6 +192,18 @@ export class DashboardComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
+    const schoolMgmtTabs = ['programs', 'holidays', 'gallery', 'inquiries', 'users'];
+    if (schoolMgmtTabs.includes(this.activeTab)) {
+      this.schoolManagementExpanded = true;
+    }
+    const publicSettingsTabs = ['settings', 'hero'];
+    if (publicSettingsTabs.includes(this.activeTab)) {
+      this.publicSettingsExpanded = true;
+    }
+    const financeMgmtTabs = ['finance-structures', 'finance-ledger'];
+    if (financeMgmtTabs.includes(this.activeTab)) {
+      this.financeExpanded = true;
+    }
     this.authService.currentUser$.subscribe(user => {
       this.currentUser = user;
     });
@@ -210,7 +241,209 @@ export class DashboardComponent implements OnInit {
       }
     } else if (tab === 'leaves') {
       this.loadLeavesAdmin();
+    } else if (tab === 'finance-structures') {
+      this.loadFeeStructures();
+    } else if (tab === 'finance-ledger') {
+      if (this.programs.length > 0 && !this.invoiceFilters.program_id) {
+        this.invoiceFilters.program_id = this.programs[0].id;
+      }
+      this.loadInvoices();
     }
+  }
+
+  toggleSchoolManagement(): void {
+    this.schoolManagementExpanded = !this.schoolManagementExpanded;
+  }
+
+  togglePublicSettings(): void {
+    this.publicSettingsExpanded = !this.publicSettingsExpanded;
+  }
+
+  toggleFinance(): void {
+    this.financeExpanded = !this.financeExpanded;
+  }
+
+  // --- ADMIN FINANCE & BILLING METHODS ---
+  loadFeeStructures(): void {
+    if (this.programs.length > 0 && !this.newFeeStructure.program_id) {
+      this.newFeeStructure.program_id = this.programs[0].id;
+    }
+    this.contentService.getFeeStructures().subscribe({
+      next: (data) => {
+        this.feeStructures = data;
+      },
+      error: (err) => {
+        this.showToast(err.error?.detail || 'Failed to load fee structures.', 'error');
+      }
+    });
+  }
+
+  createFeeStructure(): void {
+    if (!this.newFeeStructure.name.trim()) {
+      this.showToast('Please enter a structure name.', 'error');
+      return;
+    }
+    if (this.newFeeStructure.amount <= 0) {
+      this.showToast('Amount must be positive.', 'error');
+      return;
+    }
+    const payload = {
+      name: this.newFeeStructure.name,
+      category: this.newFeeStructure.category,
+      amount: Number(this.newFeeStructure.amount),
+      frequency: this.newFeeStructure.frequency,
+      program_id: this.newFeeStructure.program_id ? Number(this.newFeeStructure.program_id) : null
+    };
+    this.contentService.createFeeStructure(payload).subscribe({
+      next: () => {
+        this.showToast('Fee structure defined successfully.', 'success');
+        this.newFeeStructure.name = '';
+        this.newFeeStructure.amount = 0;
+        this.loadFeeStructures();
+      },
+      error: (err) => {
+        this.showToast(err.error?.detail || 'Failed to create fee structure.', 'error');
+      }
+    });
+  }
+
+  deleteFeeStructure(id: number): void {
+    if (!confirm('Are you sure you want to delete this fee structure?')) return;
+    this.contentService.deleteFeeStructure(id).subscribe({
+      next: () => {
+        this.showToast('Fee structure deleted successfully.', 'success');
+        this.loadFeeStructures();
+      },
+      error: (err) => {
+        this.showToast(err.error?.detail || 'Failed to delete fee structure.', 'error');
+      }
+    });
+  }
+
+  loadInvoices(): void {
+    this.financeLoading = true;
+    const params = {
+      status: this.invoiceFilters.status || undefined,
+      program_id: this.invoiceFilters.program_id ? Number(this.invoiceFilters.program_id) : undefined,
+      search: this.invoiceFilters.search || undefined
+    };
+    this.contentService.getInvoices(params).subscribe({
+      next: (data) => {
+        this.invoices = data.invoices;
+        this.outstandingCollectionsTotal = data.outstanding_total;
+        this.financeLoading = false;
+      },
+      error: (err) => {
+        this.financeLoading = false;
+        this.showToast(err.error?.detail || 'Failed to load invoices.', 'error');
+      }
+    });
+  }
+
+  openGenInvoiceModal(): void {
+    if (this.programs.length > 0) {
+      this.invoiceGeneration.program_id = this.programs[0].id;
+    }
+    const d = new Date();
+    d.setMonth(d.getMonth() + 1);
+    this.invoiceGeneration.due_date = d.toISOString().split('T')[0];
+    this.genInvoiceModalOpen = true;
+  }
+
+  generateTermInvoices(): void {
+    if (!this.invoiceGeneration.term_name.trim() || !this.invoiceGeneration.due_date) {
+      this.showToast('Please provide a term name and due date.', 'error');
+      return;
+    }
+    const payload = {
+      term_name: this.invoiceGeneration.term_name,
+      program_id: this.invoiceGeneration.program_id ? Number(this.invoiceGeneration.program_id) : null,
+      due_date: this.invoiceGeneration.due_date
+    };
+    this.contentService.generateTermInvoices(payload).subscribe({
+      next: (res) => {
+        this.showToast(res.message, 'success');
+        this.genInvoiceModalOpen = false;
+        this.loadInvoices();
+      },
+      error: (err) => {
+        this.showToast(err.error?.detail || 'Failed to generate term invoices.', 'error');
+      }
+    });
+  }
+
+  openRecordPaymentModal(invoice: any): void {
+    this.selectedInvoice = invoice;
+    this.paymentMethod = 'Cash';
+    this.paymentModalOpen = true;
+  }
+
+  recordInvoicePayment(): void {
+    if (!this.selectedInvoice) return;
+    this.contentService.recordInvoicePayment(this.selectedInvoice.id, { payment_method: this.paymentMethod }).subscribe({
+      next: (res) => {
+        this.showToast(res.message || 'Payment recorded successfully.', 'success');
+        this.paymentModalOpen = false;
+        this.selectedInvoice = null;
+        this.loadInvoices();
+      },
+      error: (err) => {
+        this.showToast(err.error?.detail || 'Failed to record payment.', 'error');
+      }
+    });
+  }
+
+  openWaiverModal(invoice: any): void {
+    this.selectedInvoice = invoice;
+    this.waiverAmount = 0;
+    this.waiverReason = '';
+    this.waiverModalOpen = true;
+  }
+
+  issueInvoiceWaiver(): void {
+    if (!this.selectedInvoice) return;
+    if (this.waiverAmount <= 0 || this.waiverAmount > this.selectedInvoice.amount) {
+      this.showToast('Waiver amount must be greater than 0 and less than or equal to the due amount.', 'error');
+      return;
+    }
+    if (!this.waiverReason.trim()) {
+      this.showToast('Please state a reason for issuing the waiver.', 'error');
+      return;
+    }
+    this.contentService.issueInvoiceWaiver(this.selectedInvoice.id, { waiver_amount: this.waiverAmount, reason: this.waiverReason }).subscribe({
+      next: (res) => {
+        this.showToast(res.message || 'Waiver recorded.', 'success');
+        this.waiverModalOpen = false;
+        this.selectedInvoice = null;
+        this.loadInvoices();
+      },
+      error: (err) => {
+        this.showToast(err.error?.detail || 'Failed to record waiver.', 'error');
+      }
+    });
+  }
+
+  sendInvoiceReminder(id: number): void {
+    this.contentService.sendInvoiceReminder(id).subscribe({
+      next: (res) => {
+        this.showToast(res.message, 'success');
+      },
+      error: (err) => {
+        this.showToast(err.error?.detail || 'Failed to send reminder.', 'error');
+      }
+    });
+  }
+
+  sendBulkInvoiceReminders(): void {
+    if (!confirm('Are you sure you want to send overdue email reminders to all parents with unpaid invoices?')) return;
+    this.contentService.sendBulkInvoiceReminders().subscribe({
+      next: (res) => {
+        this.showToast(res.message, 'success');
+      },
+      error: (err) => {
+        this.showToast(err.error?.detail || 'Failed to send bulk reminders.', 'error');
+      }
+    });
   }
 
   // --- ADMIN LEAVE APPROVALS ---
@@ -309,9 +542,30 @@ export class DashboardComponent implements OnInit {
     });
   }
 
+  get filteredMilestoneStudents(): any[] {
+    if (!this.milestoneStudentSearchQuery.trim()) {
+      return this.milestoneStudents;
+    }
+    const q = this.milestoneStudentSearchQuery.toLowerCase().trim();
+    return this.milestoneStudents.filter(s => s.name && s.name.toLowerCase().includes(q));
+  }
+
+  onStudentSearchQueryChange(): void {
+    const filtered = this.filteredMilestoneStudents;
+    if (filtered.length > 0) {
+      const exists = filtered.some(s => s.id === Number(this.selectedMilestoneStudentId));
+      if (!exists) {
+        this.selectedMilestoneStudentId = filtered[0].id;
+        this.selectedMilestoneStudentName = filtered[0].name;
+        this.loadStudentMilestones();
+      }
+    }
+  }
+
   // Student progress marking
   loadMilestoneStudents(): void {
     if (!this.milestoneStudentProgramId) return;
+    this.milestoneStudentSearchQuery = '';
     this.contentService.getStudents(this.milestoneStudentProgramId).subscribe({
       next: (data) => {
         this.milestoneStudents = data;

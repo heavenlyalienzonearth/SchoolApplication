@@ -231,11 +231,13 @@ def get_or_init_student_milestones(
         raise HTTPException(status_code=404, detail="Student not found.")
         
     milestones = db.query(models.ParentMilestone).filter(models.ParentMilestone.student_id == student_id).all()
+    templates = db.query(models.MilestoneTemplate).filter(models.MilestoneTemplate.program_id == student.program_id).all()
     
-    # Auto-initialize milestones from templates if empty
-    if not milestones:
-        templates = db.query(models.MilestoneTemplate).filter(models.MilestoneTemplate.program_id == student.program_id).all()
-        for t in templates:
+    existing_names = {m.milestone_name for m in milestones}
+    new_added = False
+    
+    for t in templates:
+        if t.milestone_name not in existing_names:
             m = models.ParentMilestone(
                 student_id=student_id,
                 milestone_name=t.milestone_name,
@@ -243,6 +245,9 @@ def get_or_init_student_milestones(
                 status="Not Started"
             )
             db.add(m)
+            new_added = True
+            
+    if new_added:
         db.commit()
         milestones = db.query(models.ParentMilestone).filter(models.ParentMilestone.student_id == student_id).all()
         

@@ -18,23 +18,43 @@
         <li [class.active]="activeTab === 'analytics'" (click)="setTab('analytics')">
           <span class="icon">📊</span> Analytics Overview
         </li>
-        <li [class.active]="activeTab === 'settings'" (click)="setTab('settings')">
-          <span class="icon">⚙️</span> Site Settings
+        <!-- Public Settings Group -->
+        <li class="sidebar-header" (click)="togglePublicSettings()" style="cursor: pointer; display: flex; justify-content: space-between; align-items: center; width: 100%; box-sizing: border-box;">
+          <span>🌐 Public Settings</span>
+          <span style="font-size: 0.7rem; color: #94a3b8; font-weight: 800; margin-left: auto;">{{ publicSettingsExpanded ? '▼' : '▶' }}</span>
         </li>
-        <li [class.active]="activeTab === 'hero'" (click)="setTab('hero')">
-          <span class="icon">🖼️</span> Hero Banner
+        <ng-container *ngIf="publicSettingsExpanded">
+          <li [class.active]="activeTab === 'settings'" (click)="setTab('settings')" class="submenu-item">
+            <span class="icon">⚙️</span> Site Settings
+          </li>
+          <li [class.active]="activeTab === 'hero'" (click)="setTab('hero')" class="submenu-item">
+            <span class="icon">🖼️</span> Hero Banner
+          </li>
+        </ng-container>
+        <!-- School Management Group -->
+        <li class="sidebar-header" (click)="toggleSchoolManagement()" style="cursor: pointer; display: flex; justify-content: space-between; align-items: center; width: 100%; box-sizing: border-box;">
+          <span>🏫 School Management</span>
+          <span style="font-size: 0.7rem; color: #94a3b8; font-weight: 800; margin-left: auto;">{{ schoolManagementExpanded ? '▼' : '▶' }}</span>
         </li>
-        <li [class.active]="activeTab === 'programs'" (click)="setTab('programs')">
-          <span class="icon">🎓</span> School Programs
-        </li>
+        <ng-container *ngIf="schoolManagementExpanded">
+          <li [class.active]="activeTab === 'programs'" (click)="setTab('programs')" class="submenu-item">
+            <span class="icon">🎓</span> School Programs
+          </li>
+          <li [class.active]="activeTab === 'holidays'" (click)="setTab('holidays')" class="submenu-item">
+            <span class="icon">📅</span> School Holidays
+          </li>
+          <li [class.active]="activeTab === 'gallery'" (click)="setTab('gallery')" class="submenu-item">
+            <span class="icon">📷</span> Gallery Items
+          </li>
+          <li [class.active]="activeTab === 'inquiries'" (click)="setTab('inquiries')" class="submenu-item">
+            <span class="icon">📩</span> Form Inquiries
+          </li>
+          <li [class.active]="activeTab === 'users'" (click)="setTab('users')" class="submenu-item" *ngIf="currentUser?.role?.toUpperCase() === 'ADMIN'">
+            <span class="icon">👥</span> User Management
+          </li>
+        </ng-container>
         <li [class.active]="activeTab === 'testimonials'" (click)="setTab('testimonials')">
           <span class="icon">💬</span> Parent Reviews
-        </li>
-        <li [class.active]="activeTab === 'gallery'" (click)="setTab('gallery')">
-          <span class="icon">📷</span> Gallery Items
-        </li>
-        <li [class.active]="activeTab === 'inquiries'" (click)="setTab('inquiries')">
-          <span class="icon">📩</span> Form Inquiries
         </li>
         <li [class.active]="activeTab === 'attendance'" (click)="setTab('attendance')">
           <span class="icon">📅</span> Kid Attendance
@@ -42,12 +62,19 @@
         <li [class.active]="activeTab === 'admissions'" (click)="setTab('admissions')">
           <span class="icon">🏫</span> Student Admissions
         </li>
-        <li [class.active]="activeTab === 'holidays'" (click)="setTab('holidays')">
-          <span class="icon">📅</span> School Holidays
+        <!-- Finance & Billing Group -->
+        <li class="sidebar-header" (click)="toggleFinance()" *ngIf="currentUser?.role?.toUpperCase() === 'ADMIN' || currentUser?.role?.toUpperCase() === 'PRINCIPAL'" style="cursor: pointer; display: flex; justify-content: space-between; align-items: center; width: 100%; box-sizing: border-box;">
+          <span>💰 Finance & Billing</span>
+          <span style="font-size: 0.7rem; color: #94a3b8; font-weight: 800; margin-left: auto;">{{ financeExpanded ? '▼' : '▶' }}</span>
         </li>
-        <li [class.active]="activeTab === 'users'" (click)="setTab('users')" *ngIf="currentUser?.role?.toUpperCase() === 'ADMIN'">
-          <span class="icon">👥</span> User Management
-        </li>
+        <ng-container *ngIf="financeExpanded && (currentUser?.role?.toUpperCase() === 'ADMIN' || currentUser?.role?.toUpperCase() === 'PRINCIPAL')">
+          <li [class.active]="activeTab === 'finance-structures'" (click)="setTab('finance-structures')" class="submenu-item">
+            <span class="icon">⚙️</span> Fee Structures
+          </li>
+          <li [class.active]="activeTab === 'finance-ledger'" (click)="setTab('finance-ledger')" class="submenu-item">
+            <span class="icon">📊</span> Invoices & Ledger
+          </li>
+        </ng-container>
         <li [class.active]="activeTab === 'stationary'" (click)="setTab('stationary')">
           <span class="icon">✏️</span> Stationery Center
         </li>
@@ -80,6 +107,8 @@
           <option value="stationary">✏️ Stationery Center</option>
           <option value="milestones" *ngIf="currentUser?.role?.toUpperCase() !== 'PARENT'">🎯 Milestone Config</option>
           <option value="leaves" *ngIf="currentUser?.role?.toUpperCase() === 'ADMIN' || currentUser?.role?.toUpperCase() === 'PRINCIPAL'">📅 Leave Approvals</option>
+          <option value="finance-structures" *ngIf="currentUser?.role?.toUpperCase() === 'ADMIN' || currentUser?.role?.toUpperCase() === 'PRINCIPAL'">⚙️ Fee Structures</option>
+          <option value="finance-ledger" *ngIf="currentUser?.role?.toUpperCase() === 'ADMIN' || currentUser?.role?.toUpperCase() === 'PRINCIPAL'">📊 Invoices & Ledger</option>
         </select>
       </div>
       
@@ -1711,9 +1740,16 @@
               </div>
 
               <div class="form-group" style="margin-top: 15px;">
-                <label>Student Name</label>
+                <label style="display: flex; justify-content: space-between; align-items: center;">
+                  <span>Student Name</span>
+                  <span style="font-size: 0.75rem; color: #94a3b8;" *ngIf="milestoneStudentSearchQuery">Filtered</span>
+                </label>
+                <!-- Search Input Field -->
+                <input type="text" [(ngModel)]="milestoneStudentSearchQuery" (ngModelChange)="onStudentSearchQueryChange()" class="form-control" placeholder="🔍 Search by name..." style="margin-bottom: 8px; font-size: 0.85rem;" />
+                
                 <select [(ngModel)]="selectedMilestoneStudentId" (change)="onMilestoneStudentChange()" class="form-control">
-                  <option *ngFor="let std of milestoneStudents" [value]="std.id">{{ std.name }}</option>
+                  <option *ngFor="let std of filteredMilestoneStudents" [value]="std.id">{{ std.name }}</option>
+                  <option *ngIf="filteredMilestoneStudents.length === 0" disabled>No students match search</option>
                 </select>
               </div>
               
@@ -1835,6 +1871,229 @@
                 <tr *ngIf="adminLeaves.length === 0">
                   <td colspan="7" style="text-align: center; color: #94a3b8; font-style: italic; padding: 40px;">
                     No student leave requests found.
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- --- FEE STRUCTURES SECTION --- -->
+      <section *ngIf="activeTab === 'finance-structures'" class="tab-section animate-fade-in">
+        <div class="section-header">
+          <h2>⚙️ School Fee Structures</h2>
+          <p>Define standard fees such as Tuition, Transport, and Uniforms. These will be used to automatically generate invoices.</p>
+        </div>
+
+        <div class="row-flex" style="display: grid; grid-template-columns: 1fr 2fr; gap: 30px; margin-top: 20px;">
+          <!-- Left side: Define Structure -->
+          <div class="dash-card">
+            <h3>Define Fee Structure</h3>
+            <div class="form-group" style="margin-top: 15px;">
+              <label>Fee Name</label>
+              <input type="text" [(ngModel)]="newFeeStructure.name" class="form-control" placeholder="e.g. Tuition Fee (Term 1)" />
+            </div>
+
+            <div class="form-group" style="margin-top: 15px;">
+              <label>Category</label>
+              <select [(ngModel)]="newFeeStructure.category" class="form-control">
+                <option value="Tuition">🧠 Tuition</option>
+                <option value="Transport">🚌 Transport</option>
+                <option value="Uniforms">👕 Uniforms</option>
+                <option value="Other">🎒 Other</option>
+              </select>
+            </div>
+
+            <div class="form-group" style="margin-top: 15px;">
+              <label>Amount (INR)</label>
+              <input type="number" [(ngModel)]="newFeeStructure.amount" class="form-control" placeholder="Amount in Rs." />
+            </div>
+
+            <div class="form-group" style="margin-top: 15px;">
+              <label>Billing Frequency</label>
+              <select [(ngModel)]="newFeeStructure.frequency" class="form-control">
+                <option value="Termly">Termly</option>
+                <option value="Monthly">Monthly</option>
+                <option value="One-time">One-time</option>
+              </select>
+            </div>
+
+            <div class="form-group" style="margin-top: 15px;">
+              <label>Applicable Program / Class</label>
+              <select [(ngModel)]="newFeeStructure.program_id" class="form-control">
+                <option [value]="0">All Programs / General</option>
+                <option *ngFor="let prog of programs" [value]="prog.id">{{ prog.title }}</option>
+              </select>
+            </div>
+
+            <button type="button" (click)="createFeeStructure()" class="btn btn-primary" style="margin-top: 20px; width: 100%; border: none; font-weight: 700; color: white; background-color: var(--secondary);">
+              ➕ Define Fee Template
+            </button>
+          </div>
+
+          <!-- Right side: Structures List -->
+          <div class="dash-card">
+            <h3>Configured Fee Templates</h3>
+            <div style="margin-top: 15px; overflow-x: auto;">
+              <table class="table">
+                <thead>
+                  <tr>
+                    <th>Fee Template</th>
+                    <th>Category</th>
+                    <th>Class Scope</th>
+                    <th>Amount</th>
+                    <th>Frequency</th>
+                    <th style="text-align: right;">Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr *ngFor="let fee of feeStructures">
+                    <td><strong>{{ fee.name }}</strong></td>
+                    <td>
+                      <span class="badge" [style.background-color]="fee.category === 'Tuition' ? '#EFF6FF' : fee.category === 'Transport' ? '#FEF3C7' : fee.category === 'Uniforms' ? '#ECFDF5' : '#F3F4F6'" [style.color]="fee.category === 'Tuition' ? '#1E40AF' : fee.category === 'Transport' ? '#B45309' : fee.category === 'Uniforms' ? '#065F46' : '#374151'" style="font-weight: 700; padding: 4px 8px; border-radius: 4px;">
+                        {{ fee.category }}
+                      </span>
+                    </td>
+                    <td>{{ fee.program_title }}</td>
+                    <td><strong>₹{{ fee.amount | number:'1.2-2' }}</strong></td>
+                    <td>{{ fee.frequency }}</td>
+                    <td style="text-align: right;">
+                      <button type="button" (click)="deleteFeeStructure(fee.id)" class="btn btn-sm btn-outline" style="border-color: #EF4444; color: #EF4444; background: none; font-weight: 700; border-radius: 4px;">
+                        Delete
+                      </button>
+                    </td>
+                  </tr>
+                  <tr *ngIf="feeStructures.length === 0">
+                    <td colspan="6" style="text-align: center; color: #94a3b8; font-style: italic; padding: 40px;">
+                      No fee structures configured. Add one on the left panel!
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- --- INVOICES & LEDGER SECTION --- -->
+      <section *ngIf="activeTab === 'finance-ledger'" class="tab-section animate-fade-in">
+        <div class="section-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px;">
+          <div>
+            <h2>📊 Student Invoices & Ledger Console</h2>
+            <p>Track collections, record cash/bank receipts, issue waivers, and manage parent outstanding balances.</p>
+          </div>
+          <div style="display: flex; gap: 10px;">
+            <button type="button" (click)="openGenInvoiceModal()" class="btn btn-primary" style="background-color: var(--secondary); border: none; font-weight: 700; color: white;">
+              ⚙️ Auto-Generate Invoices
+            </button>
+            <button type="button" (click)="sendBulkInvoiceReminders()" class="btn btn-outline" style="border-color: #EF4444; color: #EF4444; font-weight: 700; background: none;">
+              📧 Send Bulk Reminders
+            </button>
+          </div>
+        </div>
+
+        <!-- Collections Summary Stats Card -->
+        <div style="display: grid; grid-template-columns: 1fr 2fr; gap: 20px; margin-top: 20px;">
+          <div class="dash-card" style="background: linear-gradient(135deg, #1e293b, #0f172a); color: white; display: flex; flex-direction: column; justify-content: center; padding: 25px;">
+            <span style="font-size: 0.85rem; font-weight: 700; text-transform: uppercase; color: #94a3b8; letter-spacing: 0.5px;">Outstanding Collections (Filtered Scope)</span>
+            <h2 style="font-size: 2rem; font-weight: 800; color: #f59e0b; margin: 10px 0 5px 0;">₹{{ outstandingCollectionsTotal | number:'1.2-2' }}</h2>
+            <p style="margin: 0; font-size: 0.75rem; color: #64748b; font-style: italic;">Based on selected program filter below.</p>
+          </div>
+
+          <!-- Filters panel -->
+          <div class="dash-card">
+            <h3>Ledger Filters</h3>
+            <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 15px; margin-top: 15px;">
+              <div class="form-group">
+                <label>Program / Class</label>
+                <select [(ngModel)]="invoiceFilters.program_id" (change)="loadInvoices()" class="form-control">
+                  <option [value]="0">All Classes</option>
+                  <option *ngFor="let prog of programs" [value]="prog.id">{{ prog.title }}</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label>Payment Status</label>
+                <select [(ngModel)]="invoiceFilters.status" (change)="loadInvoices()" class="form-control">
+                  <option value="">All Statuses</option>
+                  <option value="Paid">Paid</option>
+                  <option value="Unpaid">Unpaid</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label>Student Search</label>
+                <input type="text" [(ngModel)]="invoiceFilters.search" (ngModelChange)="loadInvoices()" class="form-control" placeholder="Search student name..." />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Ledger Invoices Grid/Table -->
+        <div class="dash-card" style="margin-top: 20px;">
+          <div *ngIf="financeLoading" style="text-align: center; padding: 40px 0; color: #64748b;">
+            <p>Loading ledger records...</p>
+          </div>
+
+          <div *ngIf="!financeLoading" style="overflow-x: auto;">
+            <table class="table">
+              <thead>
+                <tr>
+                  <th>Student Name</th>
+                  <th>Invoice Item</th>
+                  <th>Net Due</th>
+                  <th>Waiver</th>
+                  <th>Due Date</th>
+                  <th>Status</th>
+                  <th style="text-align: right;">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let inv of invoices">
+                  <td>
+                    <strong>{{ inv.student_name }}</strong>
+                    <span style="display: block; font-size: 0.75rem; color: #64748b;">{{ inv.program_title }}</span>
+                  </td>
+                  <td>
+                    {{ inv.title }}
+                    <span style="display: block; font-size: 0.7rem; color: #94a3b8;" *ngIf="inv.notes">{{ inv.notes }}</span>
+                  </td>
+                  <td>
+                    <strong>₹{{ inv.amount | number:'1.2-2' }}</strong>
+                  </td>
+                  <td>
+                    <span style="color: #10B981; font-weight: 700;" *ngIf="inv.waiver_amount > 0">-₹{{ inv.waiver_amount | number:'1.2-2' }}</span>
+                    <span style="color: #cbd5e1;" *ngIf="inv.waiver_amount === 0">₹0.00</span>
+                  </td>
+                  <td>{{ inv.due_date }}</td>
+                  <td>
+                    <span class="badge" [ngClass]="{
+                      'badge-present': inv.status === 'Paid',
+                      'badge-absent': inv.status === 'Unpaid'
+                    }" style="font-weight: 700; padding: 4px 8px; border-radius: 4px;">
+                      {{ inv.status }}
+                    </span>
+                  </td>
+                  <td style="text-align: right;">
+                    <div style="display: flex; gap: 6px; justify-content: flex-end;" *ngIf="inv.status === 'Unpaid'">
+                      <button type="button" (click)="openRecordPaymentModal(inv)" class="btn btn-sm btn-primary" style="background-color: #10b981; border: none; color: white; font-weight: 700; border-radius: 4px; font-size: 0.75rem; padding: 3px 8px;">
+                        💵 Record Pay
+                      </button>
+                      <button type="button" (click)="openWaiverModal(inv)" class="btn btn-sm btn-outline" style="border-color: #3b82f6; color: #3b82f6; background: none; font-weight: 700; border-radius: 4px; font-size: 0.75rem; padding: 3px 8px;">
+                        ✂️ Waiver
+                      </button>
+                      <button type="button" (click)="sendInvoiceReminder(inv.id)" class="btn btn-sm btn-outline" style="border-color: #ef4444; color: #ef4444; background: none; font-weight: 700; border-radius: 4px; font-size: 0.75rem; padding: 3px 8px;">
+                        📧 Remind
+                      </button>
+                    </div>
+                    <div *ngIf="inv.status === 'Paid'" style="font-size: 0.75rem; font-weight: 700; text-align: right;">
+                      <span style="color: #10b981; display: block;">Receipt: {{ inv.receipt_no }}</span>
+                      <span style="color: #64748b; font-size: 0.7rem; font-weight: 600;">Method: {{ inv.payment_method }}</span>
+                    </div>
+                  </td>
+                </tr>
+                <tr *ngIf="invoices.length === 0">
+                  <td colspan="7" style="text-align: center; color: #94a3b8; font-style: italic; padding: 40px;">
+                    No invoices generated or found for filters.
                   </td>
                 </tr>
               </tbody>
@@ -2524,6 +2783,114 @@
       <button type="button" (click)="closePrintBooklet()" class="btn btn-outline btn-sm">❌ Close</button>
       <button type="button" (click)="printCertificate('studentBookletPrint')" class="btn btn-primary btn-sm" style="background-color: var(--secondary); border: none; color: white; font-weight: 700;">
         🖨️ Print Progress Booklet
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- AUTO-GENERATE TERM INVOICES MODAL -->
+<div class="dash-modal" *ngIf="genInvoiceModalOpen">
+  <div class="modal-content" style="max-width: 500px;">
+    <div class="modal-header">
+      <h3>⚙️ Auto-Generate Term Invoices</h3>
+      <button type="button" (click)="genInvoiceModalOpen = false" class="btn-close">×</button>
+    </div>
+    <div class="modal-body">
+      <p style="font-size: 0.85rem; color: #64748b; margin-bottom: 20px;">
+        This will look up all active students and create term billing records matching defined active fee structures.
+      </p>
+      
+      <div class="form-group">
+        <label>Term Name / Description</label>
+        <input type="text" [(ngModel)]="invoiceGeneration.term_name" class="form-control" placeholder="e.g. Term 1 - 2026" />
+      </div>
+
+      <div class="form-group" style="margin-top: 15px;">
+        <label>Program / Class level</label>
+        <select [(ngModel)]="invoiceGeneration.program_id" class="form-control">
+          <option [value]="0">All Programs</option>
+          <option *ngFor="let prog of programs" [value]="prog.id">{{ prog.title }}</option>
+        </select>
+      </div>
+
+      <div class="form-group" style="margin-top: 15px;">
+        <label>Due Date</label>
+        <input type="date" [(ngModel)]="invoiceGeneration.due_date" class="form-control" />
+      </div>
+    </div>
+    <div class="modal-footer" style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px; border-top: 1px solid #f1f5f9; padding-top: 15px;">
+      <button type="button" (click)="genInvoiceModalOpen = false" class="btn btn-outline btn-sm">❌ Cancel</button>
+      <button type="button" (click)="generateTermInvoices()" class="btn btn-primary btn-sm" style="background-color: var(--secondary); border: none; color: white; font-weight: 700;">
+        ⚡ Generate Invoices
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- RECORD MANUAL PAYMENT MODAL -->
+<div class="dash-modal" *ngIf="paymentModalOpen">
+  <div class="modal-content" style="max-width: 450px;">
+    <div class="modal-header">
+      <h3>💵 Record Invoice Payment</h3>
+      <button type="button" (click)="paymentModalOpen = false; selectedInvoice = null" class="btn-close">×</button>
+    </div>
+    <div class="modal-body">
+      <div *ngIf="selectedInvoice">
+        <p style="margin: 0 0 15px 0; font-size: 0.9rem;">
+          Recording payment of <strong>₹{{ selectedInvoice.amount | number:'1.2-2' }}</strong> for 
+          <strong>{{ selectedInvoice.student_name }}</strong> ({{ selectedInvoice.title }}).
+        </p>
+        
+        <div class="form-group">
+          <label>Payment Method</label>
+          <select [(ngModel)]="paymentMethod" class="form-control">
+            <option value="Cash">💵 Cash</option>
+            <option value="Bank Transfer">🏛️ Bank Transfer</option>
+            <option value="Card">💳 Credit / Debit Card</option>
+            <option value="Cheque">✍️ Cheque</option>
+          </select>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer" style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px; border-top: 1px solid #f1f5f9; padding-top: 15px;">
+      <button type="button" (click)="paymentModalOpen = false; selectedInvoice = null" class="btn btn-outline btn-sm">❌ Cancel</button>
+      <button type="button" (click)="recordInvoicePayment()" class="btn btn-primary btn-sm" style="background-color: #10b981; border: none; color: white; font-weight: 700;">
+        ✅ Confirm & Paid
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ISSUE WAIVER MODAL -->
+<div class="dash-modal" *ngIf="waiverModalOpen">
+  <div class="modal-content" style="max-width: 450px;">
+    <div class="modal-header">
+      <h3>✂️ Issue Fee Waiver / Discount</h3>
+      <button type="button" (click)="waiverModalOpen = false; selectedInvoice = null" class="btn-close">×</button>
+    </div>
+    <div class="modal-body">
+      <div *ngIf="selectedInvoice">
+        <p style="margin: 0 0 15px 0; font-size: 0.9rem;">
+          Issue discount/waiver on invoice <strong>{{ selectedInvoice.title }}</strong> for student 
+          <strong>{{ selectedInvoice.student_name }}</strong>. 
+          Current outstanding due: <strong>₹{{ selectedInvoice.amount | number:'1.2-2' }}</strong>.
+        </p>
+        
+        <div class="form-group">
+          <label>Waiver Amount (INR)</label>
+          <input type="number" [(ngModel)]="waiverAmount" class="form-control" placeholder="Amount to discount..." />
+        </div>
+
+        <div class="form-group" style="margin-top: 15px;">
+          <label>Reason / Scholarship Description</label>
+          <input type="text" [(ngModel)]="waiverReason" class="form-control" placeholder="e.g. Merit Scholarship 10%" />
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer" style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px; border-top: 1px solid #f1f5f9; padding-top: 15px;">
+      <button type="button" (click)="waiverModalOpen = false; selectedInvoice = null" class="btn btn-outline btn-sm">❌ Cancel</button>
+      <button type="button" (click)="issueInvoiceWaiver()" class="btn btn-primary btn-sm" style="background-color: #3b82f6; border: none; color: white; font-weight: 700;">
+        ✂️ Record Waiver
       </button>
     </div>
   </div>

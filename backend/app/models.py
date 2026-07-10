@@ -315,9 +315,25 @@ class ParentBill(Base):
     paid_date = Column(DateTime, nullable=True)
     payment_method = Column(String(50), nullable=True)
     receipt_no = Column(String(100), nullable=True)
+    waiver_amount = Column(Numeric(10, 2), default=0.00, nullable=False)
+    notes = Column(String(500), nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
 
     student = relationship("Student")
+
+class FeeStructure(Base):
+    __tablename__ = "fee_structures"
+
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String(255), nullable=False)
+    category = Column(String(50), nullable=False)  # Tuition, Transport, Uniforms, Other
+    amount = Column(Numeric(10, 2), nullable=False)
+    frequency = Column(String(50), default="Termly", nullable=False)
+    program_id = Column(Integer, ForeignKey("programs.id", ondelete="SET NULL"), nullable=True)
+    is_active = Column(Boolean, default=True, nullable=False)
+    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+
+    program = relationship("Program")
 
 class ParentMilestone(Base):
     __tablename__ = "parent_milestones"
