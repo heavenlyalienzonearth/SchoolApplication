@@ -124,3 +124,259 @@ def get_parent_dashboard(
         "issued_items": issued_items,
         "stationary_orders": orders_list
     }
+
+from pydantic import BaseModel
+import random
+from datetime import datetime, timedelta
+from fastapi.responses import HTMLResponse
+
+class LeaveCreateSchema(BaseModel):
+    start_date: str
+    end_date: str
+    reason: str
+
+class PaymentSchema(BaseModel):
+    payment_method: str
+
+@router.get("/billing")
+def get_parent_billing(
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user)
+):
+    if not current_user.student_id:
+        raise HTTPException(status_code=404, detail="No student linked to this account.")
+        
+    bills = db.query(models.ParentBill).filter(models.ParentBill.student_id == current_user.student_id).all()
+    total_due = sum(b.amount for b in bills if b.status == "Unpaid")
+    
+    bills_list = []
+    for b in bills:
+        bills_list.append({
+            "id": b.id,
+            "title": b.title,
+            "amount": float(b.amount),
+            "due_date": b.due_date,
+            "status": b.status,
+            "paid_date": b.paid_date.isoformat() if b.paid_date else None,
+            "payment_method": b.payment_method,
+            "receipt_no": b.receipt_no
+        })
+        
+    return {
+        "bills": bills_list,
+        "total_due": float(total_due)
+    }
+
+@router.post("/billing/{bill_id}/pay")
+def pay_parent_bill(
+    bill_id: int,
+    req: PaymentSchema,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user)
+):
+    if not current_user.student_id:
+        raise HTTPException(status_code=404, detail="No student linked to this account.")
+        
+    bill = db.query(models.ParentBill).filter(
+        models.ParentBill.id == bill_id,
+        models.ParentBill.student_id == current_user.student_id
+    ).first()
+    
+    if not bill:
+        raise HTTPException(status_code=404, detail="Invoice not found.")
+        
+    if bill.status == "Paid":
+        raise HTTPException(status_code=400, detail="Invoice is already paid.")
+        
+    bill.status = "Paid"
+    bill.paid_date = datetime.utcnow()
+    bill.payment_method = req.payment_method
+    bill.receipt_no = f"REC-2026-{random.randint(1000, 9999)}"
+    
+    db.commit()
+    db.refresh(bill)
+    
+    return {
+        "message": "Payment successful!",
+        "bill": {
+            "id": bill.id,
+            "title": bill.title,
+            "amount": float(bill.amount),
+            "status": bill.status,
+            "receipt_no": bill.receipt_no
+        }
+    }
+
+@router.get("/billing/{bill_id}/receipt", response_class=HTMLResponse)
+def get_bill_receipt_html(
+    bill_id: int,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user)
+):
+    if not current_user.student_id:
+        raise HTTPException(status_code=404, detail="No student linked to this account.")
+        
+    bill = db.query(models.ParentBill).filter(
+        models.ParentBill.id == bill_id,
+        models.ParentBill.student_id == current_user.student_id
+    ).first()
+    
+    if not bill or bill.status != "Paid":
+        raise HTTPException(status_code=404, detail="Receipt not found or invoice is unpaid.")
+        
+    student = db.query(models.Student).filter(models.Student.id == current_user.student_id).first()
+    
+    # Generate receipt page
+    html_content = f"""
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <title>Fee Receipt - {bill.receipt_no}</title>
+        <style>
+            body {{ font-family: 'Outfit', sans-serif; padding: 40px; color: #1E293B; max-width: 600px; margin: 0 auto; border: 1px solid #E2E8F0; border-radius: 8px; }}
+            .header {{ text-align: center; border-bottom: 2px solid #EE5A24; padding-bottom: 20px; }}
+            .header h1 {{ color: #EE5A24; margin: 0; font-size: 24px; }}
+            .header p {{ color: #64748B; margin: 5px 0 0 0; font-size: 14px; }}
+            .details-table {{ width: 100%; border-collapse: collapse; margin-top: 30px; }}
+            .details-table td {{ padding: 10px; border-bottom: 1px solid #F1F5F9; font-size: 14px; }}
+            .label {{ font-weight: 700; color: #475569; width: 40%; }}
+            .total-row {{ font-weight: 800; font-size: 18px; color: #EE5A24; }}
+            .footer {{ text-align: center; margin-top: 40px; font-size: 12px; color: #94A3B8; border-top: 1px dashed #E2E8F0; padding-top: 20px; }}
+            .print-btn {{ display: block; width: 100%; text-align: center; background: #EE5A24; color: white; padding: 12px; border-radius: 6px; text-decoration: none; font-weight: 700; margin-top: 30px; cursor: pointer; border: none; }}
+            @media print {{
+                .print-btn {{ display: none; }}
+                body {{ border: none; padding: 0; }}
+            }}
+        </style>
+    </head>
+    <body>
+        <div class="header">
+            <h1>KANGAROO KIDS PRE-SCHOOL</h1>
+            <p>108, Outer Ring Road, Bangalore, Karnataka</p>
+            <p><strong>OFFICIAL TRANSACTION RECEIPT</strong></p>
+        </div>
+        
+        <table class="details-table">
+            <tr>
+                <td class="label">Receipt Number</td>
+                <td><strong>{bill.receipt_no}</strong></td>
+            </tr>
+            <tr>
+                <td class="label">Payment Date</td>
+                <td>{bill.paid_date.strftime("%Y-%m-%d %H:%M:%S") if bill.paid_date else "--"}</td>
+            </tr>
+            <tr>
+                <td class="label">Student Name</td>
+                <td>{student.name if student else "N/A"}</td>
+            </tr>
+            <tr>
+                <td class="label">Parent Name</td>
+                <td>{current_user.full_name}</td>
+            </tr>
+            <tr>
+                <td class="label">Payment Method</td>
+                <td>{bill.payment_method}</td>
+            </tr>
+            <tr>
+                <td class="label">Item Description</td>
+                <td>{bill.title}</td>
+            </tr>
+            <tr class="total-row">
+                <td class="label">Total Paid</td>
+                <td>₹{bill.amount}</td>
+            </tr>
+        </table>
+        
+        <button class="print-btn" onclick="window.print()">🖨️ Print Receipt</button>
+        
+        <div class="footer">
+            Thank you for your payment. This is a computer-generated invoice and requires no physical signature.
+        </div>
+    </body>
+    </html>
+    """
+    return html_content
+
+@router.get("/milestones")
+def get_parent_milestones(
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user)
+):
+    if not current_user.student_id:
+        raise HTTPException(status_code=404, detail="No student linked to this account.")
+        
+    milestones = db.query(models.ParentMilestone).filter(models.ParentMilestone.student_id == current_user.student_id).all()
+    
+    grouped = {
+        "Cognitive": [],
+        "Physical": [],
+        "Emotional": []
+    }
+    
+    for m in milestones:
+        cat = m.category if m.category in grouped else "Cognitive"
+        grouped[cat].append({
+            "id": m.id,
+            "milestone_name": m.milestone_name,
+            "status": m.status,
+            "completed_date": m.completed_date,
+            "teacher_comments": m.teacher_comments
+        })
+        
+    return grouped
+
+@router.get("/leaves")
+def get_parent_leaves(
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user)
+):
+    if not current_user.student_id:
+        raise HTTPException(status_code=404, detail="No student linked to this account.")
+        
+    leaves = db.query(models.LeaveRequest).filter(models.LeaveRequest.student_id == current_user.student_id).order_by(models.LeaveRequest.created_at.desc()).all()
+    
+    leaves_list = []
+    for l in leaves:
+        leaves_list.append({
+            "id": l.id,
+            "start_date": l.start_date,
+            "end_date": l.end_date,
+            "reason": l.reason,
+            "status": l.status,
+            "created_at": l.created_at.isoformat()
+        })
+        
+    return leaves_list
+
+@router.post("/leaves")
+def submit_parent_leave(
+    req: LeaveCreateSchema,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user)
+):
+    if not current_user.student_id:
+        raise HTTPException(status_code=404, detail="No student linked to this account.")
+        
+    # Create leave request
+    leave = models.LeaveRequest(
+        student_id=current_user.student_id,
+        start_date=req.start_date,
+        end_date=req.end_date,
+        reason=req.reason,
+        status="Pending"
+    )
+    db.add(leave)
+    db.commit()
+    db.refresh(leave)
+    
+    return {
+        "message": "Leave request submitted successfully. Pending approval by administrator/principal.",
+        "leave": {
+            "id": leave.id,
+            "start_date": leave.start_date,
+            "end_date": leave.end_date,
+            "reason": leave.reason,
+            "status": leave.status
+        }
+    }
+

@@ -302,3 +302,57 @@ class StationaryOrderItem(Base):
 
     order = relationship("StationaryOrder", back_populates="items")
     item = relationship("StationaryItem")
+
+class ParentBill(Base):
+    __tablename__ = "parent_bills"
+
+    id = Column(Integer, primary_key=True, index=True)
+    student_id = Column(Integer, ForeignKey("students.id", ondelete="CASCADE"), nullable=False)
+    title = Column(String(255), nullable=False)
+    amount = Column(Numeric(10, 2), nullable=False)
+    due_date = Column(String(50), nullable=False)
+    status = Column(String(50), default="Unpaid", nullable=False)  # Paid, Unpaid
+    paid_date = Column(DateTime, nullable=True)
+    payment_method = Column(String(50), nullable=True)
+    receipt_no = Column(String(100), nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+
+    student = relationship("Student")
+
+class ParentMilestone(Base):
+    __tablename__ = "parent_milestones"
+
+    id = Column(Integer, primary_key=True, index=True)
+    student_id = Column(Integer, ForeignKey("students.id", ondelete="CASCADE"), nullable=False)
+    milestone_name = Column(String(255), nullable=False)
+    category = Column(String(50), nullable=False)  # Cognitive, Physical, Emotional
+    status = Column(String(50), default="Not Started", nullable=False)  # Completed, In Progress, Not Started
+    completed_date = Column(String(50), nullable=True)
+    teacher_comments = Column(Text, nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+
+    student = relationship("Student")
+
+class LeaveRequest(Base):
+    __tablename__ = "leave_requests"
+
+    id = Column(Integer, primary_key=True, index=True)
+    student_id = Column(Integer, ForeignKey("students.id", ondelete="CASCADE"), nullable=False)
+    start_date = Column(String(50), nullable=False)  # YYYY-MM-DD
+    end_date = Column(String(50), nullable=False)  # YYYY-MM-DD
+    reason = Column(String(550), nullable=True)
+    status = Column(String(50), default="Approved", nullable=False)
+    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+
+    student = relationship("Student")
+
+class MilestoneTemplate(Base):
+    __tablename__ = "milestone_templates"
+
+    id = Column(Integer, primary_key=True, index=True)
+    program_id = Column(Integer, ForeignKey("programs.id", ondelete="CASCADE"), nullable=False)
+    milestone_name = Column(String(255), nullable=False)
+    category = Column(String(50), nullable=False)  # Cognitive, Physical, Emotional
+    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+
+    program = relationship("Program")

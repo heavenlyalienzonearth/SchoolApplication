@@ -144,6 +144,27 @@ export class DashboardComponent implements OnInit {
   toastType: 'success' | 'error' = 'success';
   toastVisible = false;
 
+  // --- MILESTONES & LEAVES STATE ---
+  adminLeaves: any[] = [];
+  adminLeavesLoading = false;
+  milestoneActiveSubTab = 'templates'; // 'templates' | 'progress'
+  milestoneTemplates: any[] = [];
+  newMilestoneTemplate = { program_id: 0, milestone_name: '', category: 'Cognitive' };
+  selectedMilestoneProgramId = 0;
+  
+  milestoneStudents: any[] = [];
+  milestoneStudentProgramId = 0;
+  selectedMilestoneStudentId = 0;
+  selectedMilestoneStudentName = '';
+  studentMilestones: any[] = [];
+  savingStudentMilestones = false;
+  
+  // Printing Progress booklet
+  printBookletStudent: any = null;
+  printBookletMilestones: any[] = [];
+  printBookletOpen = false;
+  printBookletProgramTitle = '';
+
   constructor(
     private authService: AuthService,
     private contentService: ContentService,
@@ -179,7 +200,200 @@ export class DashboardComponent implements OnInit {
       this.loadUsers();
     } else if (tab === 'stationary') {
       this.loadStationary();
+    } else if (tab === 'milestones') {
+      if (this.programs.length > 0) {
+        this.selectedMilestoneProgramId = this.programs[0].id;
+        this.milestoneStudentProgramId = this.programs[0].id;
+        this.newMilestoneTemplate.program_id = this.programs[0].id;
+        this.loadMilestoneTemplates();
+        this.loadMilestoneStudents();
+      }
+    } else if (tab === 'leaves') {
+      this.loadLeavesAdmin();
     }
+  }
+
+  // --- ADMIN LEAVE APPROVALS ---
+  loadLeavesAdmin(): void {
+    this.adminLeavesLoading = true;
+    this.contentService.getLeavesAdmin().subscribe({
+      next: (data) => {
+        this.adminLeaves = data;
+        this.adminLeavesLoading = false;
+      },
+      error: (err) => {
+        this.adminLeavesLoading = false;
+        this.showToast(err.error?.detail || 'Failed to load leave requests.', 'error');
+      }
+    });
+  }
+
+  approveLeave(leaveId: number): void {
+    this.contentService.updateLeaveStatus(leaveId, 'Approved').subscribe({
+      next: () => {
+        this.showToast('Leave request approved and synced with attendance roster.', 'success');
+        this.loadLeavesAdmin();
+      },
+      error: (err) => {
+        this.showToast(err.error?.detail || 'Failed to approve leave request.', 'error');
+      }
+    });
+  }
+
+  declineLeave(leaveId: number): void {
+    this.contentService.updateLeaveStatus(leaveId, 'Declined').subscribe({
+      next: () => {
+        this.showToast('Leave request declined.', 'success');
+        this.loadLeavesAdmin();
+      },
+      error: (err) => {
+        this.showToast(err.error?.detail || 'Failed to decline leave request.', 'error');
+      }
+    });
+  }
+
+  // --- MILESTONES TEMPLATES & STUDENT PROGRESS ---
+  setMilestoneSubTab(subTab: string): void {
+    this.milestoneActiveSubTab = subTab;
+    if (subTab === 'templates') {
+      this.loadMilestoneTemplates();
+    } else {
+      this.loadMilestoneStudents();
+    }
+  }
+
+  loadMilestoneTemplates(): void {
+    if (!this.selectedMilestoneProgramId) return;
+    this.contentService.getMilestoneTemplates(this.selectedMilestoneProgramId).subscribe({
+      next: (data) => {
+        this.milestoneTemplates = data;
+      },
+      error: (err) => {
+        this.showToast(err.error?.detail || 'Failed to load milestone templates.', 'error');
+      }
+    });
+  }
+
+  onMilestoneProgramChange(): void {
+    this.newMilestoneTemplate.program_id = this.selectedMilestoneProgramId;
+    this.loadMilestoneTemplates();
+  }
+
+  addMilestoneTemplate(): void {
+    if (!this.newMilestoneTemplate.milestone_name.trim()) {
+      this.showToast('Please enter a milestone name.', 'error');
+      return;
+    }
+    this.contentService.createMilestoneTemplate(this.newMilestoneTemplate).subscribe({
+      next: () => {
+        this.showToast('Milestone template added successfully.', 'success');
+        this.newMilestoneTemplate.milestone_name = '';
+        this.loadMilestoneTemplates();
+      },
+      error: (err) => {
+        this.showToast(err.error?.detail || 'Failed to add milestone template.', 'error');
+      }
+    });
+  }
+
+  deleteMilestoneTemplate(id: number): void {
+    if (!confirm('Are you sure you want to delete this template milestone?')) return;
+    this.contentService.deleteMilestoneTemplate(id).subscribe({
+      next: () => {
+        this.showToast('Milestone template deleted successfully.', 'success');
+        this.loadMilestoneTemplates();
+      },
+      error: (err) => {
+        this.showToast(err.error?.detail || 'Failed to delete template.', 'error');
+      }
+    });
+  }
+
+  // Student progress marking
+  loadMilestoneStudents(): void {
+    if (!this.milestoneStudentProgramId) return;
+    this.contentService.getStudents(this.milestoneStudentProgramId).subscribe({
+      next: (data) => {
+        this.milestoneStudents = data;
+        if (data.length > 0) {
+          this.selectedMilestoneStudentId = data[0].id;
+          this.selectedMilestoneStudentName = data[0].name;
+          this.loadStudentMilestones();
+        } else {
+          this.selectedMilestoneStudentId = 0;
+          this.selectedMilestoneStudentName = '';
+          this.studentMilestones = [];
+        }
+      },
+      error: (err) => {
+        this.showToast(err.error?.detail || 'Failed to load class students.', 'error');
+      }
+    });
+  }
+
+  onMilestoneStudentChange(): void {
+    const student = this.milestoneStudents.find(s => s.id === Number(this.selectedMilestoneStudentId));
+    if (student) {
+      this.selectedMilestoneStudentName = student.name;
+      this.loadStudentMilestones();
+    }
+  }
+
+  loadStudentMilestones(): void {
+    if (!this.selectedMilestoneStudentId) return;
+    this.contentService.getStudentMilestones(this.selectedMilestoneStudentId).subscribe({
+      next: (data) => {
+        this.studentMilestones = data;
+      },
+      error: (err) => {
+        this.showToast(err.error?.detail || 'Failed to load student progress milestones.', 'error');
+      }
+    });
+  }
+
+  saveStudentMilestones(): void {
+    if (!this.selectedMilestoneStudentId) return;
+    this.savingStudentMilestones = true;
+    const payload = { milestones: this.studentMilestones };
+    this.contentService.saveStudentMilestones(this.selectedMilestoneStudentId, payload).subscribe({
+      next: () => {
+        this.savingStudentMilestones = false;
+        this.showToast('Student milestones updated successfully.', 'success');
+        this.loadStudentMilestones();
+      },
+      error: (err) => {
+        this.savingStudentMilestones = false;
+        this.showToast(err.error?.detail || 'Failed to save student milestones.', 'error');
+      }
+    });
+  }
+
+  markStudentMilestoneStatus(milestoneId: number, status: string): void {
+    const m = this.studentMilestones.find(item => item.id === milestoneId);
+    if (m) {
+      m.status = status;
+      if (status.toUpperCase() === 'COMPLETED' && !m.completed_date) {
+        m.completed_date = new Date().toISOString().split('T')[0];
+      }
+    }
+  }
+
+  // printable Report Booklet
+  generateReportBooklet(): void {
+    if (!this.selectedMilestoneStudentId) return;
+    const student = this.milestoneStudents.find(s => s.id === Number(this.selectedMilestoneStudentId));
+    const program = this.programs.find(p => p.id === Number(this.milestoneStudentProgramId));
+    
+    this.printBookletStudent = student;
+    this.printBookletProgramTitle = program ? program.title : 'Playgroup';
+    this.printBookletMilestones = this.studentMilestones;
+    this.printBookletOpen = true;
+  }
+
+  closePrintBooklet(): void {
+    this.printBookletOpen = false;
+    this.printBookletStudent = null;
+    this.printBookletMilestones = [];
   }
 
   loadAnalytics(): void {

@@ -255,6 +255,35 @@ export class ContentService {
     return this.apiService.get<any[]>(url);
   }
 
+  // --- ADMIN MILESTONES & LEAVES ---
+  getMilestoneTemplates(programId: number): Observable<any[]> {
+    return this.apiService.get<any[]>(`/attendance/milestones/templates?program_id=${programId}`);
+  }
+
+  createMilestoneTemplate(data: any): Observable<any> {
+    return this.apiService.post<any>('/attendance/milestones/templates', data);
+  }
+
+  deleteMilestoneTemplate(id: number): Observable<any> {
+    return this.apiService.delete<any>(`/attendance/milestones/templates/${id}`);
+  }
+
+  getStudentMilestones(studentId: number): Observable<any[]> {
+    return this.apiService.get<any[]>(`/attendance/milestones/student/${studentId}`);
+  }
+
+  saveStudentMilestones(studentId: number, data: any): Observable<any> {
+    return this.apiService.post<any>(`/attendance/milestones/student/${studentId}`, data);
+  }
+
+  getLeavesAdmin(): Observable<any[]> {
+    return this.apiService.get<any[]>('/attendance/leaves');
+  }
+
+  updateLeaveStatus(leaveId: number, status: string): Observable<any> {
+    return this.apiService.put<any>(`/attendance/leaves/${leaveId}/status`, { status });
+  }
+
   // --- STUDENT ADMISSIONS ---
   getVaccinations(): Observable<any[]> {
     return this.apiService.get<any[]>('/admissions/vaccinations');

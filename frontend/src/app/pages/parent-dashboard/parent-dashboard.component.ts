@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
 import { AuthService } from '../../core/services/auth.service';
 import { ApiService } from '../../core/services/api.service';
+import { ParentService, Bill, Milestone, MilestoneGroup, LeaveRequest } from '../../core/services/parent.service';
 
 @Component({
   selector: 'app-parent-dashboard',
@@ -24,14 +25,35 @@ import { ApiService } from '../../core/services/api.service';
         <div class="user-profile-menu">
           <span class="welcome-user">👋 Welcome, {{ parentName }}</span>
           <button class="btn-logout" (click)="onLogout()">
-            🚪 Sign Out
+            Sign Out
           </button>
         </div>
       </header>
 
-      <!-- Error Alerts -->
+      <!-- Subheader Tabs Bar -->
+      <div class="tabs-bar-container">
+        <div class="tabs-bar">
+          <button class="tab-btn" [class.active]="activeTab === 'overview'" (click)="setTab('overview')">
+            📋 Portal Overview
+          </button>
+          <button class="tab-btn" [class.active]="activeTab === 'billing'" (click)="setTab('billing')">
+            💳 Fees & Ledger
+          </button>
+          <button class="tab-btn" [class.active]="activeTab === 'milestones'" (click)="setTab('milestones')">
+            🎯 Milestones Tracker
+          </button>
+          <button class="tab-btn" [class.active]="activeTab === 'leaves'" (click)="setTab('leaves')">
+            📅 Absence Requests
+          </button>
+        </div>
+      </div>
+
+      <!-- Alert banners -->
       <div class="alert alert-danger" *ngIf="errorMessage" style="margin: 20px auto; max-width: 1200px;">
         ⚠️ {{ errorMessage }}
+      </div>
+      <div class="alert alert-success" *ngIf="successMessage" style="margin: 20px auto; max-width: 1200px;">
+        ✨ {{ successMessage }}
       </div>
 
       <!-- Loading State -->
@@ -42,197 +64,443 @@ import { ApiService } from '../../core/services/api.service';
 
       <!-- Main Portal Layout -->
       <main class="dashboard-main" *ngIf="!loading && dashboardData">
-        <!-- Welcome Header Banner -->
-        <div class="welcome-banner">
-          <h2>Welcome Back!</h2>
-          <p>Here is a summary of <strong>{{ dashboardData.kid?.name }}'s</strong> school profile, daily schedule, and attendance record.</p>
-        </div>
 
-        <div class="dashboard-grid">
-          <!-- Left Column: Kid Profile & Attendance -->
-          <div class="col-left">
-            <!-- Kid Profile Card -->
-            <div class="card kid-card animate-fade-in">
-              <div class="kid-header">
-                <div class="avatar-wrapper">
-                  <img [src]="dashboardData.kid?.photo_url ? 'http://localhost:8000' + dashboardData.kid.photo_url : 'assets/parent_avatar1_1783324784413.png'" alt="Kid Photo" class="kid-photo" (error)="onImgError($event)" />
-                </div>
-                <div class="kid-intro">
-                  <span class="badge badge-program">{{ dashboardData.kid?.program_title }}</span>
-                  <h3>{{ dashboardData.kid?.name }}</h3>
-                  <p class="dob">🎂 DOB: {{ dashboardData.kid?.dob }}</p>
-                </div>
-              </div>
-              
-              <div class="kid-details">
-                <div class="detail-row">
-                  <span class="label">🩸 Blood Group</span>
-                  <span class="value">{{ dashboardData.kid?.blood_group }}</span>
-                </div>
-                <div class="detail-row">
-                  <span class="label">⚠️ Food Allergies</span>
-                  <span class="value alert-allergies">{{ dashboardData.kid?.allergies }}</span>
-                </div>
-                <div class="detail-row">
-                  <span class="label">📞 Emergency Contact</span>
-                  <span class="value">{{ dashboardData.kid?.emergency_phone }}</span>
-                </div>
-              </div>
-            </div>
-
-            <!-- Attendance Stats Card -->
-            <div class="card attendance-card animate-fade-in" style="margin-top: 30px;">
-              <h3 class="card-title">📅 Attendance Track</h3>
-              
-              <div class="attendance-summary">
-                <!-- Circular Dial -->
-                <div class="dial-container">
-                  <div class="radial-progress" [style.--percent]="dashboardData.attendance?.percentage">
-                    <span class="percent-val">{{ dashboardData.attendance?.percentage }}%</span>
-                  </div>
-                </div>
-                
-                <div class="attendance-stats">
-                  <div class="stat-box">
-                    <span class="stat-count">{{ dashboardData.attendance?.present }}</span>
-                    <span class="stat-label">Days Present</span>
-                  </div>
-                  <div class="stat-box">
-                    <span class="stat-count">{{ dashboardData.attendance?.total - dashboardData.attendance?.present }}</span>
-                    <span class="stat-label">Days Absent</span>
-                  </div>
-                </div>
-              </div>
-
-              <!-- Recent Logs -->
-              <div class="attendance-history">
-                <h4>Recent Attendance Records</h4>
-                <div class="history-list">
-                  <div class="history-item" *ngFor="let rec of dashboardData.attendance?.records">
-                    <span class="history-date">{{ rec.date | date:'mediumDate' }}</span>
-                    <span class="badge" [ngClass]="{
-                      'badge-present': rec.status.toUpperCase() === 'PRESENT',
-                      'badge-absent': rec.status.toUpperCase() === 'ABSENT',
-                      'badge-late': rec.status.toUpperCase() === 'LATE'
-                    }">{{ rec.status }}</span>
-                    <span class="history-notes" *ngIf="rec.notes">({{ rec.notes }})</span>
-                  </div>
-                  <div *ngIf="dashboardData.attendance?.records?.length === 0" class="no-records">
-                    No attendance records logged yet.
-                  </div>
-                </div>
-              </div>
-            </div>
+        <!-- 1. OVERVIEW TAB -->
+        <div *ngIf="activeTab === 'overview'" class="tab-content animate-fade-in">
+          <div class="welcome-banner">
+            <h2>Welcome Back!</h2>
+            <p>Here is a summary of <strong>{{ dashboardData.kid?.name }}'s</strong> school profile, daily schedule, and attendance record.</p>
           </div>
 
-          <!-- Right Column: Timetable, Checklists & Orders -->
-          <div class="col-right">
-            <!-- Timetable & Breakfast Menu Card -->
-            <div class="card timetable-card animate-fade-in">
-              <h3 class="card-title">🍳 Daily Timetable & Breakfast Menu</h3>
-              <p class="subtitle" style="margin-top: -15px; margin-bottom: 20px; font-size: 0.85rem; color: #64748B;">Weekly day-wise learning activity and nutrition tracker.</p>
-              
-              <div class="timetable-wrapper" style="overflow-x: auto;">
-                <table class="timetable-table">
-                  <thead>
-                    <tr>
-                      <th>Day</th>
-                      <th>📖 Study & Mindset</th>
-                      <th>🏃 Physical Play</th>
-                      <th>🤖 Games / Robotics</th>
-                      <th>🥞 Breakfast Menu</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr *ngFor="let day of getDaysKeys()">
-                      <td class="day-cell"><strong>{{ day }}</strong></td>
-                      <td>{{ dashboardData.weekly_plan?.[day]?.study || '--' }}</td>
-                      <td>{{ dashboardData.weekly_plan?.[day]?.physical || '--' }}</td>
-                      <td>{{ dashboardData.weekly_plan?.[day]?.games || '--' }}</td>
-                      <td class="breakfast-cell">🥞 {{ dashboardData.weekly_plan?.[day]?.breakfast || '--' }}</td>
-                    </tr>
-                    <tr *ngIf="!dashboardData.weekly_plan">
-                      <td colspan="5" class="no-records" style="text-align: center; padding: 20px;">No weekly plan scheduled for this program.</td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
-            </div>
-
-            <!-- Checklists & Orders Row -->
-            <div class="checklists-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 30px; margin-top: 30px;">
-              <!-- Vaccination & Issued Items Card -->
-              <div class="card checklist-card animate-fade-in">
-                <h3 class="card-title">🩺 Health & Uniform Kit</h3>
-                
-                <!-- Vaccinations -->
-                <div class="checklist-section">
-                  <h4>Vaccinations Checklist</h4>
-                  <div class="checklist-list" style="max-height: 160px; overflow-y: auto; padding-right: 5px;">
-                    <div class="checklist-item done" *ngFor="let vac of dashboardData.vaccinations">
-                      <span class="check-icon">✓</span>
-                      <div>
-                        <strong style="color: #1E293B; font-size: 0.85rem;">{{ vac.vaccination_name }}</strong>
-                        <span style="display: block; font-size: 0.75rem; color: #64748B;">Administered: {{ vac.administered_date | date:'mediumDate' }}</span>
-                      </div>
-                    </div>
-                    <div *ngIf="dashboardData.vaccinations?.length === 0" class="no-records">
-                      No vaccination records logged.
-                    </div>
+          <div class="dashboard-grid">
+            <!-- Left Column: Kid Profile & Attendance -->
+            <div class="col-left">
+              <!-- Kid Profile Card -->
+              <div class="card kid-card">
+                <div class="kid-header">
+                  <div class="avatar-wrapper">
+                    <img [src]="dashboardData.kid?.photo_url ? 'http://localhost:8000' + dashboardData.kid.photo_url : 'assets/parent_avatar1_1783324784413.png'" alt="Kid Photo" class="kid-photo" (error)="onImgError($event)" />
+                  </div>
+                  <div class="kid-intro">
+                    <span class="badge badge-program">{{ dashboardData.kid?.program_title }}</span>
+                    <h3>{{ dashboardData.kid?.name }}</h3>
+                    <p class="dob">🎂 DOB: {{ dashboardData.kid?.dob }}</p>
                   </div>
                 </div>
-
-                <!-- Issued Uniforms -->
-                <div class="checklist-section" style="margin-top: 20px;">
-                  <h4>Issued Supplies & Uniforms</h4>
-                  <div class="supplies-tags">
-                    <span class="supply-tag" *ngFor="let item of dashboardData.issued_items">
-                      👕 {{ item }}
-                    </span>
-                    <div *ngIf="dashboardData.issued_items?.length === 0" class="no-records">
-                      No uniforms/supplies checked off.
-                    </div>
+                
+                <div class="kid-details">
+                  <div class="detail-row">
+                    <span class="label">🩸 Blood Group</span>
+                    <span class="value">{{ dashboardData.kid?.blood_group }}</span>
+                  </div>
+                  <div class="detail-row">
+                    <span class="label">⚠️ Food Allergies</span>
+                    <span class="value alert-allergies">{{ dashboardData.kid?.allergies }}</span>
+                  </div>
+                  <div class="detail-row">
+                    <span class="label">📞 Emergency Contact</span>
+                    <span class="value">{{ dashboardData.kid?.emergency_phone }}</span>
                   </div>
                 </div>
               </div>
 
-              <!-- Stationery Orders Card -->
-              <div class="card orders-card animate-fade-in">
-                <h3 class="card-title">✏️ Supplies Order History</h3>
+              <!-- Attendance Stats Card -->
+              <div class="card attendance-card" style="margin-top: 30px;">
+                <h3 class="card-title">📅 Attendance Track</h3>
                 
-                <div class="orders-timeline" style="max-height: 380px; overflow-y: auto; padding-right: 5px;">
-                  <div class="order-box" *ngFor="let order of dashboardData.stationary_orders">
-                    <div class="order-hdr">
-                      <span class="order-id">Order #{{ order.id }}</span>
+                <div class="attendance-summary">
+                  <!-- Circular Dial -->
+                  <div class="dial-container">
+                    <div class="radial-progress" [style.--percent]="dashboardData.attendance?.percentage">
+                      <span class="percent-val">{{ dashboardData.attendance?.percentage }}%</span>
+                    </div>
+                  </div>
+                  
+                  <div class="attendance-stats">
+                    <div class="stat-box">
+                      <span class="stat-count">{{ dashboardData.attendance?.present }}</span>
+                      <span class="stat-label">Days Present</span>
+                    </div>
+                    <div class="stat-box">
+                      <span class="stat-count">{{ dashboardData.attendance?.total - dashboardData.attendance?.present }}</span>
+                      <span class="stat-label">Days Absent</span>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Recent Logs -->
+                <div class="attendance-history">
+                  <h4>Recent Attendance Records</h4>
+                  <div class="history-list">
+                    <div class="history-item" *ngFor="let rec of dashboardData.attendance?.records">
+                      <span class="history-date">{{ rec.date | date:'mediumDate' }}</span>
                       <span class="badge" [ngClass]="{
-                        'badge-pending': order.status.toUpperCase() === 'PENDING',
-                        'badge-dispatched': order.status.toUpperCase() === 'DISPATCHED',
-                        'badge-delivered': order.status.toUpperCase() === 'DELIVERED'
-                      }">{{ order.status }}</span>
+                        'badge-present': rec.status.toUpperCase() === 'PRESENT',
+                        'badge-absent': rec.status.toUpperCase() === 'ABSENT',
+                        'badge-late': rec.status.toUpperCase() === 'LATE',
+                        'badge-leave': rec.status.toUpperCase() === 'LEAVE'
+                      }">{{ rec.status }}</span>
+                      <span class="history-notes" *ngIf="rec.notes">({{ rec.notes }})</span>
                     </div>
-                    
-                    <div class="order-items-list">
-                      <div class="order-item-row" *ngFor="let item of order.items">
-                        <span>{{ item.name }} × {{ item.quantity }}</span>
-                        <span>₹{{ item.unit_price * item.quantity }}</span>
-                      </div>
+                    <div *ngIf="dashboardData.attendance?.records?.length === 0" class="no-records">
+                      No attendance records logged yet.
                     </div>
+                  </div>
+                </div>
+              </div>
+            </div>
 
-                    <div class="order-footer">
-                      <span class="order-date">{{ order.order_date | date:'short' }}</span>
-                      <span class="order-total">Total: ₹{{ order.total_price }}</span>
+            <!-- Right Column: Timetable, Checklists & Orders -->
+            <div class="col-right">
+              <!-- Timetable & Breakfast Menu Card -->
+              <div class="card timetable-card">
+                <h3 class="card-title">🍳 Daily Timetable & Breakfast Menu</h3>
+                <p class="subtitle" style="margin-top: -15px; margin-bottom: 20px; font-size: 0.85rem; color: #64748B;">Weekly day-wise learning activity and nutrition tracker.</p>
+                
+                <div class="timetable-wrapper" style="overflow-x: auto;">
+                  <table class="timetable-table">
+                    <thead>
+                      <tr>
+                        <th>Day</th>
+                        <th>📖 Study & Mindset</th>
+                        <th>🏃 Physical Play</th>
+                        <th>🤖 Games / Robotics</th>
+                        <th>🥞 Breakfast Menu</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr *ngFor="let day of getDaysKeys()">
+                        <td class="day-cell"><strong>{{ day }}</strong></td>
+                        <td>{{ dashboardData.weekly_plan?.[day]?.study || '--' }}</td>
+                        <td>{{ dashboardData.weekly_plan?.[day]?.physical || '--' }}</td>
+                        <td>{{ dashboardData.weekly_plan?.[day]?.games || '--' }}</td>
+                        <td class="breakfast-cell">🥞 {{ dashboardData.weekly_plan?.[day]?.breakfast || '--' }}</td>
+                      </tr>
+                      <tr *ngIf="!dashboardData.weekly_plan">
+                        <td colspan="5" class="no-records" style="text-align: center; padding: 20px;">No weekly plan scheduled for this program.</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              <!-- Checklists & Orders Row -->
+              <div class="checklists-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 30px; margin-top: 30px;">
+                <!-- Vaccination & Issued Items Card -->
+                <div class="card checklist-card">
+                  <h3 class="card-title">🩺 Health & Uniform Kit</h3>
+                  
+                  <!-- Vaccinations -->
+                  <div class="checklist-section">
+                    <h4>Vaccinations Checklist</h4>
+                    <div class="checklist-list" style="max-height: 160px; overflow-y: auto; padding-right: 5px;">
+                      <div class="checklist-item done" *ngFor="let vac of dashboardData.vaccinations">
+                        <span class="check-icon">✓</span>
+                        <div>
+                          <strong style="color: #1E293B; font-size: 0.85rem;">{{ vac.vaccination_name }}</strong>
+                          <span style="display: block; font-size: 0.75rem; color: #64748B;">Administered: {{ vac.administered_date | date:'mediumDate' }}</span>
+                        </div>
+                      </div>
+                      <div *ngIf="dashboardData.vaccinations?.length === 0" class="no-records">
+                        No vaccination records logged.
+                      </div>
                     </div>
                   </div>
 
-                  <div *ngIf="dashboardData.stationary_orders?.length === 0" class="no-records" style="padding: 40px 0;">
-                    No stationery orders placed yet for {{ dashboardData.kid?.name }}.
+                  <!-- Issued Uniforms -->
+                  <div class="checklist-section" style="margin-top: 20px;">
+                    <h4>Issued Supplies & Uniforms</h4>
+                    <div class="supplies-tags">
+                      <span class="supply-tag" *ngFor="let item of dashboardData.issued_items">
+                        👕 {{ item }}
+                      </span>
+                      <div *ngIf="dashboardData.issued_items?.length === 0" class="no-records">
+                        No uniforms/supplies checked off.
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Stationery Orders Card -->
+                <div class="card orders-card">
+                  <h3 class="card-title">✏️ Supplies Order History</h3>
+                  
+                  <div class="orders-timeline" style="max-height: 380px; overflow-y: auto; padding-right: 5px;">
+                    <div class="order-box" *ngFor="let order of dashboardData.stationary_orders">
+                      <div class="order-hdr">
+                        <span class="order-id">Order #{{ order.id }}</span>
+                        <span class="badge" [ngClass]="{
+                          'badge-pending': order.status.toUpperCase() === 'PENDING',
+                          'badge-dispatched': order.status.toUpperCase() === 'DISPATCHED',
+                          'badge-delivered': order.status.toUpperCase() === 'DELIVERED'
+                        }">{{ order.status }}</span>
+                      </div>
+                      
+                      <div class="order-items-list">
+                        <div class="order-item-row" *ngFor="let item of order.items">
+                          <span>{{ item.name }} × {{ item.quantity }}</span>
+                          <span>₹{{ item.unit_price * item.quantity }}</span>
+                        </div>
+                      </div>
+
+                      <div class="order-footer">
+                        <span class="order-date">{{ order.order_date | date:'short' }}</span>
+                        <span class="order-total">Total: ₹{{ order.total_price }}</span>
+                      </div>
+                    </div>
+
+                    <div *ngIf="dashboardData.stationary_orders?.length === 0" class="no-records" style="padding: 40px 0;">
+                      No stationery orders placed yet for {{ dashboardData.kid?.name }}.
+                    </div>
                   </div>
                 </div>
               </div>
             </div>
           </div>
         </div>
+
+
+        <!-- 2. FEES & BILLING TAB -->
+        <div *ngIf="activeTab === 'billing'" class="tab-content animate-fade-in">
+          <div class="billing-summary-grid">
+            <div class="billing-summary-card outstanding-card">
+              <span class="summary-icon">💸</span>
+              <div>
+                <h3>₹{{ totalOutstanding | number:'1.2-2' }}</h3>
+                <p>Total Outstanding Balance</p>
+              </div>
+            </div>
+            
+            <div class="billing-summary-card count-card">
+              <span class="summary-icon">📜</span>
+              <div>
+                <h3>{{ billsList.length }}</h3>
+                <p>Total Invoiced Demands</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="card ledger-card" style="margin-top: 30px;">
+            <h3 class="card-title">🧾 Fee Demands & Payments Ledger</h3>
+            <div style="overflow-x: auto;">
+              <table class="ledger-table">
+                <thead>
+                  <tr>
+                    <th>Invoice / Demand description</th>
+                    <th>Amount</th>
+                    <th>Due Date</th>
+                    <th>Status</th>
+                    <th>Paid Date</th>
+                    <th>Method</th>
+                    <th style="text-align: right;">Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr *ngFor="let bill of billsList">
+                    <td><strong>{{ bill.title }}</strong></td>
+                    <td class="amount-cell">₹{{ bill.amount | number:'1.2-2' }}</td>
+                    <td>{{ bill.due_date | date:'mediumDate' }}</td>
+                    <td>
+                      <span class="badge" [ngClass]="{
+                        'badge-present': bill.status.toUpperCase() === 'PAID',
+                        'badge-absent': bill.status.toUpperCase() === 'UNPAID'
+                      }">{{ bill.status }}</span>
+                    </td>
+                    <td>{{ bill.paid_date ? (bill.paid_date | date:'mediumDate') : '--' }}</td>
+                    <td>{{ bill.payment_method || '--' }}</td>
+                    <td style="text-align: right;">
+                      <button *ngIf="bill.status === 'Unpaid'" class="btn-action btn-pay" (click)="openPaymentModal(bill)">
+                        💳 Pay Now
+                      </button>
+                      <a *ngIf="bill.status === 'Paid'" [href]="'http://localhost:8000/api/v1/parent/billing/' + bill.id + '/receipt'" target="_blank" class="btn-action btn-receipt">
+                        🖨️ Receipt
+                      </a>
+                    </td>
+                  </tr>
+                  <tr *ngIf="billsList.length === 0">
+                    <td colspan="7" class="no-records" style="text-align: center; padding: 30px;">No fee ledger entries found for this student.</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+
+        <!-- 3. MILESTONES TRACKER TAB -->
+        <div *ngIf="activeTab === 'milestones'" class="tab-content animate-fade-in">
+          <div class="milestones-intro">
+            <h2>🎯 Developmental Progress Tracker</h2>
+            <p>Track your child's key developmental milestones verified by the classroom supervisor.</p>
+          </div>
+
+          <div class="milestones-columns">
+            <!-- Cognitive -->
+            <div class="milestone-column">
+              <div class="col-hdr cognitive-hdr">
+                <h4>🧠 Cognitive & Learning</h4>
+                <span class="count-badge">{{ getProgressString('Cognitive') }}</span>
+              </div>
+              <div class="milestone-list">
+                <div class="milestone-card" *ngFor="let m of milestonesGroup?.Cognitive" [ngClass]="m.status.toLowerCase()">
+                  <div class="card-top">
+                    <span class="status-indicator"></span>
+                    <h5>{{ m.milestone_name }}</h5>
+                  </div>
+                  <p class="comments" *ngIf="m.teacher_comments">
+                    <strong>Feedback:</strong> "{{ m.teacher_comments }}"
+                  </p>
+                  <span class="completion-date" *ngIf="m.completed_date">✓ Met on: {{ m.completed_date | date:'mediumDate' }}</span>
+                </div>
+                <div *ngIf="milestonesGroup?.Cognitive?.length === 0" class="no-records">No cognitive milestones listed.</div>
+              </div>
+            </div>
+
+            <!-- Physical -->
+            <div class="milestone-column">
+              <div class="col-hdr physical-hdr">
+                <h4>🏃 Physical & Motor Skills</h4>
+                <span class="count-badge">{{ getProgressString('Physical') }}</span>
+              </div>
+              <div class="milestone-list">
+                <div class="milestone-card" *ngFor="let m of milestonesGroup?.Physical" [ngClass]="m.status.toLowerCase()">
+                  <div class="card-top">
+                    <span class="status-indicator"></span>
+                    <h5>{{ m.milestone_name }}</h5>
+                  </div>
+                  <p class="comments" *ngIf="m.teacher_comments">
+                    <strong>Feedback:</strong> "{{ m.teacher_comments }}"
+                  </p>
+                  <span class="completion-date" *ngIf="m.completed_date">✓ Met on: {{ m.completed_date | date:'mediumDate' }}</span>
+                </div>
+                <div *ngIf="milestonesGroup?.Physical?.length === 0" class="no-records">No physical milestones listed.</div>
+              </div>
+            </div>
+
+            <!-- Emotional -->
+            <div class="milestone-column">
+              <div class="col-hdr emotional-hdr">
+                <h4>🤝 Social & Emotional</h4>
+                <span class="count-badge">{{ getProgressString('Emotional') }}</span>
+              </div>
+              <div class="milestone-list">
+                <div class="milestone-card" *ngFor="let m of milestonesGroup?.Emotional" [ngClass]="m.status.toLowerCase()">
+                  <div class="card-top">
+                    <span class="status-indicator"></span>
+                    <h5>{{ m.milestone_name }}</h5>
+                  </div>
+                  <p class="comments" *ngIf="m.teacher_comments">
+                    <strong>Feedback:</strong> "{{ m.teacher_comments }}"
+                  </p>
+                  <span class="completion-date" *ngIf="m.completed_date">✓ Met on: {{ m.completed_date | date:'mediumDate' }}</span>
+                </div>
+                <div *ngIf="milestonesGroup?.Emotional?.length === 0" class="no-records">No emotional milestones listed.</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+
+        <!-- 4. LEAVE REQUESTS TAB -->
+        <div *ngIf="activeTab === 'leaves'" class="tab-content animate-fade-in">
+          <div class="leaves-layout">
+            <!-- Left Panel: Submission Form -->
+            <div class="card leave-form-card">
+              <h3 class="card-title">📝 Apply for Absence Leave</h3>
+              <form (submit)="onLeaveSubmit($event)" class="leave-form">
+                <div class="form-group">
+                  <label for="startDate">Start Date</label>
+                  <input type="date" id="startDate" name="startDate" [(ngModel)]="leaveForm.startDate" required class="form-control" />
+                </div>
+
+                <div class="form-group">
+                  <label for="endDate">End Date</label>
+                  <input type="date" id="endDate" name="endDate" [(ngModel)]="leaveForm.endDate" required class="form-control" />
+                </div>
+
+                <div class="form-group">
+                  <label for="reason">Absence Reason / medical Note</label>
+                  <textarea id="reason" name="reason" [(ngModel)]="leaveForm.reason" rows="4" required placeholder="Describe the reason for leave..." class="form-control"></textarea>
+                </div>
+
+                <button type="submit" class="btn-submit-leave" [disabled]="submittingLeave">
+                  {{ submittingLeave ? 'Sending request...' : '🚀 Submit Leave Request' }}
+                </button>
+              </form>
+            </div>
+
+            <!-- Right Panel: Leave Logs History -->
+            <div class="card leave-history-card">
+              <h3 class="card-title">📜 Absence Logs & status</h3>
+              
+              <div class="leaves-timeline">
+                <div class="leave-log-box" *ngFor="let req of leavesList">
+                  <div class="log-hdr">
+                    <span class="dates-range">📅 {{ req.start_date | date:'mediumDate' }} to {{ req.end_date | date:'mediumDate' }}</span>
+                    <span class="badge badge-present">{{ req.status }}</span>
+                  </div>
+                  <p class="reason-txt"><strong>Reason:</strong> {{ req.reason }}</p>
+                  <span class="submitted-time">Submitted: {{ req.created_at | date:'short' }}</span>
+                </div>
+                <div *ngIf="leavesList.length === 0" class="no-records" style="padding: 40px 0;">
+                  No leave requests submitted yet.
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
       </main>
+
+      <!-- MOCK PAYMENT GATEWAY MODAL -->
+      <div class="modal-backdrop" *ngIf="showPaymentModal">
+        <div class="modal-card animate-fade-in">
+          <div class="modal-header">
+            <h4>💳 Lovable Pay Gateway</h4>
+            <button class="btn-close" (click)="closePaymentModal()">×</button>
+          </div>
+          
+          <div class="modal-body">
+            <div class="bill-summary-box">
+              <p class="bill-title">{{ selectedBill?.title }}</p>
+              <h3 class="bill-amount">₹{{ selectedBill?.amount | number:'1.2-2' }}</h3>
+            </div>
+            
+            <div class="payment-method-selector">
+              <label class="method-option">
+                <input type="radio" name="paymethod" value="Online" [(ngModel)]="payMethod" checked />
+                <span>🌐 net Banking / UPI</span>
+              </label>
+              <label class="method-option" style="margin-top: 10px;">
+                <input type="radio" name="paymethod" value="Card" [(ngModel)]="payMethod" />
+                <span>💳 Credit / Debit Card</span>
+              </label>
+            </div>
+
+            <!-- Card Entry simulation -->
+            <div class="card-simulation-box" *ngIf="payMethod === 'Card'">
+              <input type="text" class="modal-input" placeholder="Card Number (4000 1234 5678 9010)" maxlength="19" />
+              <div class="card-double-input" style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 10px;">
+                <input type="text" class="modal-input" placeholder="MM/YY" maxlength="5" />
+                <input type="password" class="modal-input" placeholder="CVV" maxlength="3" />
+              </div>
+            </div>
+
+            <!-- UPI Simulation -->
+            <div class="upi-simulation-box" *ngIf="payMethod === 'Online'" style="margin-top: 15px;">
+              <input type="text" class="modal-input" placeholder="yourname@okhdfcbank" />
+            </div>
+          </div>
+
+          <div class="modal-footer">
+            <button class="btn-modal btn-cancel" (click)="closePaymentModal()">Cancel</button>
+            <button class="btn-modal btn-confirm" (click)="processMockPayment()" [disabled]="processingPayment">
+              {{ processingPayment ? 'Authorizing Payment...' : 'Proceed Secure Payment' }}
+            </button>
+          </div>
+        </div>
+      </div>
+
     </div>
   `,
   styles: [`
@@ -268,7 +536,7 @@ import { ApiService } from '../../core/services/api.service';
       margin: 0;
       font-size: 1.3rem;
       font-weight: 800;
-      color: #EE5A24; /* primary */
+      color: #EE5A24;
       line-height: 1.1;
     }
 
@@ -307,6 +575,51 @@ import { ApiService } from '../../core/services/api.service';
     .btn-logout:hover {
       background: #E2E8F0;
       color: #1E293B;
+    }
+
+    /* Tabs Bar styling */
+    .tabs-bar-container {
+      background: white;
+      border-bottom: 1px solid #E2E8F0;
+      padding: 0 40px;
+    }
+
+    .tabs-bar {
+      display: flex;
+      max-width: 1200px;
+      margin: 0 auto;
+      gap: 30px;
+    }
+
+    .tab-btn {
+      background: none;
+      border: none;
+      padding: 16px 8px;
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: #64748B;
+      cursor: pointer;
+      position: relative;
+      transition: color 0.2s;
+    }
+
+    .tab-btn:hover {
+      color: #1E293B;
+    }
+
+    .tab-btn.active {
+      color: #EE5A24;
+    }
+
+    .tab-btn.active::after {
+      content: '';
+      position: absolute;
+      bottom: -1px;
+      left: 0;
+      right: 0;
+      height: 3px;
+      background: #EE5A24;
+      border-radius: 3px 3px 0 0;
     }
 
     .loading-container {
@@ -485,7 +798,6 @@ import { ApiService } from '../../core/services/api.service';
       border-bottom: 1px dashed #F1F5F9;
     }
 
-    /* Radial Progress bar custom CSS */
     .radial-progress {
       position: relative;
       width: 90px;
@@ -584,6 +896,11 @@ import { ApiService } from '../../core/services/api.service';
     .badge-late {
       background: #FEF3C7;
       color: #92400E;
+    }
+
+    .badge-leave {
+      background: #E0F2FE;
+      color: #0369A1;
     }
 
     .no-records {
@@ -754,13 +1071,523 @@ import { ApiService } from '../../core/services/api.service';
       border: 1px solid #FCA5A5;
     }
 
-    /* Animations */
+    .alert-success {
+      background-color: #D1FAE5;
+      color: #065F46;
+      border: 1px solid #A7F3D0;
+    }
+
+    /* Billing Tab Styling */
+    .billing-summary-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 30px;
+    }
+
+    .billing-summary-card {
+      background: white;
+      border-radius: 12px;
+      border: 1px solid #E2E8F0;
+      padding: 25px;
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.02);
+    }
+
+    .outstanding-card {
+      background: linear-gradient(135deg, #FFFBEB 0%, #FEF3C7 100%);
+      border-color: #FDE68A;
+    }
+
+    .outstanding-card h3 {
+      color: #92400E;
+      font-size: 1.8rem;
+      margin: 0;
+      font-weight: 800;
+    }
+
+    .outstanding-card p {
+      margin: 2px 0 0 0;
+      color: #B45309;
+      font-size: 0.85rem;
+      font-weight: 600;
+    }
+
+    .count-card h3 {
+      font-size: 1.8rem;
+      margin: 0;
+      font-weight: 800;
+      color: #1E293B;
+    }
+
+    .count-card p {
+      margin: 2px 0 0 0;
+      color: #64748B;
+      font-size: 0.85rem;
+      font-weight: 600;
+    }
+
+    .summary-icon {
+      font-size: 2.2rem;
+    }
+
+    .ledger-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.9rem;
+    }
+
+    .ledger-table th {
+      background: #F8FAFC;
+      padding: 12px;
+      font-weight: 700;
+      color: #475569;
+      border-bottom: 2px solid #E2E8F0;
+      text-align: left;
+    }
+
+    .ledger-table td {
+      padding: 14px 12px;
+      border-bottom: 1px solid #F1F5F9;
+    }
+
+    .amount-cell {
+      font-weight: 700;
+      color: #1E293B;
+    }
+
+    .btn-action {
+      border: none;
+      padding: 6px 12px;
+      border-radius: 4px;
+      font-size: 0.8rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: background 0.2s;
+      display: inline-block;
+      text-decoration: none;
+    }
+
+    .btn-pay {
+      background: #EE5A24;
+      color: white;
+    }
+
+    .btn-pay:hover {
+      background: #EA541F;
+    }
+
+    .btn-receipt {
+      background: #E2E8F0;
+      color: #475569;
+    }
+
+    .btn-receipt:hover {
+      background: #CBD5E1;
+      color: #1E293B;
+    }
+
+    /* Milestones Tab */
+    .milestones-intro {
+      margin-bottom: 25px;
+    }
+
+    .milestones-intro h2 {
+      margin: 0;
+      font-weight: 800;
+      font-size: 1.5rem;
+      color: #1E293B;
+    }
+
+    .milestones-intro p {
+      margin: 4px 0 0 0;
+      color: #64748B;
+      font-size: 0.9rem;
+    }
+
+    .milestones-columns {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 30px;
+    }
+
+    .milestone-column {
+      background: white;
+      border-radius: 12px;
+      border: 1px solid #E2E8F0;
+      overflow: hidden;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.02);
+    }
+
+    .col-hdr {
+      padding: 16px 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid #E2E8F0;
+    }
+
+    .col-hdr h4 {
+      margin: 0;
+      font-size: 0.95rem;
+      font-weight: 800;
+    }
+
+    .cognitive-hdr {
+      background: #EFF6FF;
+      color: #1E40AF;
+    }
+
+    .physical-hdr {
+      background: #ECFDF5;
+      color: #065F46;
+    }
+
+    .emotional-hdr {
+      background: #FDF2F8;
+      color: #9D174D;
+    }
+
+    .count-badge {
+      font-size: 0.75rem;
+      font-weight: 700;
+      background: white;
+      padding: 2px 8px;
+      border-radius: 20px;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+    }
+
+    .milestone-list {
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+      max-height: 500px;
+      overflow-y: auto;
+    }
+
+    .milestone-card {
+      border: 1px solid #E2E8F0;
+      border-radius: 8px;
+      padding: 12px 15px;
+      background: #F8FAFC;
+      transition: all 0.2s;
+    }
+
+    .milestone-card.completed {
+      background: #F0FDF4;
+      border-color: #BBF7D0;
+    }
+
+    .milestone-card.in_progress {
+      background: #FFFBEB;
+      border-color: #FDE68A;
+    }
+
+    .card-top {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+    }
+
+    .status-indicator {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      margin-top: 5px;
+      flex-shrink: 0;
+    }
+
+    .completed .status-indicator { background: #10B981; }
+    .in_progress .status-indicator { background: #F59E0B; }
+    .not_started .status-indicator { background: #94A3B8; }
+
+    .card-top h5 {
+      margin: 0;
+      font-size: 0.85rem;
+      font-weight: 700;
+      line-height: 1.3;
+      color: #1E293B;
+    }
+
+    .comments {
+      margin: 8px 0 0 0;
+      font-size: 0.75rem;
+      color: #475569;
+      line-height: 1.4;
+      background: rgba(255, 255, 255, 0.6);
+      padding: 6px 8px;
+      border-radius: 4px;
+    }
+
+    .completion-date {
+      display: block;
+      margin-top: 8px;
+      font-size: 0.7rem;
+      font-weight: 700;
+      color: #059669;
+    }
+
+    /* Leaves Tab */
+    .leaves-layout {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 30px;
+    }
+
+    .leave-form {
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+    }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .form-group label {
+      font-size: 0.85rem;
+      font-weight: 700;
+      color: #475569;
+    }
+
+    .form-control {
+      border: 1px solid #CBD5E1;
+      border-radius: 6px;
+      padding: 10px 12px;
+      font-size: 0.9rem;
+      font-family: inherit;
+      color: #1E293B;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    .form-control:focus {
+      border-color: #EE5A24;
+    }
+
+    .btn-submit-leave {
+      background: #EE5A24;
+      color: white;
+      border: none;
+      padding: 12px;
+      border-radius: 6px;
+      font-weight: 700;
+      font-size: 0.9rem;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .btn-submit-leave:hover {
+      background: #EA541F;
+    }
+
+    .btn-submit-leave:disabled {
+      background: #F1F5F9;
+      color: #94A3B8;
+      cursor: not-allowed;
+    }
+
+    .leaves-timeline {
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+      max-height: 420px;
+      overflow-y: auto;
+      padding-right: 5px;
+    }
+
+    .leave-log-box {
+      border: 1px solid #E2E8F0;
+      border-radius: 8px;
+      padding: 15px;
+      background: #FAFAFA;
+    }
+
+    .log-hdr {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+    }
+
+    .dates-range {
+      font-weight: 700;
+      color: #1E293B;
+      font-size: 0.85rem;
+    }
+
+    .reason-txt {
+      margin: 6px 0;
+      font-size: 0.8rem;
+      color: #475569;
+      line-height: 1.4;
+    }
+
+    .submitted-time {
+      font-size: 0.7rem;
+      color: #94A3B8;
+      font-weight: 600;
+    }
+
+    /* Modal Backdrop & card */
+    .modal-backdrop {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(15, 23, 42, 0.45);
+      backdrop-filter: blur(4px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+    }
+
+    .modal-card {
+      background: white;
+      width: 420px;
+      border-radius: 12px;
+      border: 1px solid #E2E8F0;
+      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+      overflow: hidden;
+    }
+
+    .modal-header {
+      padding: 16px 20px;
+      background: #F8FAFC;
+      border-bottom: 1px solid #E2E8F0;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .modal-header h4 {
+      margin: 0;
+      font-size: 0.95rem;
+      font-weight: 800;
+      color: #1E293B;
+    }
+
+    .btn-close {
+      background: none;
+      border: none;
+      font-size: 1.5rem;
+      color: #94A3B8;
+      cursor: pointer;
+      line-height: 1;
+    }
+
+    .modal-body {
+      padding: 20px;
+    }
+
+    .bill-summary-box {
+      text-align: center;
+      background: #FFFBEB;
+      border: 1px solid #FDE68A;
+      padding: 15px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+    }
+
+    .bill-title {
+      margin: 0 0 5px 0;
+      font-size: 0.8rem;
+      color: #B45309;
+      font-weight: 600;
+    }
+
+    .bill-amount {
+      margin: 0;
+      font-size: 1.6rem;
+      font-weight: 800;
+      color: #92400E;
+    }
+
+    .payment-method-selector {
+      display: flex;
+      flex-direction: column;
+      margin-bottom: 15px;
+    }
+
+    .method-option {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 0.9rem;
+      font-weight: 700;
+      color: #475569;
+      cursor: pointer;
+    }
+
+    .modal-input {
+      width: 100%;
+      border: 1px solid #CBD5E1;
+      border-radius: 6px;
+      padding: 10px;
+      font-size: 0.85rem;
+      outline: none;
+      font-family: inherit;
+      box-sizing: border-box;
+    }
+
+    .modal-input:focus {
+      border-color: #EE5A24;
+    }
+
+    .modal-footer {
+      padding: 15px 20px;
+      background: #F8FAFC;
+      border-top: 1px solid #E2E8F0;
+      display: flex;
+      justify-content: flex-end;
+      gap: 12px;
+    }
+
+    .btn-modal {
+      border: none;
+      padding: 8px 16px;
+      border-radius: 6px;
+      font-weight: 700;
+      font-size: 0.85rem;
+      cursor: pointer;
+    }
+
+    .btn-cancel {
+      background: #E2E8F0;
+      color: #475569;
+    }
+
+    .btn-cancel:hover {
+      background: #CBD5E1;
+    }
+
+    .btn-confirm {
+      background: #10B981;
+      color: white;
+    }
+
+    .btn-confirm:hover {
+      background: #059669;
+    }
+
+    .btn-confirm:disabled {
+      background: #E2E8F0;
+      color: #94A3B8;
+      cursor: not-allowed;
+    }
+
     .animate-fade-in {
-      animation: fadeIn 0.4s ease-out;
+      animation: fadeIn 0.3s ease-out;
     }
 
     @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(10px); }
+      from { opacity: 0; transform: translateY(8px); }
       to { opacity: 1; transform: translateY(0); }
     }
   `]
@@ -769,11 +1596,34 @@ export class ParentDashboardComponent implements OnInit {
   parentName = '';
   loading = true;
   errorMessage = '';
+  successMessage = '';
   dashboardData: any = null;
+  activeTab = 'overview';
+
+  // Billing State
+  billsList: Bill[] = [];
+  totalOutstanding = 0;
+  showPaymentModal = false;
+  selectedBill: Bill | null = null;
+  payMethod = 'Online';
+  processingPayment = false;
+
+  // Milestones State
+  milestonesGroup: MilestoneGroup | null = null;
+
+  // Leave State
+  leavesList: LeaveRequest[] = [];
+  submittingLeave = false;
+  leaveForm = {
+    startDate: '',
+    endDate: '',
+    reason: ''
+  };
 
   constructor(
     private authService: AuthService,
     private apiService: ApiService,
+    private parentService: ParentService,
     private router: Router
   ) {}
 
@@ -800,6 +1650,127 @@ export class ParentDashboardComponent implements OnInit {
       error: (err) => {
         this.loading = false;
         this.errorMessage = err.error?.detail || 'Failed to retrieve portal dashboard details.';
+      }
+    });
+  }
+
+  setTab(tab: string): void {
+    this.activeTab = tab;
+    this.errorMessage = '';
+    this.successMessage = '';
+
+    if (tab === 'billing') {
+      this.loadBilling();
+    } else if (tab === 'milestones') {
+      this.loadMilestones();
+    } else if (tab === 'leaves') {
+      this.loadLeaves();
+    } else if (tab === 'overview') {
+      this.loadDashboardData();
+    }
+  }
+
+  // --- BILLING LEDGER ---
+  loadBilling(): void {
+    this.parentService.getBilling().subscribe({
+      next: (res) => {
+        this.billsList = res.bills;
+        this.totalOutstanding = res.total_due;
+      },
+      error: (err) => {
+        this.errorMessage = err.error?.detail || 'Failed to load billing ledger.';
+      }
+    });
+  }
+
+  openPaymentModal(bill: Bill): void {
+    this.selectedBill = bill;
+    this.payMethod = 'Online';
+    this.showPaymentModal = true;
+  }
+
+  closePaymentModal(): void {
+    this.showPaymentModal = false;
+    this.selectedBill = null;
+  }
+
+  processMockPayment(): void {
+    if (!this.selectedBill) return;
+    this.processingPayment = true;
+    this.errorMessage = '';
+    
+    this.parentService.payBill(this.selectedBill.id, this.payMethod).subscribe({
+      next: () => {
+        this.processingPayment = false;
+        this.closePaymentModal();
+        this.successMessage = 'Payment simulated successfully!';
+        this.loadBilling();
+        setTimeout(() => this.successMessage = '', 4000);
+      },
+      error: (err) => {
+        this.processingPayment = false;
+        this.errorMessage = err.error?.detail || 'Payment failed. Please retry.';
+      }
+    });
+  }
+
+  // --- MILESTONES ---
+  loadMilestones(): void {
+    this.parentService.getMilestones().subscribe({
+      next: (res) => {
+        this.milestonesGroup = res;
+      },
+      error: (err) => {
+        this.errorMessage = err.error?.detail || 'Failed to retrieve progress milestones.';
+      }
+    });
+  }
+
+  getProgressString(category: 'Cognitive' | 'Physical' | 'Emotional'): string {
+    if (!this.milestonesGroup) return '0/0';
+    const list = this.milestonesGroup[category] || [];
+    const completed = list.filter(m => m.status.toUpperCase() === 'COMPLETED').length;
+    return `${completed}/${list.length} Met`;
+  }
+
+  // --- LEAVE OF ABSENCE ---
+  loadLeaves(): void {
+    this.parentService.getLeaves().subscribe({
+      next: (res) => {
+        this.leavesList = res;
+      },
+      error: (err) => {
+        this.errorMessage = err.error?.detail || 'Failed to load leave history log.';
+      }
+    });
+  }
+
+  onLeaveSubmit(event: Event): void {
+    event.preventDefault();
+    if (!this.leaveForm.startDate || !this.leaveForm.endDate || !this.leaveForm.reason) {
+      this.errorMessage = 'Please complete all form fields.';
+      return;
+    }
+    
+    this.submittingLeave = true;
+    this.errorMessage = '';
+    this.successMessage = '';
+
+    this.parentService.submitLeave(
+      this.leaveForm.startDate,
+      this.leaveForm.endDate,
+      this.leaveForm.reason
+    ).subscribe({
+      next: () => {
+        this.submittingLeave = false;
+        this.successMessage = 'Leave request submitted and auto-marked successfully!';
+        this.leaveForm = { startDate: '', endDate: '', reason: '' };
+        this.loadLeaves();
+        setTimeout(() => this.successMessage = '', 4000);
+      },
+      error: (err) => {
+        this.submittingLeave = false;
+        this.errorMessage = err.error?.detail || 'Failed to submit leave request.';
       }
     });
   }

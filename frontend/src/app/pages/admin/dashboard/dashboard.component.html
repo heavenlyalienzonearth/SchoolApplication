@@ -51,6 +51,12 @@
         <li [class.active]="activeTab === 'stationary'" (click)="setTab('stationary')">
           <span class="icon">✏️</span> Stationery Center
         </li>
+        <li [class.active]="activeTab === 'milestones'" (click)="setTab('milestones')" *ngIf="currentUser?.role?.toUpperCase() !== 'PARENT'">
+          <span class="icon">🎯</span> Milestone Config
+        </li>
+        <li [class.active]="activeTab === 'leaves'" (click)="setTab('leaves')" *ngIf="currentUser?.role?.toUpperCase() === 'ADMIN' || currentUser?.role?.toUpperCase() === 'PRINCIPAL'">
+          <span class="icon">📅</span> Leave Approvals
+        </li>
       </ul>
     </aside>
 
@@ -72,6 +78,8 @@
           <option value="holidays">📅 School Holidays</option>
           <option value="users" *ngIf="currentUser?.role?.toUpperCase() === 'ADMIN'">👥 User Management</option>
           <option value="stationary">✏️ Stationery Center</option>
+          <option value="milestones" *ngIf="currentUser?.role?.toUpperCase() !== 'PARENT'">🎯 Milestone Config</option>
+          <option value="leaves" *ngIf="currentUser?.role?.toUpperCase() === 'ADMIN' || currentUser?.role?.toUpperCase() === 'PRINCIPAL'">📅 Leave Approvals</option>
         </select>
       </div>
       
@@ -770,6 +778,14 @@
                               [style.border-color]="kid.status === 'LATE' ? '#F59E0B' : ''"
                               style="border-radius: 20px; padding: 4px 12px; font-weight: 700;">
                         Late
+                      </button>
+                      <button type="button" (click)="markKidStatus(kid.id, 'LEAVE')" 
+                              class="btn btn-sm btn-outline" 
+                              [style.background-color]="kid.status === 'LEAVE' ? '#3B82F6' : ''"
+                              [style.color]="kid.status === 'LEAVE' ? 'white' : ''"
+                              [style.border-color]="kid.status === 'LEAVE' ? '#3B82F6' : ''"
+                              style="border-radius: 20px; padding: 4px 12px; font-weight: 700;">
+                        Leave
                       </button>
                     </div>
                   </td>
@@ -1596,6 +1612,236 @@
           </div>
         </div>
       </section>
+
+      <!-- --- MILESTONES SECTION --- -->
+      <section *ngIf="activeTab === 'milestones'" class="tab-section animate-fade-in">
+        <div class="section-header">
+          <h2>🎯 Student Milestones & Progress Configurator</h2>
+          <div class="sub-tab-buttons" style="display: flex; gap: 15px; margin-top: 15px; border-bottom: 2px solid #e2e8f0; padding-bottom: 5px;">
+            <button type="button" (click)="setMilestoneSubTab('templates')" [style.color]="milestoneActiveSubTab === 'templates' ? 'var(--secondary)' : '#64748b'" [style.border-bottom]="milestoneActiveSubTab === 'templates' ? '3px solid var(--secondary)' : 'none'" style="font-weight: 700; padding: 8px 12px; background: none; border: none; cursor: pointer;">
+              ⚙️ Milestone Templates
+            </button>
+            <button type="button" (click)="setMilestoneSubTab('progress')" [style.color]="milestoneActiveSubTab === 'progress' ? 'var(--secondary)' : '#64748b'" [style.border-bottom]="milestoneActiveSubTab === 'progress' ? '3px solid var(--secondary)' : 'none'" style="font-weight: 700; padding: 8px 12px; background: none; border: none; cursor: pointer;">
+              ✍️ Track Student Milestones
+            </button>
+          </div>
+        </div>
+
+        <!-- Sub-Tab 1: Milestone Templates -->
+        <div *ngIf="milestoneActiveSubTab === 'templates'" style="margin-top: 20px;">
+          <div class="row-flex" style="display: grid; grid-template-columns: 1fr 2fr; gap: 30px;">
+            <!-- Left Side: Add Template -->
+            <div class="dash-card">
+              <h3>Create Milestone Template</h3>
+              <div class="form-group" style="margin-top: 15px;">
+                <label>Program / Class level</label>
+                <select [(ngModel)]="selectedMilestoneProgramId" (change)="onMilestoneProgramChange()" class="form-control">
+                  <option *ngFor="let prog of programs" [value]="prog.id">{{ prog.title }}</option>
+                </select>
+              </div>
+              
+              <div class="form-group" style="margin-top: 15px;">
+                <label>Milestone category</label>
+                <select [(ngModel)]="newMilestoneTemplate.category" class="form-control">
+                  <option value="Cognitive">🧠 Cognitive & Learning</option>
+                  <option value="Physical">🏃 Physical & Motor Skills</option>
+                  <option value="Emotional">🤝 Social & Emotional</option>
+                </select>
+              </div>
+
+              <div class="form-group" style="margin-top: 15px;">
+                <label>Milestone description</label>
+                <textarea [(ngModel)]="newMilestoneTemplate.milestone_name" class="form-control" rows="3" placeholder="e.g. Identifies standard uppercase & lowercase letters..."></textarea>
+              </div>
+
+              <button type="button" (click)="addMilestoneTemplate()" class="btn btn-primary" style="margin-top: 15px; width: 100%; border: none; font-weight: 700; color: white; background-color: var(--secondary);">
+                ➕ Add Milestone Template
+              </button>
+            </div>
+
+            <!-- Right Side: Template List -->
+            <div class="dash-card">
+              <h3>Available Milestone Templates</h3>
+              <div style="margin-top: 15px; max-height: 480px; overflow-y: auto;">
+                <table class="table">
+                  <thead>
+                    <tr>
+                      <th>Category</th>
+                      <th>Description</th>
+                      <th style="text-align: right;">Action</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr *ngFor="let temp of milestoneTemplates">
+                      <td>
+                        <span class="badge" [style.background-color]="temp.category === 'Cognitive' ? '#EFF6FF' : temp.category === 'Physical' ? '#ECFDF5' : '#FDF2F8'" [style.color]="temp.category === 'Cognitive' ? '#1E40AF' : temp.category === 'Physical' ? '#065F46' : '#9D174D'" style="font-weight: 700; padding: 4px 8px; border-radius: 4px;">
+                          {{ temp.category }}
+                        </span>
+                      </td>
+                      <td>{{ temp.milestone_name }}</td>
+                      <td style="text-align: right;">
+                        <button type="button" (click)="deleteMilestoneTemplate(temp.id)" class="btn btn-sm btn-outline" style="border-color: #EF4444; color: #EF4444; background: none; font-weight: 700; border-radius: 4px; padding: 2px 8px;">
+                          Delete
+                        </button>
+                      </td>
+                    </tr>
+                    <tr *ngIf="milestoneTemplates.length === 0">
+                      <td colspan="3" style="text-align: center; color: #94a3b8; font-style: italic; padding: 30px;">
+                        No milestone templates configured for this program. Add one on the left panel!
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Sub-Tab 2: Track Student Milestones -->
+        <div *ngIf="milestoneActiveSubTab === 'progress'" style="margin-top: 20px;">
+          <div class="row-flex" style="display: grid; grid-template-columns: 1fr 3fr; gap: 30px;">
+            <!-- Left Panel: Select Student -->
+            <div class="dash-card">
+              <h3>Select Student</h3>
+              <div class="form-group" style="margin-top: 15px;">
+                <label>Program / Class level</label>
+                <select [(ngModel)]="milestoneStudentProgramId" (change)="loadMilestoneStudents()" class="form-control">
+                  <option *ngFor="let prog of programs" [value]="prog.id">{{ prog.title }}</option>
+                </select>
+              </div>
+
+              <div class="form-group" style="margin-top: 15px;">
+                <label>Student Name</label>
+                <select [(ngModel)]="selectedMilestoneStudentId" (change)="onMilestoneStudentChange()" class="form-control">
+                  <option *ngFor="let std of milestoneStudents" [value]="std.id">{{ std.name }}</option>
+                </select>
+              </div>
+              
+              <div *ngIf="milestoneStudents.length > 0" style="margin-top: 25px;">
+                <button type="button" (click)="generateReportBooklet()" class="btn btn-outline" style="width: 100%; border-color: var(--secondary); color: var(--secondary); font-weight: 700; background: none;">
+                  🖨️ Report Booklet Print
+                </button>
+              </div>
+            </div>
+
+            <!-- Right Panel: Student Milestone Checkmarks -->
+            <div class="dash-card">
+              <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #f1f5f9; padding-bottom: 10px; margin-bottom: 15px;">
+                <h3 style="margin: 0;">Mark Progress for: <span style="color: var(--secondary);">{{ selectedMilestoneStudentName || 'N/A' }}</span></h3>
+                <button type="button" (click)="saveStudentMilestones()" class="btn btn-primary" [disabled]="savingStudentMilestones || studentMilestones.length === 0" style="border: none; font-weight: 700; color: white; background-color: #10b981;">
+                  {{ savingStudentMilestones ? 'Saving...' : '💾 Save Progress' }}
+                </button>
+              </div>
+
+              <div style="max-height: 480px; overflow-y: auto; padding-right: 5px;">
+                <div class="student-milestone-item" *ngFor="let m of studentMilestones" style="border: 1px solid #e2e8f0; border-radius: 8px; padding: 15px; margin-bottom: 15px; background: #fafafa;">
+                  <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                    <div>
+                      <span class="badge" [style.background-color]="m.category === 'Cognitive' ? '#EFF6FF' : m.category === 'Physical' ? '#ECFDF5' : '#FDF2F8'" [style.color]="m.category === 'Cognitive' ? '#1E40AF' : m.category === 'Physical' ? '#065F46' : '#9D174D'" style="font-weight: 700; padding: 2px 6px; border-radius: 4px; font-size: 0.75rem;">
+                        {{ m.category }}
+                      </span>
+                      <h4 style="margin: 8px 0 0 0; font-size: 0.95rem; font-weight: 700; color: #1e293b;">{{ m.milestone_name }}</h4>
+                    </div>
+
+                    <!-- Status Selector Buttons -->
+                    <div style="display: flex; gap: 6px;">
+                      <button type="button" (click)="markStudentMilestoneStatus(m.id, 'Not Started')" [style.background]="m.status === 'Not Started' ? '#e2e8f0' : 'white'" [style.color]="m.status === 'Not Started' ? '#475569' : '#64748b'" style="border: 1px solid #cbd5e1; border-radius: 4px; padding: 4px 8px; font-size: 0.75rem; font-weight: 700; cursor: pointer;">
+                        Not Started
+                      </button>
+                      <button type="button" (click)="markStudentMilestoneStatus(m.id, 'In Progress')" [style.background]="m.status === 'In Progress' ? '#fef3c7' : 'white'" [style.color]="m.status === 'In Progress' ? '#d97706' : '#64748b'" style="border: 1px solid #fde68a; border-radius: 4px; padding: 4px 8px; font-size: 0.75rem; font-weight: 700; cursor: pointer;">
+                        In Progress
+                      </button>
+                      <button type="button" (click)="markStudentMilestoneStatus(m.id, 'Completed')" [style.background]="m.status === 'Completed' ? '#d1fae5' : 'white'" [style.color]="m.status === 'Completed' ? '#059669' : '#64748b'" style="border: 1px solid #a7f3d0; border-radius: 4px; padding: 4px 8px; font-size: 0.75rem; font-weight: 700; cursor: pointer;">
+                        Completed
+                      </button>
+                    </div>
+                  </div>
+
+                  <!-- Date & Comments Inputs -->
+                  <div style="display: grid; grid-template-columns: 1fr 3fr; gap: 15px; margin-top: 12px; border-top: 1px dashed #e2e8f0; padding-top: 10px;">
+                    <div class="form-group">
+                      <label style="font-size: 0.75rem; font-weight: 700; color: #64748b;">Completed Date</label>
+                      <input type="date" [(ngModel)]="m.completed_date" [disabled]="m.status !== 'Completed'" class="form-control" style="font-size: 0.8rem; padding: 4px 8px;" />
+                    </div>
+                    <div class="form-group">
+                      <label style="font-size: 0.75rem; font-weight: 700; color: #64748b;">Teacher Comments</label>
+                      <input type="text" [(ngModel)]="m.teacher_comments" class="form-control" style="font-size: 0.8rem; padding: 4px 8px;" placeholder="Add details of child's skill performance..." />
+                    </div>
+                  </div>
+                </div>
+
+                <div *ngIf="studentMilestones.length === 0" style="text-align: center; color: #94a3b8; font-style: italic; padding: 40px 0;">
+                  No milestones found for this student. Try selecting another student or configuring templates first.
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- --- LEAVE APPROVALS SECTION --- -->
+      <section *ngIf="activeTab === 'leaves'" class="tab-section animate-fade-in">
+        <div class="section-header">
+          <h2>📅 Leave Approval Requests Center</h2>
+          <p>Review leave applications submitted by parents, verify details, and approve to sync with classroom attendance.</p>
+        </div>
+
+        <div class="dash-card" style="margin-top: 20px;">
+          <div *ngIf="adminLeavesLoading" style="text-align: center; padding: 40px 0; color: #64748b;">
+            <p>Loading leave requests...</p>
+          </div>
+
+          <div *ngIf="!adminLeavesLoading" style="overflow-x: auto;">
+            <table class="table">
+              <thead>
+                <tr>
+                  <th>Student Name</th>
+                  <th>Program / Class</th>
+                  <th>Dates Range</th>
+                  <th>Reason</th>
+                  <th>Submitted At</th>
+                  <th>Status</th>
+                  <th style="text-align: right;">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let request of adminLeaves">
+                  <td><strong>{{ request.student_name }}</strong></td>
+                  <td>{{ request.program_title }}</td>
+                  <td><strong>{{ request.start_date | date:'mediumDate' }}</strong> to <strong>{{ request.end_date | date:'mediumDate' }}</strong></td>
+                  <td>{{ request.reason }}</td>
+                  <td>{{ request.created_at | date:'short' }}</td>
+                  <td>
+                    <span class="badge" [ngClass]="{
+                      'badge-present': request.status === 'Approved',
+                      'badge-absent': request.status === 'Declined',
+                      'badge-late': request.status === 'Pending'
+                    }" style="font-weight: 700; padding: 4px 8px; border-radius: 4px;">
+                      {{ request.status }}
+                    </span>
+                  </td>
+                  <td style="text-align: right;">
+                    <div style="display: flex; gap: 8px; justify-content: flex-end;" *ngIf="request.status === 'Pending'">
+                      <button type="button" (click)="approveLeave(request.id)" class="btn btn-sm btn-primary" style="background-color: #10b981; border: none; color: white; font-weight: 700; border-radius: 4px; padding: 4px 10px;">
+                        Approve
+                      </button>
+                      <button type="button" (click)="declineLeave(request.id)" class="btn btn-sm btn-outline" style="border-color: #ef4444; color: #ef4444; background: none; font-weight: 700; border-radius: 4px; padding: 4px 10px;">
+                        Decline
+                      </button>
+                    </div>
+                    <span *ngIf="request.status !== 'Pending'" style="color: #94a3b8; font-size: 0.8rem; font-style: italic; font-weight: 600;">Processed</span>
+                  </td>
+                </tr>
+                <tr *ngIf="adminLeaves.length === 0">
+                  <td colspan="7" style="text-align: center; color: #94a3b8; font-style: italic; padding: 40px;">
+                    No student leave requests found.
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
     </main>
   </div>
 </div>
@@ -2200,6 +2446,86 @@
       </button>
     </div>
 
+  </div>
+</div>
+
+<!-- PRINTABLE PROGRESS REPORT BOOKLET MODAL -->
+<div class="dash-modal" *ngIf="printBookletOpen">
+  <div class="modal-content" style="max-width: 800px; max-height: 90vh; overflow-y: auto;">
+    <div class="modal-header">
+      <h3>🖨️ Printable Student Progress Booklet</h3>
+      <button type="button" (click)="closePrintBooklet()" class="btn-close">×</button>
+    </div>
+    
+    <!-- Booklet Print Container -->
+    <div id="studentBookletPrint" style="padding: 40px; font-family: 'Outfit', sans-serif; color: #1E293B; background: white;">
+      <!-- Title Page -->
+      <div style="text-align: center; border-bottom: 3px double #EE5A24; padding-bottom: 25px; margin-bottom: 30px;">
+        <span style="font-size: 3rem;">🦘</span>
+        <h1 style="color: #EE5A24; margin: 5px 0 0 0; font-size: 2.2rem; font-weight: 800; letter-spacing: 0.5px;">KANGAROO KIDS PRE-SCHOOL</h1>
+        <p style="color: #64748B; margin: 2px 0 0 0; font-size: 0.95rem; font-weight: 600;">Developmental Milestones & Progress Report Booklet</p>
+      </div>
+
+      <!-- Kid / Profile Metadata -->
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; background: #fafafa; border: 1px solid #e2e8f0; border-radius: 8px; padding: 20px; font-size: 0.9rem; margin-bottom: 30px;">
+        <div>
+          <p style="margin: 0 0 6px 0;"><strong>Student Name:</strong> {{ printBookletStudent?.name }}</p>
+          <p style="margin: 0 0 6px 0;"><strong>Class Program:</strong> {{ printBookletProgramTitle }}</p>
+          <p style="margin: 0;"><strong>Report Date:</strong> {{ currentDateString | date:'mediumDate' }}</p>
+        </div>
+        <div>
+          <p style="margin: 0 0 6px 0;"><strong>Parent Name:</strong> {{ printBookletStudent?.parent_name }}</p>
+          <p style="margin: 0 0 6px 0;"><strong>Emergency Phone:</strong> {{ printBookletStudent?.emergency_phone || 'N/A' }}</p>
+          <p style="margin: 0;"><strong>Blood Group:</strong> {{ printBookletStudent?.blood_group || 'N/A' }}</p>
+        </div>
+      </div>
+
+      <!-- Milestones List -->
+      <div style="margin-top: 20px;">
+        <h3 style="color: #EE5A24; font-size: 1.25rem; font-weight: 800; border-bottom: 2px solid #F1F5F9; padding-bottom: 8px; margin-bottom: 15px;">🔍 Milestone Assessment List</h3>
+        
+        <div style="display: flex; flex-direction: column; gap: 20px;">
+          <div *ngFor="let m of printBookletMilestones" style="border-bottom: 1px solid #f1f5f9; padding-bottom: 12px;">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+              <span style="font-weight: 700; font-size: 0.95rem; color: #1e293b;">{{ m.milestone_name }}</span>
+              <span [style.background-color]="m.status === 'Completed' ? '#d1fae5' : m.status === 'In Progress' ? '#fef3c7' : '#e2e8f0'"
+                    [style.color]="m.status === 'Completed' ? '#065f46' : m.status === 'In Progress' ? '#b45309' : '#475569'"
+                    style="font-size: 0.75rem; font-weight: 700; padding: 3px 8px; border-radius: 4px;">
+                {{ m.status }}
+              </span>
+            </div>
+            <p style="margin: 6px 0 0 0; font-size: 0.8rem; color: #64748b; font-style: italic;" *ngIf="m.teacher_comments">
+              <strong>Teacher Review Comments:</strong> "{{ m.teacher_comments }}"
+            </p>
+            <span style="display: block; font-size: 0.7rem; color: #10B981; font-weight: 700; margin-top: 4px;" *ngIf="m.completed_date">✓ Verified completed on: {{ m.completed_date | date:'mediumDate' }}</span>
+          </div>
+          <div *ngIf="printBookletMilestones.length === 0" style="text-align: center; color: #94a3b8; font-style: italic; padding: 20px 0;">
+            No milestone metrics available for this student.
+          </div>
+        </div>
+      </div>
+
+      <!-- Signatures Footer -->
+      <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-top: 80px; font-weight: 600; font-size: 0.85rem; color: #475569;">
+        <div style="text-align: center; width: 180px;">
+          <div style="border-bottom: 1px solid #cbd5e1; height: 35px; width: 100%;"></div>
+          <span style="display: block; margin-top: 5px;">Class Teacher</span>
+        </div>
+        
+        <div style="text-align: center; width: 180px;">
+          <div style="border-bottom: 1px solid #cbd5e1; height: 35px; width: 100%;"></div>
+          <span style="display: block; margin-top: 5px;">Principal Seal</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Print Booklet footer actions -->
+    <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px;">
+      <button type="button" (click)="closePrintBooklet()" class="btn btn-outline btn-sm">❌ Close</button>
+      <button type="button" (click)="printCertificate('studentBookletPrint')" class="btn btn-primary btn-sm" style="background-color: var(--secondary); border: none; color: white; font-weight: 700;">
+        🖨️ Print Progress Booklet
+      </button>
+    </div>
   </div>
 </div>
 

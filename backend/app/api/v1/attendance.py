@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
-from typing import List, Optional
+from typing import List, Optional, Dict, Any
 from app.core.database import get_db
 from app.api.v1.auth import get_current_user
 from app import models, schemas
@@ -145,3 +145,214 @@ def get_attendance_stats(
         })
         
     return stats_list
+
+from pydantic import BaseModel
+from datetime import datetime, timedelta
+
+class MilestoneTemplateCreate(BaseModel):
+    program_id: int
+    milestone_name: str
+    category: str
+
+class StudentMilestoneUpdate(BaseModel):
+    id: int
+    status: str
+    completed_date: Optional[str] = None
+    teacher_comments: Optional[str] = None
+
+class StudentMilestonesSave(BaseModel):
+    milestones: List[StudentMilestoneUpdate]
+
+class LeaveStatusUpdate(BaseModel):
+    status: str  # Approved, Declined
+
+# --- MILESTONE TEMPLATES CONFIGURATOR ---
+@router.get("/milestones/templates", response_model=List[Dict[str, Any]])
+def get_milestone_templates(
+    program_id: int,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user)
+):
+    templates = db.query(models.MilestoneTemplate).filter(models.MilestoneTemplate.program_id == program_id).all()
+    return [
+        {
+            "id": t.id,
+            "program_id": t.program_id,
+            "milestone_name": t.milestone_name,
+            "category": t.category
+        }
+        for t in templates
+    ]
+
+@router.post("/milestones/templates")
+def create_milestone_template(
+    data: MilestoneTemplateCreate,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user)
+):
+    if current_user.role.upper() not in ["ADMIN", "PRINCIPAL"]:
+        raise HTTPException(status_code=403, detail="Permission denied.")
+        
+    template = models.MilestoneTemplate(
+        program_id=data.program_id,
+        milestone_name=data.milestone_name,
+        category=data.category
+    )
+    db.add(template)
+    db.commit()
+    return {"message": "Milestone template added successfully."}
+
+@router.delete("/milestones/templates/{template_id}")
+def delete_milestone_template(
+    template_id: int,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user)
+):
+    if current_user.role.upper() not in ["ADMIN", "PRINCIPAL"]:
+        raise HTTPException(status_code=403, detail="Permission denied.")
+        
+    template = db.query(models.MilestoneTemplate).filter(models.MilestoneTemplate.id == template_id).first()
+    if not template:
+        raise HTTPException(status_code=404, detail="Template not found.")
+        
+    db.delete(template)
+    db.commit()
+    return {"message": "Milestone template deleted."}
+
+# --- STUDENT MILESTONES MANAGEMENT ---
+@router.get("/milestones/student/{student_id}")
+def get_or_init_student_milestones(
+    student_id: int,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user)
+):
+    student = db.query(models.Student).filter(models.Student.id == student_id).first()
+    if not student:
+        raise HTTPException(status_code=404, detail="Student not found.")
+        
+    milestones = db.query(models.ParentMilestone).filter(models.ParentMilestone.student_id == student_id).all()
+    
+    # Auto-initialize milestones from templates if empty
+    if not milestones:
+        templates = db.query(models.MilestoneTemplate).filter(models.MilestoneTemplate.program_id == student.program_id).all()
+        for t in templates:
+            m = models.ParentMilestone(
+                student_id=student_id,
+                milestone_name=t.milestone_name,
+                category=t.category,
+                status="Not Started"
+            )
+            db.add(m)
+        db.commit()
+        milestones = db.query(models.ParentMilestone).filter(models.ParentMilestone.student_id == student_id).all()
+        
+    return [
+        {
+            "id": m.id,
+            "milestone_name": m.milestone_name,
+            "category": m.category,
+            "status": m.status,
+            "completed_date": m.completed_date,
+            "teacher_comments": m.teacher_comments
+        }
+        for m in milestones
+    ]
+
+@router.post("/milestones/student/{student_id}")
+def save_student_milestones(
+    student_id: int,
+    data: StudentMilestonesSave,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user)
+):
+    for m_update in data.milestones:
+        db_m = db.query(models.ParentMilestone).filter(
+            models.ParentMilestone.id == m_update.id,
+            models.ParentMilestone.student_id == student_id
+        ).first()
+        if db_m:
+            db_m.status = m_update.status
+            db_m.completed_date = m_update.completed_date if m_update.status.upper() == "COMPLETED" else None
+            db_m.teacher_comments = m_update.teacher_comments
+            
+    db.commit()
+    return {"message": "Student progress milestones updated successfully."}
+
+# --- LEAVE APPROVALS ---
+@router.get("/leaves")
+def get_all_leave_requests(
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user)
+):
+    if current_user.role.upper() not in ["ADMIN", "PRINCIPAL"]:
+        raise HTTPException(status_code=403, detail="Permission denied.")
+        
+    leaves = db.query(models.LeaveRequest).order_by(models.LeaveRequest.created_at.desc()).all()
+    
+    leaves_list = []
+    for l in leaves:
+        student = db.query(models.Student).filter(models.Student.id == l.student_id).first()
+        leaves_list.append({
+            "id": l.id,
+            "student_id": l.student_id,
+            "student_name": student.name if student else "Unknown Student",
+            "program_title": student.program.title if student and student.program else "N/A",
+            "start_date": l.start_date,
+            "end_date": l.end_date,
+            "reason": l.reason,
+            "status": l.status,
+            "created_at": l.created_at.isoformat()
+        })
+        
+    return leaves_list
+
+@router.put("/leaves/{leave_id}/status")
+def update_leave_request_status(
+    leave_id: int,
+    req: LeaveStatusUpdate,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user)
+):
+    if current_user.role.upper() not in ["ADMIN", "PRINCIPAL"]:
+        raise HTTPException(status_code=403, detail="Permission denied.")
+        
+    leave = db.query(models.LeaveRequest).filter(models.LeaveRequest.id == leave_id).first()
+    if not leave:
+        raise HTTPException(status_code=404, detail="Leave request not found.")
+        
+    leave.status = req.status
+    
+    # Sync with attendance table if approved
+    if req.status.upper() == "APPROVED":
+        # Generate dates in range
+        date_strings = []
+        try:
+            start_dt = datetime.strptime(leave.start_date, "%Y-%m-%d")
+            end_dt = datetime.strptime(leave.end_date, "%Y-%m-%d")
+            delta = end_dt - start_dt
+            for i in range(delta.days + 1):
+                date_strings.append((start_dt + timedelta(days=i)).strftime("%Y-%m-%d"))
+        except Exception as e:
+            raise HTTPException(status_code=400, detail=f"Invalid date format: {str(e)}")
+            
+        for d_str in date_strings:
+            existing_att = db.query(models.Attendance).filter(
+                models.Attendance.student_id == leave.student_id,
+                models.Attendance.date == d_str
+            ).first()
+            
+            if existing_att:
+                existing_att.status = "LEAVE"
+                existing_att.notes = f"Approved Leave: {leave.reason}"
+            else:
+                db_att = models.Attendance(
+                    student_id=leave.student_id,
+                    date=d_str,
+                    status="LEAVE",
+                    notes=f"Approved Leave: {leave.reason}"
+                )
+                db.add(db_att)
+                
+    db.commit()
+    return {"message": f"Leave request status updated to {req.status} and synced with attendance."}
+
