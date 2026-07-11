@@ -383,15 +383,21 @@ import { MomentsService, StudentMoment } from '../../core/services/moments.servi
             <p>Track your child's key developmental milestones verified by the classroom supervisor.</p>
           </div>
 
-          <div class="milestones-columns">
-            <!-- Cognitive -->
-            <div class="milestone-column">
-              <div class="col-hdr cognitive-hdr">
-                <h4>🧠 Cognitive & Learning</h4>
-                <span class="count-badge">{{ getProgressString('Cognitive') }}</span>
+          <div class="milestones-columns" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px;">
+            <!-- Dynamic columns -->
+            <div class="milestone-column" *ngFor="let catKey of getMilestonesCategories()">
+              <div class="col-hdr" [ngClass]="{
+                'cognitive-hdr': catKey === 'Cognitive',
+                'physical-hdr': catKey === 'Physical',
+                'emotional-hdr': catKey === 'Emotional'
+              }" style="display: flex; justify-content: space-between; align-items: center; padding: 10px; border-bottom: 2px solid #e2e8f0; margin-bottom: 12px;">
+                <h4 style="margin: 0; font-size: 0.9rem; font-weight: 700; color: #1e293b;">
+                  {{ catKey === 'Cognitive' ? '🧠 Cognitive & Learning' : catKey === 'Physical' ? '🏃 Physical & Motor' : catKey === 'Emotional' ? '🤝 Social & Emotional' : '🎯 ' + catKey }}
+                </h4>
+                <span class="count-badge" style="font-size: 0.7rem; font-weight: 700; background: #e2e8f0; color: #475569; padding: 2px 6px; border-radius: 4px;">{{ getProgressString(catKey) }}</span>
               </div>
               <div class="milestone-list">
-                <div class="milestone-card" *ngFor="let m of milestonesGroup?.Cognitive" [ngClass]="m.status.toLowerCase()">
+                <div class="milestone-card" *ngFor="let m of getMilestonesByCategory(catKey)" [ngClass]="m.status.toLowerCase()">
                   <div class="card-top">
                     <span class="status-indicator"></span>
                     <h5>{{ m.milestone_name }}</h5>
@@ -401,49 +407,7 @@ import { MomentsService, StudentMoment } from '../../core/services/moments.servi
                   </p>
                   <span class="completion-date" *ngIf="m.completed_date">✓ Met on: {{ m.completed_date | date:'mediumDate' }}</span>
                 </div>
-                <div *ngIf="milestonesGroup?.Cognitive?.length === 0" class="no-records">No cognitive milestones listed.</div>
-              </div>
-            </div>
-
-            <!-- Physical -->
-            <div class="milestone-column">
-              <div class="col-hdr physical-hdr">
-                <h4>🏃 Physical & Motor Skills</h4>
-                <span class="count-badge">{{ getProgressString('Physical') }}</span>
-              </div>
-              <div class="milestone-list">
-                <div class="milestone-card" *ngFor="let m of milestonesGroup?.Physical" [ngClass]="m.status.toLowerCase()">
-                  <div class="card-top">
-                    <span class="status-indicator"></span>
-                    <h5>{{ m.milestone_name }}</h5>
-                  </div>
-                  <p class="comments" *ngIf="m.teacher_comments">
-                    <strong>Feedback:</strong> "{{ m.teacher_comments }}"
-                  </p>
-                  <span class="completion-date" *ngIf="m.completed_date">✓ Met on: {{ m.completed_date | date:'mediumDate' }}</span>
-                </div>
-                <div *ngIf="milestonesGroup?.Physical?.length === 0" class="no-records">No physical milestones listed.</div>
-              </div>
-            </div>
-
-            <!-- Emotional -->
-            <div class="milestone-column">
-              <div class="col-hdr emotional-hdr">
-                <h4>🤝 Social & Emotional</h4>
-                <span class="count-badge">{{ getProgressString('Emotional') }}</span>
-              </div>
-              <div class="milestone-list">
-                <div class="milestone-card" *ngFor="let m of milestonesGroup?.Emotional" [ngClass]="m.status.toLowerCase()">
-                  <div class="card-top">
-                    <span class="status-indicator"></span>
-                    <h5>{{ m.milestone_name }}</h5>
-                  </div>
-                  <p class="comments" *ngIf="m.teacher_comments">
-                    <strong>Feedback:</strong> "{{ m.teacher_comments }}"
-                  </p>
-                  <span class="completion-date" *ngIf="m.completed_date">✓ Met on: {{ m.completed_date | date:'mediumDate' }}</span>
-                </div>
-                <div *ngIf="milestonesGroup?.Emotional?.length === 0" class="no-records">No emotional milestones listed.</div>
+                <div *ngIf="getMilestonesByCategory(catKey)?.length === 0" class="no-records">No milestones configured.</div>
               </div>
             </div>
           </div>
@@ -1869,10 +1833,10 @@ export class ParentDashboardComponent implements OnInit {
     });
   }
 
-  getProgressString(category: 'Cognitive' | 'Physical' | 'Emotional'): string {
+  getProgressString(category: string): string {
     if (!this.milestonesGroup) return '0/0';
-    const list = this.milestonesGroup[category] || [];
-    const completed = list.filter(m => m.status.toUpperCase() === 'COMPLETED').length;
+    const list = (this.milestonesGroup as any)[category] || [];
+    const completed = list.filter((m: any) => m.status.toUpperCase() === 'COMPLETED').length;
     return `${completed}/${list.length} Met`;
   }
 
@@ -1958,5 +1922,15 @@ export class ParentDashboardComponent implements OnInit {
       link.click();
       document.body.removeChild(link);
     });
+  }
+
+  getMilestonesCategories(): string[] {
+    if (!this.milestonesGroup) return [];
+    return Object.keys(this.milestonesGroup);
+  }
+
+  getMilestonesByCategory(category: string): any[] {
+    if (!this.milestonesGroup) return [];
+    return (this.milestonesGroup as any)[category] || [];
   }
 }

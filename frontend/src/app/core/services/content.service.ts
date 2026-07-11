@@ -268,6 +268,10 @@ export class ContentService {
     return this.apiService.delete<any>(`/attendance/milestones/templates/${id}`);
   }
 
+  updateMilestoneTemplate(id: number, data: any): Observable<any> {
+    return this.apiService.put<any>(`/attendance/milestones/templates/${id}`, data);
+  }
+
   getStudentMilestones(studentId: number): Observable<any[]> {
     return this.apiService.get<any[]>(`/attendance/milestones/student/${studentId}`);
   }

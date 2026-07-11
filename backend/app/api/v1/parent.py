@@ -323,7 +323,9 @@ def get_parent_milestones(
     }
     
     for m in milestones:
-        cat = m.category if m.category in grouped else "Cognitive"
+        cat = m.category or "Cognitive"
+        if cat not in grouped:
+            grouped[cat] = []
         grouped[cat].append({
             "id": m.id,
             "milestone_name": m.milestone_name,

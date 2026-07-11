@@ -153,6 +153,10 @@ export class DashboardComponent implements OnInit {
   milestoneTemplates: any[] = [];
   newMilestoneTemplate = { program_id: 0, milestone_name: '', category: 'Cognitive' };
   selectedMilestoneProgramId = 0;
+  editingTemplateId: number | null = null;
+  editingTemplateData = { milestone_name: '', category: 'Cognitive' };
+  showCustomCategory = false;
+  customCategoryName = '';
   
   milestoneStudents: any[] = [];
   milestoneStudentProgramId = 0;
@@ -541,19 +545,43 @@ export class DashboardComponent implements OnInit {
 
   addMilestoneTemplate(): void {
     if (!this.newMilestoneTemplate.milestone_name.trim()) {
-      this.showToast('Please enter a milestone name.', 'error');
+      this.showToast('Please enter a milestone description.', 'error');
       return;
     }
-    this.contentService.createMilestoneTemplate(this.newMilestoneTemplate).subscribe({
+    
+    const finalData = { ...this.newMilestoneTemplate };
+    if (this.showCustomCategory) {
+      if (!this.customCategoryName.trim()) {
+        this.showToast('Please specify a custom category name.', 'error');
+        return;
+      }
+      finalData.category = this.customCategoryName.trim();
+    }
+
+    this.contentService.createMilestoneTemplate(finalData).subscribe({
       next: () => {
         this.showToast('Milestone template added successfully.', 'success');
         this.newMilestoneTemplate.milestone_name = '';
+        this.showCustomCategory = false;
+        this.customCategoryName = '';
         this.loadMilestoneTemplates();
       },
       error: (err) => {
         this.showToast(err.error?.detail || 'Failed to add milestone template.', 'error');
       }
     });
+  }
+
+  get allMilestoneCategories(): string[] {
+    const cats = new Set<string>(['Cognitive', 'Physical', 'Emotional']);
+    this.milestoneTemplates.forEach(t => {
+      if (t.category) cats.add(t.category);
+    });
+    return Array.from(cats);
+  }
+
+  getTemplatesByCategory(category: string): any[] {
+    return this.milestoneTemplates.filter(t => t.category === category);
   }
 
   deleteMilestoneTemplate(id: number): void {
@@ -565,6 +593,35 @@ export class DashboardComponent implements OnInit {
       },
       error: (err) => {
         this.showToast(err.error?.detail || 'Failed to delete template.', 'error');
+      }
+    });
+  }
+
+  startEditTemplate(temp: any): void {
+    this.editingTemplateId = temp.id;
+    this.editingTemplateData = {
+      milestone_name: temp.milestone_name || '',
+      category: temp.category || 'Cognitive'
+    };
+  }
+
+  cancelEditTemplate(): void {
+    this.editingTemplateId = null;
+  }
+
+  saveEditTemplate(id: number): void {
+    if (!this.editingTemplateData.milestone_name.trim()) {
+      this.showToast('Milestone description cannot be empty.', 'error');
+      return;
+    }
+    this.contentService.updateMilestoneTemplate(id, this.editingTemplateData).subscribe({
+      next: () => {
+        this.showToast('Milestone template updated successfully.', 'success');
+        this.editingTemplateId = null;
+        this.loadMilestoneTemplates();
+      },
+      error: (err) => {
+        this.showToast(err.error?.detail || 'Failed to update milestone template.', 'error');
       }
     });
   }

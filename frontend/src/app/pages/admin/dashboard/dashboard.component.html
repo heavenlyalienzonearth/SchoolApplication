@@ -1674,12 +1674,23 @@
               </div>
               
               <div class="form-group" style="margin-top: 15px;">
-                <label>Milestone category</label>
-                <select [(ngModel)]="newMilestoneTemplate.category" class="form-control">
-                  <option value="Cognitive">🧠 Cognitive & Learning</option>
-                  <option value="Physical">🏃 Physical & Motor Skills</option>
-                  <option value="Emotional">🤝 Social & Emotional</option>
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                  <label style="margin-bottom: 0;">Milestone category</label>
+                  <label style="font-size: 0.75rem; color: var(--primary); font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 4px;">
+                    <input type="checkbox" [(ngModel)]="showCustomCategory" style="margin: 0;" />
+                    ➕ New Category
+                  </label>
+                </div>
+
+                <!-- Existing Categories dropdown -->
+                <select *ngIf="!showCustomCategory" [(ngModel)]="newMilestoneTemplate.category" class="form-control">
+                  <option *ngFor="let cat of allMilestoneCategories" [value]="cat">
+                    {{ cat === 'Cognitive' ? '🧠 Cognitive & Learning' : cat === 'Physical' ? '🏃 Physical & Motor' : cat === 'Emotional' ? '🤝 Social & Emotional' : '🎯 ' + cat }}
+                  </option>
                 </select>
+
+                <!-- New Category input field -->
+                <input *ngIf="showCustomCategory" type="text" [(ngModel)]="customCategoryName" class="form-control" placeholder="e.g. Creative Arts, Language Skills" />
               </div>
 
               <div class="form-group" style="margin-top: 15px;">
@@ -1695,36 +1706,78 @@
             <!-- Right Side: Template List -->
             <div class="dash-card">
               <h3>Available Milestone Templates</h3>
-              <div style="margin-top: 15px; max-height: 480px; overflow-y: auto;">
-                <table class="table">
-                  <thead>
-                    <tr>
-                      <th>Category</th>
-                      <th>Description</th>
-                      <th style="text-align: right;">Action</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr *ngFor="let temp of milestoneTemplates">
-                      <td>
-                        <span class="badge" [style.background-color]="temp.category === 'Cognitive' ? '#EFF6FF' : temp.category === 'Physical' ? '#ECFDF5' : '#FDF2F8'" [style.color]="temp.category === 'Cognitive' ? '#1E40AF' : temp.category === 'Physical' ? '#065F46' : '#9D174D'" style="font-weight: 700; padding: 4px 8px; border-radius: 4px;">
-                          {{ temp.category }}
-                        </span>
-                      </td>
-                      <td>{{ temp.milestone_name }}</td>
-                      <td style="text-align: right;">
-                        <button type="button" (click)="deleteMilestoneTemplate(temp.id)" class="btn btn-sm btn-outline" style="border-color: #EF4444; color: #EF4444; background: none; font-weight: 700; border-radius: 4px; padding: 2px 8px;">
-                          Delete
-                        </button>
-                      </td>
-                    </tr>
-                    <tr *ngIf="milestoneTemplates.length === 0">
-                      <td colspan="3" style="text-align: center; color: #94a3b8; font-style: italic; padding: 30px;">
-                        No milestone templates configured for this program. Add one on the left panel!
-                      </td>
-                    </tr>
-                  </tbody>
-                </table>
+              <p style="font-size: 0.8rem; color: #64748b; margin-bottom: 15px;">Milestones are grouped by category. Click Edit to adjust categories or descriptions.</p>
+              
+              <div style="margin-top: 15px; max-height: 520px; overflow-y: auto; padding-right: 6px;">
+                
+                <!-- Category Loop -->
+                <div *ngFor="let cat of allMilestoneCategories" style="margin-bottom: 24px;">
+                  <div *ngIf="getTemplatesByCategory(cat).length > 0" style="margin-bottom: 12px;">
+                    <!-- Category Section Header -->
+                    <div style="display: flex; justify-content: space-between; align-items: center; padding: 6px 12px; border-radius: 6px; margin-bottom: 10px;"
+                         [style.background-color]="cat === 'Cognitive' ? '#EFF6FF' : cat === 'Physical' ? '#ECFDF5' : cat === 'Emotional' ? '#FDF2F8' : '#F8FAFC'"
+                         [style.color]="cat === 'Cognitive' ? '#1E40AF' : cat === 'Physical' ? '#065F46' : cat === 'Emotional' ? '#9D174D' : '#475569'">
+                      <span style="font-size: 0.85rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;">
+                        {{ cat === 'Cognitive' ? '🧠 Cognitive & Learning' : cat === 'Physical' ? '🏃 Physical & Motor Skills' : cat === 'Emotional' ? '🤝 Social & Emotional' : '🎯 ' + cat }}
+                      </span>
+                      <span style="font-size: 0.72rem; font-weight: 700; padding: 2px 8px; border-radius: 9999px; background: rgba(255,255,255,0.6);">
+                        {{ getTemplatesByCategory(cat).length }}
+                      </span>
+                    </div>
+
+                    <!-- Milestones in Category -->
+                    <div style="display: flex; flex-direction: column; gap: 8px;">
+                      <div *ngFor="let temp of getTemplatesByCategory(cat)" style="border: 1px solid #e2e8f0; border-radius: 8px; padding: 12px; background: white; box-shadow: 0 1px 2px rgba(0,0,0,0.02); transition: all 0.2s;">
+                        
+                        <!-- View Mode -->
+                        <div *ngIf="editingTemplateId !== temp.id" style="display: flex; justify-content: space-between; align-items: flex-start; gap: 12px;">
+                          <p style="margin: 0; font-size: 0.82rem; color: #334155; line-height: 1.4; white-space: pre-line; flex: 1;">
+                            {{ temp.milestone_name }}
+                          </p>
+                          <div style="display: flex; gap: 6px;">
+                            <button type="button" (click)="startEditTemplate(temp)" class="btn btn-sm btn-outline" style="font-size: 0.72rem; padding: 2px 8px; border-color: var(--primary); color: var(--primary); background: none; font-weight: 700; border-radius: 4px;">
+                              Edit
+                            </button>
+                            <button type="button" (click)="deleteMilestoneTemplate(temp.id)" class="btn btn-sm btn-outline" style="font-size: 0.72rem; padding: 2px 8px; border-color: #ef4444; color: #ef4444; background: none; font-weight: 700; border-radius: 4px;">
+                              Delete
+                            </button>
+                          </div>
+                        </div>
+
+                        <!-- Edit Mode -->
+                        <div *ngIf="editingTemplateId === temp.id" style="display: flex; flex-direction: column; gap: 10px;">
+                          <div style="display: grid; grid-template-columns: 1fr 2fr; gap: 12px;">
+                            <div>
+                              <label style="font-size: 0.7rem; color: #94a3b8; font-weight: 700; text-transform: uppercase;">Category</label>
+                              <select [(ngModel)]="editingTemplateData.category" class="form-control" style="font-size: 0.78rem; padding: 4px; border-radius: 4px;">
+                                <option *ngFor="let catOpt of allMilestoneCategories" [value]="catOpt">{{ catOpt }}</option>
+                              </select>
+                            </div>
+                            <div>
+                              <label style="font-size: 0.7rem; color: #94a3b8; font-weight: 700; text-transform: uppercase;">Milestone Description</label>
+                              <textarea [(ngModel)]="editingTemplateData.milestone_name" class="form-control" rows="3" style="font-size: 0.8rem; border-radius: 4px; padding: 6px; resize: vertical;"></textarea>
+                            </div>
+                          </div>
+                          <div style="display: flex; justify-content: flex-end; gap: 8px;">
+                            <button type="button" (click)="cancelEditTemplate()" class="btn btn-sm btn-outline" style="font-size: 0.72rem; padding: 4px 10px; border-color: #64748b; color: #64748b; background: none; font-weight: 700; border-radius: 4px;">
+                              Cancel
+                            </button>
+                            <button type="button" (click)="saveEditTemplate(temp.id)" class="btn btn-sm btn-primary" style="font-size: 0.72rem; padding: 4px 10px; background-color: #10b981; border: none; color: white; font-weight: 700; border-radius: 4px;">
+                              Save Changes
+                            </button>
+                          </div>
+                        </div>
+
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Empty State -->
+                <div *ngIf="milestoneTemplates.length === 0" style="text-align: center; color: #94a3b8; font-style: italic; padding: 40px; border: 2px dashed #e2e8f0; border-radius: 8px; background: #f8fafc;">
+                  No milestone templates configured for this program. Add one on the left panel!
+                </div>
+
               </div>
             </div>
           </div>

@@ -154,6 +154,10 @@ class MilestoneTemplateCreate(BaseModel):
     milestone_name: str
     category: str
 
+class MilestoneTemplateUpdate(BaseModel):
+    milestone_name: str
+    category: str
+
 class StudentMilestoneUpdate(BaseModel):
     id: int
     status: str
@@ -219,6 +223,25 @@ def delete_milestone_template(
     db.delete(template)
     db.commit()
     return {"message": "Milestone template deleted."}
+
+@router.put("/milestones/templates/{template_id}")
+def update_milestone_template(
+    template_id: int,
+    data: MilestoneTemplateUpdate,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user)
+):
+    if current_user.role.upper() not in ["ADMIN", "PRINCIPAL"]:
+        raise HTTPException(status_code=403, detail="Permission denied.")
+        
+    template = db.query(models.MilestoneTemplate).filter(models.MilestoneTemplate.id == template_id).first()
+    if not template:
+        raise HTTPException(status_code=404, detail="Template not found.")
+        
+    template.milestone_name = data.milestone_name
+    template.category = data.category
+    db.commit()
+    return {"message": "Milestone template updated successfully."}
 
 # --- STUDENT MILESTONES MANAGEMENT ---
 @router.get("/milestones/student/{student_id}")
