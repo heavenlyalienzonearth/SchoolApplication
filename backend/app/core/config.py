@@ -11,6 +11,8 @@ class Settings(BaseSettings):
     API_PORT: int = 8000
     API_HOST: str = "127.0.0.1"
     CORS_ORIGINS: str = '["http://localhost:4200"]'
+    RAZORPAY_KEY_ID: str = ""
+    RAZORPAY_KEY_SECRET: str = ""
 
     @property
     def cors_origins_list(self) -> List[str]:

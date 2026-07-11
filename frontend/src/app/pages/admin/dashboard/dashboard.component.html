@@ -19,11 +19,11 @@
           <span class="icon">📊</span> Analytics Overview
         </li>
         <!-- Public Settings Group -->
-        <li class="sidebar-header" (click)="togglePublicSettings()" style="cursor: pointer; display: flex; justify-content: space-between; align-items: center; width: 100%; box-sizing: border-box;">
+        <li class="sidebar-header" (click)="togglePublicSettings()" *ngIf="currentUser?.role?.toUpperCase() === 'ADMIN' || currentUser?.role?.toUpperCase() === 'PRINCIPAL'" style="cursor: pointer; display: flex; justify-content: space-between; align-items: center; width: 100%; box-sizing: border-box;">
           <span>🌐 Public Settings</span>
           <span style="font-size: 0.7rem; color: #94a3b8; font-weight: 800; margin-left: auto;">{{ publicSettingsExpanded ? '▼' : '▶' }}</span>
         </li>
-        <ng-container *ngIf="publicSettingsExpanded">
+        <ng-container *ngIf="publicSettingsExpanded && (currentUser?.role?.toUpperCase() === 'ADMIN' || currentUser?.role?.toUpperCase() === 'PRINCIPAL')">
           <li [class.active]="activeTab === 'settings'" (click)="setTab('settings')" class="submenu-item">
             <span class="icon">⚙️</span> Site Settings
           </li>
@@ -37,29 +37,29 @@
           <span style="font-size: 0.7rem; color: #94a3b8; font-weight: 800; margin-left: auto;">{{ schoolManagementExpanded ? '▼' : '▶' }}</span>
         </li>
         <ng-container *ngIf="schoolManagementExpanded">
-          <li [class.active]="activeTab === 'programs'" (click)="setTab('programs')" class="submenu-item">
+          <li [class.active]="activeTab === 'programs'" (click)="setTab('programs')" class="submenu-item" *ngIf="currentUser?.role?.toUpperCase() === 'ADMIN' || currentUser?.role?.toUpperCase() === 'PRINCIPAL'">
             <span class="icon">🎓</span> School Programs
           </li>
           <li [class.active]="activeTab === 'holidays'" (click)="setTab('holidays')" class="submenu-item">
             <span class="icon">📅</span> School Holidays
           </li>
-          <li [class.active]="activeTab === 'gallery'" (click)="setTab('gallery')" class="submenu-item">
+          <li [class.active]="activeTab === 'gallery'" (click)="setTab('gallery')" class="submenu-item" *ngIf="currentUser?.role?.toUpperCase() === 'ADMIN' || currentUser?.role?.toUpperCase() === 'PRINCIPAL'">
             <span class="icon">📷</span> Gallery Items
           </li>
-          <li [class.active]="activeTab === 'inquiries'" (click)="setTab('inquiries')" class="submenu-item">
+          <li [class.active]="activeTab === 'inquiries'" (click)="setTab('inquiries')" class="submenu-item" *ngIf="currentUser?.role?.toUpperCase() === 'ADMIN' || currentUser?.role?.toUpperCase() === 'PRINCIPAL'">
             <span class="icon">📩</span> Form Inquiries
           </li>
           <li [class.active]="activeTab === 'users'" (click)="setTab('users')" class="submenu-item" *ngIf="currentUser?.role?.toUpperCase() === 'ADMIN'">
             <span class="icon">👥</span> User Management
           </li>
         </ng-container>
-        <li [class.active]="activeTab === 'testimonials'" (click)="setTab('testimonials')">
+        <li [class.active]="activeTab === 'testimonials'" (click)="setTab('testimonials')" *ngIf="currentUser?.role?.toUpperCase() === 'ADMIN' || currentUser?.role?.toUpperCase() === 'PRINCIPAL'">
           <span class="icon">💬</span> Parent Reviews
         </li>
         <li [class.active]="activeTab === 'attendance'" (click)="setTab('attendance')">
           <span class="icon">📅</span> Kid Attendance
         </li>
-        <li [class.active]="activeTab === 'admissions'" (click)="setTab('admissions')">
+        <li [class.active]="activeTab === 'admissions'" (click)="setTab('admissions')" *ngIf="currentUser?.role?.toUpperCase() === 'ADMIN' || currentUser?.role?.toUpperCase() === 'PRINCIPAL'">
           <span class="icon">🏫</span> Student Admissions
         </li>
         <!-- Finance & Billing Group -->
@@ -75,8 +75,11 @@
             <span class="icon">📊</span> Invoices & Ledger
           </li>
         </ng-container>
-        <li [class.active]="activeTab === 'stationary'" (click)="setTab('stationary')">
+        <li [class.active]="activeTab === 'stationary'" (click)="setTab('stationary')" *ngIf="currentUser?.role?.toUpperCase() === 'ADMIN' || currentUser?.role?.toUpperCase() === 'PRINCIPAL'">
           <span class="icon">✏️</span> Stationery Center
+        </li>
+        <li [class.active]="activeTab === 'moments'" (click)="setTab('moments')" *ngIf="currentUser?.role?.toUpperCase() === 'ADMIN' || currentUser?.role?.toUpperCase() === 'PRINCIPAL' || currentUser?.role?.toUpperCase() === 'TEACHER'">
+          <span class="icon">📸</span> Daily Moments
         </li>
         <li [class.active]="activeTab === 'milestones'" (click)="setTab('milestones')" *ngIf="currentUser?.role?.toUpperCase() !== 'PARENT'">
           <span class="icon">🎯</span> Milestone Config
@@ -94,17 +97,18 @@
         <label class="form-label" for="mobileTabSelect">Dashboard Navigation:</label>
         <select id="mobileTabSelect" [ngModel]="activeTab" (ngModelChange)="setTab($event)" class="form-control select-tab">
           <option value="analytics">📊 Analytics Overview</option>
-          <option value="settings">⚙️ Site Settings</option>
-          <option value="hero">🖼️ Hero Banner</option>
-          <option value="programs">🎓 School Programs</option>
-          <option value="testimonials">💬 Parent Reviews</option>
-          <option value="gallery">📷 Gallery Items</option>
-          <option value="inquiries">📩 Form Inquiries</option>
+          <option value="settings" *ngIf="currentUser?.role?.toUpperCase() === 'ADMIN' || currentUser?.role?.toUpperCase() === 'PRINCIPAL'">⚙️ Site Settings</option>
+          <option value="hero" *ngIf="currentUser?.role?.toUpperCase() === 'ADMIN' || currentUser?.role?.toUpperCase() === 'PRINCIPAL'">🖼️ Hero Banner</option>
+          <option value="programs" *ngIf="currentUser?.role?.toUpperCase() === 'ADMIN' || currentUser?.role?.toUpperCase() === 'PRINCIPAL'">🎓 School Programs</option>
+          <option value="testimonials" *ngIf="currentUser?.role?.toUpperCase() === 'ADMIN' || currentUser?.role?.toUpperCase() === 'PRINCIPAL'">💬 Parent Reviews</option>
+          <option value="gallery" *ngIf="currentUser?.role?.toUpperCase() === 'ADMIN' || currentUser?.role?.toUpperCase() === 'PRINCIPAL'">📷 Gallery Items</option>
+          <option value="inquiries" *ngIf="currentUser?.role?.toUpperCase() === 'ADMIN' || currentUser?.role?.toUpperCase() === 'PRINCIPAL'">📩 Form Inquiries</option>
           <option value="attendance">📅 Kid Attendance</option>
-          <option value="admissions">🏫 Student Admissions</option>
+          <option value="admissions" *ngIf="currentUser?.role?.toUpperCase() === 'ADMIN' || currentUser?.role?.toUpperCase() === 'PRINCIPAL'">🏫 Student Admissions</option>
           <option value="holidays">📅 School Holidays</option>
           <option value="users" *ngIf="currentUser?.role?.toUpperCase() === 'ADMIN'">👥 User Management</option>
-          <option value="stationary">✏️ Stationery Center</option>
+          <option value="stationary" *ngIf="currentUser?.role?.toUpperCase() === 'ADMIN' || currentUser?.role?.toUpperCase() === 'PRINCIPAL'">✏️ Stationery Center</option>
+          <option value="moments" *ngIf="currentUser?.role?.toUpperCase() === 'ADMIN' || currentUser?.role?.toUpperCase() === 'PRINCIPAL' || currentUser?.role?.toUpperCase() === 'TEACHER'">📸 Daily Moments</option>
           <option value="milestones" *ngIf="currentUser?.role?.toUpperCase() !== 'PARENT'">🎯 Milestone Config</option>
           <option value="leaves" *ngIf="currentUser?.role?.toUpperCase() === 'ADMIN' || currentUser?.role?.toUpperCase() === 'PRINCIPAL'">📅 Leave Approvals</option>
           <option value="finance-structures" *ngIf="currentUser?.role?.toUpperCase() === 'ADMIN' || currentUser?.role?.toUpperCase() === 'PRINCIPAL'">⚙️ Fee Structures</option>
@@ -2098,6 +2102,106 @@
                 </tr>
               </tbody>
             </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- --- STUDENT DAILY MOMENTS SECTION --- -->
+      <section *ngIf="activeTab === 'moments'" class="tab-section animate-fade-in">
+        <div class="section-header">
+          <h2>📸 Daily Student Moments</h2>
+          <p>Upload daily snapshots or videos of students at school. Parents will be notified automatically via email. Media will automatically expire and be deleted after 2 days.</p>
+        </div>
+
+        <div class="row-flex" style="display: grid; grid-template-columns: 1fr 2fr; gap: 30px; margin-top: 20px;">
+          <!-- Left side: Upload Moment Form -->
+          <div class="dash-card">
+            <h3>Upload New Moment</h3>
+            
+            <div class="form-group" style="margin-top: 15px;">
+              <label>Select Program / Class</label>
+              <select [(ngModel)]="momentSelectedProgramId" (change)="loadMomentsStudents()" class="form-control">
+                <option *ngFor="let prog of programs" [value]="prog.id">{{ prog.title }}</option>
+              </select>
+            </div>
+
+            <div class="form-group" style="margin-top: 15px;">
+              <label>Search Student Name</label>
+              <input type="text" [(ngModel)]="momentStudentSearchQuery" (ngModelChange)="onMomentStudentSearchQueryChange()" class="form-control" placeholder="Type to filter student name..." />
+            </div>
+
+            <div class="form-group" style="margin-top: 15px;">
+              <label>Select Student</label>
+              <select [(ngModel)]="momentSelectedStudentId" (change)="onMomentStudentSelect()" class="form-control">
+                <option *ngFor="let stud of filteredMomentStudents" [value]="stud.id">{{ stud.name }}</option>
+                <option *ngIf="filteredMomentStudents.length === 0" disabled>No matching students found</option>
+              </select>
+            </div>
+
+            <div class="form-group" style="margin-top: 15px;">
+              <label>Media Files (Select Multiple Images/Videos)</label>
+              <input type="file" id="momentFileInput" (change)="onMomentFileChange($event)" class="form-control" accept="image/*,video/*" multiple />
+              <p style="font-size: 0.72rem; color: #94a3b8; margin: 4px 0 0 0;">Max size: 50MB per file. Select multiple photos and videos together.</p>
+            </div>
+
+            <!-- Preview Card -->
+            <div *ngIf="momentFilePreviews.length > 0" style="margin-top: 15px; border: 1px solid #e2e8f0; border-radius: 6px; overflow: hidden; background: #f8fafc; padding: 12px;">
+              <span style="font-size: 0.7rem; color: #64748b; font-weight: 700; display: block; margin-bottom: 8px; text-transform: uppercase;">Selected Media Previews ({{ momentFilePreviews.length }})</span>
+              <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(80px, 1fr)); gap: 10px; max-height: 200px; overflow-y: auto;">
+                <div *ngFor="let preview of momentFilePreviews" style="border: 1px solid #cbd5e1; border-radius: 4px; overflow: hidden; position: relative; height: 80px; display: flex; align-items: center; justify-content: center; background: white;">
+                  <img *ngIf="preview.type === 'image'" [src]="preview.url" style="width: 100%; height: 100%; object-fit: cover;" />
+                  <div *ngIf="preview.type === 'video'" style="font-size: 1.5rem;">📹</div>
+                </div>
+              </div>
+            </div>
+
+            <div class="form-group" style="margin-top: 15px;">
+              <label>Moment Caption / Title</label>
+              <input type="text" [(ngModel)]="momentDescription" class="form-control" placeholder="e.g. Aarav painting a house during creative play" />
+            </div>
+
+            <button type="button" (click)="uploadStudentMoment()" class="btn btn-primary" [disabled]="momentsUploading" style="margin-top: 20px; width: 100%; border: none; font-weight: 700; color: white; background-color: var(--secondary);">
+              {{ momentsUploading ? 'Uploading & Notifying Parent...' : '⚡ Upload & Notify Parent' }}
+            </button>
+          </div>
+
+          <!-- Right side: Active Moments list for selected student -->
+          <div class="dash-card">
+            <h3>Active Moments (Last 48 Hours)</h3>
+            <p style="font-size: 0.8rem; color: #64748b; margin-bottom: 15px;">These moments are currently visible to the parent. They will be auto-deleted upon expiration.</p>
+            
+            <div *ngIf="momentsLoading" style="text-align: center; padding: 40px 0; color: #64748b;">
+              <p>Loading student moments...</p>
+            </div>
+
+            <div *ngIf="!momentsLoading">
+              <!-- Grid of Moments -->
+              <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 20px;" *ngIf="momentsList.length > 0">
+                <div *ngFor="let moment of momentsList" class="moment-preview-card" style="border: 1px solid #e2e8f0; border-radius: 6px; overflow: hidden; background: white; display: flex; flex-direction: column; box-shadow: 0 2px 4px rgba(0,0,0,0.02);">
+                  <div style="position: relative; background: #0f172a; height: 140px; display: flex; align-items: center; justify-content: center;">
+                    <img *ngIf="moment.file_type === 'image'" [src]="'http://localhost:8000' + moment.file_path" style="width: 100%; height: 100%; object-fit: cover;" />
+                    <video *ngIf="moment.file_type === 'video'" [src]="'http://localhost:8000' + moment.file_path" controls style="width: 100%; height: 100%; object-fit: cover;"></video>
+                    
+                    <span style="position: absolute; top: 8px; left: 8px; background: rgba(239, 68, 68, 0.9); color: white; padding: 2px 6px; border-radius: 4px; font-size: 0.65rem; font-weight: 700; text-transform: uppercase;">
+                      Expires soon
+                    </span>
+                  </div>
+                  <div style="padding: 12px; display: flex; flex-direction: column; flex: 1; justify-content: space-between;">
+                    <div>
+                      <p style="margin: 0; font-size: 0.85rem; font-weight: 700; color: #1e293b; line-height: 1.4;">{{ moment.title }}</p>
+                      <span style="font-size: 0.72rem; color: #94a3b8; display: block; margin-top: 4px;">Uploaded: {{ moment.created_at | date:'short' }}</span>
+                    </div>
+                    <button type="button" (click)="deleteStudentMoment(moment.id)" class="btn btn-sm btn-outline" style="margin-top: 12px; width: 100%; border-color: #ef4444; color: #ef4444; background: none; font-size: 0.75rem; padding: 4px; font-weight: 700; border-radius: 4px;">
+                      🗑️ Delete Permanently
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <div *ngIf="momentsList.length === 0" style="text-align: center; color: #94a3b8; font-style: italic; padding: 40px; border: 2px dashed #e2e8f0; border-radius: 6px; background: #f8fafc;">
+                No active moments found for this student. Use the upload panel to share the first daily snapshot!
+              </div>
+            </div>
           </div>
         </div>
       </section>

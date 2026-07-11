@@ -358,6 +358,7 @@ class LeaveRequest(Base):
     end_date = Column(String(50), nullable=False)  # YYYY-MM-DD
     reason = Column(String(550), nullable=True)
     status = Column(String(50), default="Approved", nullable=False)
+    admin_comment = Column(String(550), nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
 
     student = relationship("Student")
@@ -372,3 +373,18 @@ class MilestoneTemplate(Base):
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
 
     program = relationship("Program")
+
+class StudentDailyMoment(Base):
+    __tablename__ = "student_daily_moments"
+
+    id = Column(Integer, primary_key=True, index=True)
+    student_id = Column(Integer, ForeignKey("students.id", ondelete="CASCADE"), nullable=False)
+    teacher_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    file_path = Column(String(500), nullable=False)
+    file_type = Column(String(50), nullable=False)  # image or video
+    title = Column(String(255), nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    expires_at = Column(DateTime, nullable=False)
+
+    student = relationship("Student")
+    teacher = relationship("User")

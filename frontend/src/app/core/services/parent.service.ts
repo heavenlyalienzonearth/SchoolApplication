@@ -55,6 +55,14 @@ export class ParentService {
     return this.apiService.post<any>(`/parent/billing/${billId}/pay`, { payment_method: paymentMethod });
   }
 
+  createRazorpayOrder(billId: number): Observable<any> {
+    return this.apiService.post<any>(`/parent/billing/${billId}/razorpay-order`, {});
+  }
+
+  verifyRazorpayPayment(billId: number, payload: any): Observable<any> {
+    return this.apiService.post<any>(`/parent/billing/${billId}/razorpay-verify`, payload);
+  }
+
   getMilestones(): Observable<MilestoneGroup> {
     return this.apiService.get<MilestoneGroup>('/parent/milestones');
   }

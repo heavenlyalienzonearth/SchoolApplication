@@ -5,6 +5,7 @@ import { Router, RouterModule } from '@angular/router';
 import { AuthService } from '../../core/services/auth.service';
 import { ApiService } from '../../core/services/api.service';
 import { ParentService, Bill, Milestone, MilestoneGroup, LeaveRequest } from '../../core/services/parent.service';
+import { MomentsService, StudentMoment } from '../../core/services/moments.service';
 
 @Component({
   selector: 'app-parent-dashboard',
@@ -150,8 +151,56 @@ import { ParentService, Bill, Milestone, MilestoneGroup, LeaveRequest } from '..
               </div>
             </div>
 
-            <!-- Right Column: Timetable, Checklists & Orders -->
+             <!-- Right Column: Timetable, Checklists & Orders -->
             <div class="col-right">
+              <!-- 📸 Daily Moments Card -->
+              <div class="card moments-card" style="margin-bottom: 30px; border: 2.5px solid var(--secondary);">
+                <h3 class="card-title" style="display: flex; align-items: center; justify-content: space-between;">
+                  <span>📸 Daily Moments</span>
+                  <button *ngIf="parentMoments.length > 0" (click)="downloadAllMoments()" class="btn btn-sm btn-secondary" style="font-size: 0.72rem; padding: 6px 10px; border: none; font-weight: 700; background: var(--secondary); color: white; border-radius: 4px; cursor: pointer;">
+                    📥 Download All
+                  </button>
+                </h3>
+                <p class="subtitle" style="margin-top: -15px; margin-bottom: 20px; font-size: 0.85rem; color: #64748B;">
+                  Daily snapshots and video clips shared by class teachers. Media automatically expires after 2 days.
+                </p>
+
+                <div *ngIf="parentMomentsLoading" style="text-align: center; padding: 20px; color: #64748b;">
+                  <p>Loading moments...</p>
+                </div>
+
+                <div *ngIf="!parentMomentsLoading">
+                  <!-- Grid of active Moments -->
+                  <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 15px;" *ngIf="parentMoments.length > 0">
+                    <div *ngFor="let moment of parentMoments" style="border: 1px solid #e2e8f0; border-radius: 8px; overflow: hidden; background: #f8fafc; display: flex; flex-direction: column;">
+                      <div style="position: relative; background: #0f172a; height: 130px; display: flex; align-items: center; justify-content: center;">
+                        <img *ngIf="moment.file_type === 'image'" [src]="'http://localhost:8000' + moment.file_path" style="width: 100%; height: 100%; object-fit: cover;" />
+                        <video *ngIf="moment.file_type === 'video'" [src]="'http://localhost:8000' + moment.file_path" controls style="width: 100%; height: 100%; object-fit: cover;"></video>
+                        
+                        <span style="position: absolute; bottom: 8px; right: 8px; background: rgba(239, 68, 68, 0.95); color: white; padding: 2px 6px; border-radius: 4px; font-size: 0.65rem; font-weight: 700;">
+                          ⏰ {{ moment.hours_remaining }}h left
+                        </span>
+                      </div>
+                      <div style="padding: 10px; display: flex; flex-direction: column; justify-content: space-between; flex: 1;">
+                        <div>
+                          <p style="margin: 0; font-size: 0.8rem; font-weight: 700; color: #1e293b; line-height: 1.3;">{{ moment.title }}</p>
+                          <span style="font-size: 0.68rem; color: #64748b; display: block; margin-top: 6px; font-weight: 600;">
+                            📅 {{ moment.created_at | date:'mediumDate' }} at {{ moment.created_at | date:'shortTime' }}
+                          </span>
+                        </div>
+                        <a [href]="'http://localhost:8000' + moment.file_path" [download]="moment.title || 'moment'" target="_blank" style="margin-top: 10px; display: inline-flex; align-items: center; justify-content: center; gap: 4px; font-size: 0.72rem; font-weight: 700; color: var(--primary); text-decoration: none; padding: 5px; border: 1px solid var(--primary); border-radius: 4px; transition: all 0.2s;" onmouseover="this.style.background='var(--primary)'; this.style.color='white'" onmouseout="this.style.background='none'; this.style.color='var(--primary)'">
+                          📥 Download Media
+                        </a>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div *ngIf="parentMoments.length === 0" style="text-align: center; color: #94a3b8; font-style: italic; padding: 30px; border: 2px dashed #e2e8f0; border-radius: 6px; background: #fafafa;">
+                    No moments shared for today yet. Check back later!
+                  </div>
+                </div>
+              </div>
+
               <!-- Timetable & Breakfast Menu Card -->
               <div class="card timetable-card">
                 <h3 class="card-title">🍳 Daily Timetable & Breakfast Menu</h3>
@@ -309,8 +358,8 @@ import { ParentService, Bill, Milestone, MilestoneGroup, LeaveRequest } from '..
                     <td>{{ bill.paid_date ? (bill.paid_date | date:'mediumDate') : '--' }}</td>
                     <td>{{ bill.payment_method || '--' }}</td>
                     <td style="text-align: right;">
-                      <button *ngIf="bill.status === 'Unpaid'" class="btn-action btn-pay" (click)="openPaymentModal(bill)">
-                        💳 Pay Now
+                      <button *ngIf="bill.status === 'Unpaid'" class="btn-action btn-pay" (click)="payWithRazorpay(bill)" [disabled]="processingPayment">
+                        💳 {{ processingPayment && selectedBill?.id === bill.id ? 'Processing...' : 'Pay Now' }}
                       </button>
                       <a *ngIf="bill.status === 'Paid'" [href]="'http://localhost:8000/api/v1/parent/billing/' + bill.id + '/receipt'" target="_blank" class="btn-action btn-receipt">
                         🖨️ Receipt
@@ -452,50 +501,48 @@ import { ParentService, Bill, Milestone, MilestoneGroup, LeaveRequest } from '..
 
       </main>
 
-      <!-- MOCK PAYMENT GATEWAY MODAL -->
-      <div class="modal-backdrop" *ngIf="showPaymentModal">
-        <div class="modal-card animate-fade-in">
-          <div class="modal-header">
-            <h4>💳 Lovable Pay Gateway</h4>
-            <button class="btn-close" (click)="closePaymentModal()">×</button>
+      <!-- SIMULATED RAZORPAY CHECKOUT MODAL -->
+      <div class="modal-backdrop" *ngIf="showRazorpayMockModal">
+        <div class="modal-card animate-fade-in" style="max-width: 420px; border-radius: 8px; overflow: hidden; box-shadow: 0 10px 25px rgba(0,0,0,0.15); border: none;">
+          <!-- Razorpay Blue Theme Header -->
+          <div style="background-color: #0c2b64; color: white; padding: 25px 20px; display: flex; flex-direction: column; position: relative;">
+            <button (click)="closeRazorpayMockModal()" style="position: absolute; top: 15px; right: 15px; background: none; border: none; color: #94a3b8; font-size: 1.5rem; cursor: pointer; line-height: 1;">×</button>
+            <div style="display: flex; align-items: center; gap: 12px;">
+              <span style="font-size: 1.8rem; background: rgba(255,255,255,0.15); width: 45px; height: 45px; display: flex; align-items: center; justify-content: center; border-radius: 50%;">🦘</span>
+              <div>
+                <h4 style="margin: 0; font-size: 1.1rem; font-weight: 800; letter-spacing: 0.3px;">Kangaroo Kids School</h4>
+                <p style="margin: 2px 0 0 0; font-size: 0.72rem; color: #3b82f6; font-weight: 700; text-transform: uppercase;">Razorpay Checkout <span style="background: #2563eb; color: white; padding: 1px 4px; border-radius: 2px; font-size: 0.6rem; margin-left: 4px;">TEST MODE</span></p>
+              </div>
+            </div>
           </div>
           
-          <div class="modal-body">
-            <div class="bill-summary-box">
-              <p class="bill-title">{{ selectedBill?.title }}</p>
-              <h3 class="bill-amount">₹{{ selectedBill?.amount | number:'1.2-2' }}</h3>
+          <div class="modal-body" style="padding: 20px; background-color: #f8fafc;">
+            <div class="bill-summary-box" style="background: white; border: 1px solid #e2e8f0; border-radius: 6px; padding: 15px; text-align: center; margin-bottom: 20px;">
+              <span style="font-size: 0.75rem; color: #64748b; font-weight: 700; text-transform: uppercase;">Amount to Pay</span>
+              <h2 style="font-size: 1.8rem; font-weight: 800; color: #0f172a; margin: 4px 0 0 0;">₹{{ (razorpayOrderData?.amount / 100) | number:'1.2-2' }}</h2>
+              <p style="margin: 5px 0 0 0; font-size: 0.8rem; color: #475569; font-weight: 600;">{{ razorpayOrderData?.title }}</p>
             </div>
             
-            <div class="payment-method-selector">
-              <label class="method-option">
-                <input type="radio" name="paymethod" value="Online" [(ngModel)]="payMethod" checked />
-                <span>🌐 net Banking / UPI</span>
-              </label>
-              <label class="method-option" style="margin-top: 10px;">
-                <input type="radio" name="paymethod" value="Card" [(ngModel)]="payMethod" />
-                <span>💳 Credit / Debit Card</span>
-              </label>
-            </div>
-
-            <!-- Card Entry simulation -->
-            <div class="card-simulation-box" *ngIf="payMethod === 'Card'">
-              <input type="text" class="modal-input" placeholder="Card Number (4000 1234 5678 9010)" maxlength="19" />
-              <div class="card-double-input" style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 10px;">
-                <input type="text" class="modal-input" placeholder="MM/YY" maxlength="5" />
-                <input type="password" class="modal-input" placeholder="CVV" maxlength="3" />
+            <div style="background: white; border: 1px solid #e2e8f0; border-radius: 6px; padding: 15px;">
+              <h5 style="margin: 0 0 10px 0; font-size: 0.75rem; font-weight: 700; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.5px;">Prefilled Contact</h5>
+              <div style="display: flex; flex-direction: column; gap: 8px; font-size: 0.82rem; color: #334155;">
+                <div style="display: flex; justify-content: space-between;"><span style="color: #64748b;">Name:</span><strong>{{ parentName }}</strong></div>
+                <div style="display: flex; justify-content: space-between;"><span style="color: #64748b;">Email:</span><strong>{{ authService.currentUserValue?.email || '--' }}</strong></div>
               </div>
             </div>
 
-            <!-- UPI Simulation -->
-            <div class="upi-simulation-box" *ngIf="payMethod === 'Online'" style="margin-top: 15px;">
-              <input type="text" class="modal-input" placeholder="yourname@okhdfcbank" />
+            <div style="margin-top: 20px; text-align: center;">
+              <span style="font-size: 0.72rem; color: #94a3b8; font-weight: 600; display: block; margin-bottom: 8px;">💳 Simulated Test Gateway</span>
+              <p style="font-size: 0.72rem; color: #64748b; line-height: 1.4; margin: 0;">
+                No real money will be charged. Click below to verify and complete order signature simulation.
+              </p>
             </div>
           </div>
 
-          <div class="modal-footer">
-            <button class="btn-modal btn-cancel" (click)="closePaymentModal()">Cancel</button>
-            <button class="btn-modal btn-confirm" (click)="processMockPayment()" [disabled]="processingPayment">
-              {{ processingPayment ? 'Authorizing Payment...' : 'Proceed Secure Payment' }}
+          <div class="modal-footer" style="padding: 15px 20px; background-color: white; border-top: 1px solid #f1f5f9; display: flex; gap: 10px;">
+            <button class="btn-modal btn-cancel" (click)="closeRazorpayMockModal()" style="flex: 1; padding: 10px; font-weight: 700; font-size: 0.85rem; border-radius: 4px; border: 1px solid #cbd5e1; background: none; cursor: pointer;">Cancel</button>
+            <button class="btn-modal btn-confirm" (click)="confirmRazorpayMockPayment()" [disabled]="processingPayment" style="flex: 2; padding: 10px; font-weight: 700; font-size: 0.85rem; border-radius: 4px; border: none; background-color: #2563eb; color: white; cursor: pointer;">
+              {{ processingPayment ? 'Verifying payment...' : 'Simulate Success' }}
             </button>
           </div>
         </div>
@@ -1608,6 +1655,11 @@ export class ParentDashboardComponent implements OnInit {
   payMethod = 'Online';
   processingPayment = false;
 
+  // Razorpay Integration State
+  razorpayScriptLoaded = false;
+  showRazorpayMockModal = false;
+  razorpayOrderData: any = null;
+
   // Milestones State
   milestonesGroup: MilestoneGroup | null = null;
 
@@ -1620,11 +1672,16 @@ export class ParentDashboardComponent implements OnInit {
     reason: ''
   };
 
+  // Parent Moments State
+  parentMoments: StudentMoment[] = [];
+  parentMomentsLoading = false;
+
   constructor(
-    private authService: AuthService,
+    public authService: AuthService,
     private apiService: ApiService,
     private parentService: ParentService,
-    private router: Router
+    private router: Router,
+    private momentsService: MomentsService
   ) {}
 
   ngOnInit(): void {
@@ -1636,6 +1693,27 @@ export class ParentDashboardComponent implements OnInit {
     
     this.parentName = user.full_name || 'Parent';
     this.loadDashboardData();
+    this.loadParentMoments();
+    this.loadRazorpayScript().then(() => {
+      this.razorpayScriptLoaded = true;
+    });
+  }
+
+  loadRazorpayScript(): Promise<void> {
+    return new Promise((resolve) => {
+      if ((window as any).Razorpay) {
+        resolve();
+        return;
+      }
+      const script = document.createElement('script');
+      script.src = 'https://checkout.razorpay.com/v1/checkout.js';
+      script.onload = () => resolve();
+      script.onerror = () => {
+        console.error('Failed to load Razorpay Checkout script');
+        resolve();
+      };
+      document.body.appendChild(script);
+    });
   }
 
   loadDashboardData(): void {
@@ -1683,35 +1761,90 @@ export class ParentDashboardComponent implements OnInit {
     });
   }
 
-  openPaymentModal(bill: Bill): void {
+  payWithRazorpay(bill: Bill): void {
     this.selectedBill = bill;
-    this.payMethod = 'Online';
-    this.showPaymentModal = true;
-  }
-
-  closePaymentModal(): void {
-    this.showPaymentModal = false;
-    this.selectedBill = null;
-  }
-
-  processMockPayment(): void {
-    if (!this.selectedBill) return;
     this.processingPayment = true;
     this.errorMessage = '';
-    
-    this.parentService.payBill(this.selectedBill.id, this.payMethod).subscribe({
-      next: () => {
+    this.successMessage = '';
+
+    this.parentService.createRazorpayOrder(bill.id).subscribe({
+      next: (data) => {
         this.processingPayment = false;
-        this.closePaymentModal();
-        this.successMessage = 'Payment simulated successfully!';
-        this.loadBilling();
-        setTimeout(() => this.successMessage = '', 4000);
+        if (data.is_mock) {
+          // Open simulated Razorpay modal
+          this.razorpayOrderData = data;
+          this.showRazorpayMockModal = true;
+        } else {
+          // Load native Razorpay Checkout window
+          const options = {
+            key: data.key_id,
+            amount: data.amount,
+            currency: data.currency,
+            name: "Kangaroo Kids School",
+            description: data.title,
+            order_id: data.order_id,
+            handler: (response: any) => {
+              this.verifyRazorpayPayment(bill.id, {
+                razorpay_order_id: response.razorpay_order_id,
+                razorpay_payment_id: response.razorpay_payment_id,
+                razorpay_signature: response.razorpay_signature,
+                is_mock: false
+              });
+            },
+            prefill: {
+              name: this.parentName,
+              email: this.authService.currentUserValue?.email || ''
+            },
+            theme: {
+              color: "#EE5A24"
+            }
+          };
+          const rzp = new (window as any).Razorpay(options);
+          rzp.open();
+        }
       },
       error: (err) => {
         this.processingPayment = false;
-        this.errorMessage = err.error?.detail || 'Payment failed. Please retry.';
+        this.errorMessage = err.error?.detail || 'Failed to initialize payment gateway checkout.';
       }
     });
+  }
+
+  verifyRazorpayPayment(billId: number, payload: any): void {
+    this.processingPayment = true;
+    this.errorMessage = '';
+    this.parentService.verifyRazorpayPayment(billId, payload).subscribe({
+      next: (res) => {
+        this.processingPayment = false;
+        this.showRazorpayMockModal = false;
+        this.selectedBill = null;
+        this.razorpayOrderData = null;
+        this.successMessage = res.message || 'Payment processed successfully!';
+        this.loadBilling();
+        this.loadDashboardData();
+        setTimeout(() => this.successMessage = '', 5000);
+      },
+      error: (err) => {
+        this.processingPayment = false;
+        this.showRazorpayMockModal = false;
+        this.selectedBill = null;
+        this.razorpayOrderData = null;
+        this.errorMessage = err.error?.detail || 'Razorpay payment verification failed.';
+      }
+    });
+  }
+
+  confirmRazorpayMockPayment(): void {
+    if (!this.razorpayOrderData) return;
+    this.verifyRazorpayPayment(this.razorpayOrderData.bill_id, {
+      is_mock: true
+    });
+  }
+
+  closeRazorpayMockModal(): void {
+    this.showRazorpayMockModal = false;
+    this.selectedBill = null;
+    this.razorpayOrderData = null;
   }
 
   // --- MILESTONES ---
@@ -1787,5 +1920,33 @@ export class ParentDashboardComponent implements OnInit {
   onLogout(): void {
     this.authService.logout();
     this.router.navigate(['/admin/login']);
+  }
+
+  loadParentMoments(): void {
+    this.parentMomentsLoading = true;
+    this.momentsService.getParentMoments().subscribe({
+      next: (data) => {
+        this.parentMoments = data;
+        this.parentMomentsLoading = false;
+      },
+      error: (err) => {
+        this.parentMomentsLoading = false;
+        console.error('Failed to load parent daily moments:', err);
+      }
+    });
+  }
+
+  downloadAllMoments(): void {
+    if (this.parentMoments.length === 0) return;
+    this.parentMoments.forEach((moment, idx) => {
+      const link = document.createElement('a');
+      link.href = 'http://localhost:8000' + moment.file_path;
+      const ext = moment.file_path.split('.').pop() || (moment.file_type === 'video' ? 'mp4' : 'jpg');
+      link.download = moment.title ? `${moment.title.replace(/\s+/g, '_')}.${ext}` : `moment_${moment.id || idx}.${ext}`;
+      link.target = '_blank';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    });
   }
 }

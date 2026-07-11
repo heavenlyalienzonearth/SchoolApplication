@@ -5,6 +5,7 @@ import { Router, RouterModule } from '@angular/router';
 import { AuthService } from '../../../core/services/auth.service';
 import { ContentService } from '../../../core/services/content.service';
 import { StationaryService, StationaryItem, StationaryOrder } from '../../../core/services/stationary.service';
+import { MomentsService, StudentMoment } from '../../../core/services/moments.service';
 
 @Component({
   selector: 'app-admin-dashboard',
@@ -184,11 +185,24 @@ export class DashboardComponent implements OnInit {
   waiverAmount = 0;
   waiverReason = '';
 
+  // Daily Moments State
+  momentsList: StudentMoment[] = [];
+  momentsLoading = false;
+  momentsUploading = false;
+  momentSelectedStudentId: number | null = null;
+  momentSelectedProgramId = 0;
+  momentDescription = '';
+  momentFiles: File[] = [];
+  momentFilePreviews: { url: string, type: string }[] = [];
+  momentStudents: any[] = [];
+  momentStudentSearchQuery = '';
+
   constructor(
     private authService: AuthService,
     private contentService: ContentService,
     private router: Router,
-    private stationaryService: StationaryService
+    private stationaryService: StationaryService,
+    private momentsService: MomentsService
   ) {}
 
   ngOnInit(): void {
@@ -206,6 +220,10 @@ export class DashboardComponent implements OnInit {
     }
     this.authService.currentUser$.subscribe(user => {
       this.currentUser = user;
+      if (user?.role?.toUpperCase() === 'TEACHER') {
+        this.activeTab = 'moments';
+        this.setTab('moments');
+      }
     });
     this.loadAnalytics();
     this.loadSettings();
@@ -248,6 +266,8 @@ export class DashboardComponent implements OnInit {
         this.invoiceFilters.program_id = this.programs[0].id;
       }
       this.loadInvoices();
+    } else if (tab === 'moments') {
+      this.onMomentsTabSelect();
     }
   }
 
@@ -1966,6 +1986,160 @@ export class DashboardComponent implements OnInit {
       error: (err) => {
         this.stationaryLoading = false;
         alert(err.error?.detail || 'Failed to update order status.');
+      }
+    });
+  }
+
+  // --- STUDENT MOMENTS METHODS ---
+  onMomentsTabSelect(): void {
+    if (this.programs.length > 0) {
+      if (!this.momentSelectedProgramId) {
+        this.momentSelectedProgramId = this.programs[0].id;
+      }
+      this.loadMomentsStudents();
+    }
+  }
+
+  loadMomentsStudents(): void {
+    if (!this.momentSelectedProgramId) return;
+    this.momentStudentSearchQuery = '';
+    this.contentService.getStudents(Number(this.momentSelectedProgramId)).subscribe({
+      next: (data) => {
+        this.momentStudents = data;
+        if (data.length > 0) {
+          this.momentSelectedStudentId = data[0].id;
+          this.loadStudentMoments();
+        } else {
+          this.momentSelectedStudentId = null;
+          this.momentsList = [];
+        }
+      },
+      error: (err) => {
+        this.showToast('Failed to load students for this program.', 'error');
+      }
+    });
+  }
+
+  get filteredMomentStudents(): any[] {
+    if (!this.momentStudentSearchQuery.trim()) {
+      return this.momentStudents;
+    }
+    const q = this.momentStudentSearchQuery.toLowerCase().trim();
+    return this.momentStudents.filter(s => s.name && s.name.toLowerCase().includes(q));
+  }
+
+  onMomentStudentSearchQueryChange(): void {
+    const filtered = this.filteredMomentStudents;
+    if (filtered.length > 0) {
+      const exists = filtered.some(s => s.id === Number(this.momentSelectedStudentId));
+      if (!exists) {
+        this.momentSelectedStudentId = filtered[0].id;
+        this.loadStudentMoments();
+      }
+    }
+  }
+
+  onMomentStudentSelect(): void {
+    this.loadStudentMoments();
+  }
+
+  loadStudentMoments(): void {
+    if (!this.momentSelectedStudentId) {
+      this.momentsList = [];
+      return;
+    }
+    this.momentsLoading = true;
+    this.momentsService.getMomentsByStudent(Number(this.momentSelectedStudentId)).subscribe({
+      next: (data) => {
+        this.momentsList = data;
+        this.momentsLoading = false;
+      },
+      error: (err) => {
+        this.momentsLoading = false;
+        this.showToast('Failed to load active moments.', 'error');
+      }
+    });
+  }
+
+  onMomentFileChange(event: any): void {
+    const selectedFiles = event.target.files;
+    if (!selectedFiles || selectedFiles.length === 0) return;
+    
+    this.momentFiles = [];
+    this.momentFilePreviews = [];
+    
+    for (let i = 0; i < selectedFiles.length; i++) {
+      const file = selectedFiles[i];
+      if (!file.type.startsWith('image/') && !file.type.startsWith('video/')) {
+        this.showToast(`File ${file.name} is not a valid image or video.`, 'error');
+        continue;
+      }
+      this.momentFiles.push(file);
+      
+      const reader = new FileReader();
+      reader.onload = (e: any) => {
+        this.momentFilePreviews.push({
+          url: e.target.result,
+          type: file.type.startsWith('video/') ? 'video' : 'image'
+        });
+      };
+      reader.readAsDataURL(file);
+    }
+  }
+
+  uploadStudentMoment(): void {
+    if (!this.momentSelectedStudentId) {
+      this.showToast('Please select a student.', 'error');
+      return;
+    }
+    if (this.momentFiles.length === 0) {
+      this.showToast('Please select at least one image or video file to upload.', 'error');
+      return;
+    }
+    if (!this.momentDescription.trim()) {
+      this.showToast('Please enter a caption description.', 'error');
+      return;
+    }
+
+    this.momentsUploading = true;
+    this.momentsService.uploadMoment(
+      Number(this.momentSelectedStudentId),
+      this.momentDescription,
+      this.momentFiles
+    ).subscribe({
+      next: (res) => {
+        this.momentsUploading = false;
+        this.showToast(`Successfully uploaded ${res.moments?.length || this.momentFiles.length} moments and notified parents!`, 'success');
+        
+        // Reset upload fields
+        this.momentDescription = '';
+        this.momentFiles = [];
+        this.momentFilePreviews = [];
+        
+        // Clear input file element
+        const fileInput = document.getElementById('momentFileInput') as HTMLInputElement;
+        if (fileInput) fileInput.value = '';
+        
+        // Reload list
+        this.loadStudentMoments();
+      },
+      error: (err) => {
+        this.momentsUploading = false;
+        this.showToast(err.error?.detail || 'Failed to upload moment.', 'error');
+      }
+    });
+  }
+
+  deleteStudentMoment(momentId: number): void {
+    if (!confirm('Are you sure you want to delete this moment? It will be permanently removed.')) return;
+    
+    this.momentsService.deleteMoment(momentId).subscribe({
+      next: () => {
+        this.showToast('Moment deleted successfully.', 'success');
+        this.loadStudentMoments();
+      },
+      error: (err) => {
+        this.showToast(err.error?.detail || 'Failed to delete moment.', 'error');
       }
     });
   }
