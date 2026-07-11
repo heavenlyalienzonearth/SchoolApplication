@@ -165,6 +165,7 @@ class StudentMilestonesSave(BaseModel):
 
 class LeaveStatusUpdate(BaseModel):
     status: str  # Approved, Declined
+    admin_comment: Optional[str] = None
 
 # --- MILESTONE TEMPLATES CONFIGURATOR ---
 @router.get("/milestones/templates", response_model=List[Dict[str, Any]])
@@ -289,7 +290,7 @@ def get_all_leave_requests(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(get_current_user)
 ):
-    if current_user.role.upper() not in ["ADMIN", "PRINCIPAL"]:
+    if current_user.role.upper() not in ["ADMIN", "PRINCIPAL", "TEACHER"]:
         raise HTTPException(status_code=403, detail="Permission denied.")
         
     leaves = db.query(models.LeaveRequest).order_by(models.LeaveRequest.created_at.desc()).all()
@@ -306,6 +307,7 @@ def get_all_leave_requests(
             "end_date": l.end_date,
             "reason": l.reason,
             "status": l.status,
+            "admin_comment": l.admin_comment,
             "created_at": l.created_at.isoformat()
         })
         
@@ -318,7 +320,7 @@ def update_leave_request_status(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(get_current_user)
 ):
-    if current_user.role.upper() not in ["ADMIN", "PRINCIPAL"]:
+    if current_user.role.upper() not in ["ADMIN", "PRINCIPAL", "TEACHER"]:
         raise HTTPException(status_code=403, detail="Permission denied.")
         
     leave = db.query(models.LeaveRequest).filter(models.LeaveRequest.id == leave_id).first()
@@ -326,6 +328,7 @@ def update_leave_request_status(
         raise HTTPException(status_code=404, detail="Leave request not found.")
         
     leave.status = req.status
+    leave.admin_comment = req.admin_comment
     
     # Sync with attendance table if approved
     if req.status.upper() == "APPROVED":
@@ -359,5 +362,5 @@ def update_leave_request_status(
                 db.add(db_att)
                 
     db.commit()
-    return {"message": f"Leave request status updated to {req.status} and synced with attendance."}
+    return {"message": f"Leave request status updated to {req.status} and synced with attendance.", "admin_comment": leave.admin_comment}
 

@@ -280,8 +280,8 @@ export class ContentService {
     return this.apiService.get<any[]>('/attendance/leaves');
   }
 
-  updateLeaveStatus(leaveId: number, status: string): Observable<any> {
-    return this.apiService.put<any>(`/attendance/leaves/${leaveId}/status`, { status });
+  updateLeaveStatus(leaveId: number, status: string, adminComment?: string): Observable<any> {
+    return this.apiService.put<any>(`/attendance/leaves/${leaveId}/status`, { status, admin_comment: adminComment });
   }
 
   // --- ADMIN FINANCE & BILLING ---

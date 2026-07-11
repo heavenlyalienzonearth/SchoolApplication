@@ -38,6 +38,7 @@ export interface LeaveRequest {
   end_date: string;
   reason: string;
   status: string;
+  admin_comment?: string;
   created_at: string;
 }
 

@@ -483,13 +483,23 @@ import { MomentsService, StudentMoment } from '../../core/services/moments.servi
               <h3 class="card-title">📜 Absence Logs & status</h3>
               
               <div class="leaves-timeline">
-                <div class="leave-log-box" *ngFor="let req of leavesList">
-                  <div class="log-hdr">
-                    <span class="dates-range">📅 {{ req.start_date | date:'mediumDate' }} to {{ req.end_date | date:'mediumDate' }}</span>
-                    <span class="badge badge-present">{{ req.status }}</span>
+                <div class="leave-log-box" *ngFor="let req of leavesList" style="border: 1px solid #e2e8f0; border-radius: 8px; padding: 12px; margin-bottom: 12px; background: white;">
+                  <div class="log-hdr" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                    <span class="dates-range" style="font-weight: 700; font-size: 0.82rem; color: #1e293b;">📅 {{ req.start_date | date:'mediumDate' }} to {{ req.end_date | date:'mediumDate' }}</span>
+                    <span class="badge" [ngClass]="{
+                      'badge-present': req.status === 'Approved',
+                      'badge-absent': req.status === 'Declined',
+                      'badge-late': req.status === 'Pending'
+                    }" style="font-weight: 700; font-size: 0.72rem; padding: 3px 8px; border-radius: 4px;">{{ req.status }}</span>
                   </div>
-                  <p class="reason-txt"><strong>Reason:</strong> {{ req.reason }}</p>
-                  <span class="submitted-time">Submitted: {{ req.created_at | date:'short' }}</span>
+                  <p class="reason-txt" style="margin: 4px 0; font-size: 0.78rem; color: #475569;"><strong>Reason:</strong> {{ req.reason }}</p>
+                  
+                  <!-- Admin Remarks / Comment Box -->
+                  <div *ngIf="req.admin_comment" style="margin-top: 8px; padding: 8px; background: #f8fafc; border-left: 3px solid var(--secondary); border-radius: 4px; font-size: 0.75rem; color: #334155; font-style: italic;">
+                    <strong>Remarks:</strong> "{{ req.admin_comment }}"
+                  </div>
+                  
+                  <span class="submitted-time" style="font-size: 0.65rem; color: #94a3b8; display: block; margin-top: 8px;">Submitted: {{ req.created_at | date:'short' }}</span>
                 </div>
                 <div *ngIf="leavesList.length === 0" class="no-records" style="padding: 40px 0;">
                   No leave requests submitted yet.

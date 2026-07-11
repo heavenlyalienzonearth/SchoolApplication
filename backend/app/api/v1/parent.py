@@ -352,6 +352,7 @@ def get_parent_leaves(
             "end_date": l.end_date,
             "reason": l.reason,
             "status": l.status,
+            "admin_comment": l.admin_comment,
             "created_at": l.created_at.isoformat()
         })
         

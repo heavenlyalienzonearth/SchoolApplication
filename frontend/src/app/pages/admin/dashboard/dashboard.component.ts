@@ -148,6 +148,7 @@ export class DashboardComponent implements OnInit {
   // --- MILESTONES & LEAVES STATE ---
   adminLeaves: any[] = [];
   adminLeavesLoading = false;
+  leaveComments: { [key: number]: string } = {};
   milestoneActiveSubTab = 'templates'; // 'templates' | 'progress'
   milestoneTemplates: any[] = [];
   newMilestoneTemplate = { program_id: 0, milestone_name: '', category: 'Cognitive' };
@@ -473,6 +474,10 @@ export class DashboardComponent implements OnInit {
       next: (data) => {
         this.adminLeaves = data;
         this.adminLeavesLoading = false;
+        // Populate existing comments
+        data.forEach((l: any) => {
+          this.leaveComments[l.id] = l.admin_comment || '';
+        });
       },
       error: (err) => {
         this.adminLeavesLoading = false;
@@ -482,7 +487,8 @@ export class DashboardComponent implements OnInit {
   }
 
   approveLeave(leaveId: number): void {
-    this.contentService.updateLeaveStatus(leaveId, 'Approved').subscribe({
+    const comment = this.leaveComments[leaveId] || '';
+    this.contentService.updateLeaveStatus(leaveId, 'Approved', comment).subscribe({
       next: () => {
         this.showToast('Leave request approved and synced with attendance roster.', 'success');
         this.loadLeavesAdmin();
@@ -494,7 +500,8 @@ export class DashboardComponent implements OnInit {
   }
 
   declineLeave(leaveId: number): void {
-    this.contentService.updateLeaveStatus(leaveId, 'Declined').subscribe({
+    const comment = this.leaveComments[leaveId] || '';
+    this.contentService.updateLeaveStatus(leaveId, 'Declined', comment).subscribe({
       next: () => {
         this.showToast('Leave request declined.', 'success');
         this.loadLeavesAdmin();
