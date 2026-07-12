@@ -80,7 +80,7 @@ import { MomentsService, StudentMoment } from '../../core/services/moments.servi
               <div class="card kid-card">
                 <div class="kid-header">
                   <div class="avatar-wrapper">
-                    <img [src]="dashboardData.kid?.photo_url ? 'http://localhost:8000' + dashboardData.kid.photo_url : 'assets/parent_avatar1_1783324784413.png'" alt="Kid Photo" class="kid-photo" (error)="onImgError($event)" />
+                    <img [src]="dashboardData.kid?.photo_url ? mediaBaseUrl + dashboardData.kid.photo_url : 'assets/parent_avatar1_1783324784413.png'" alt="Kid Photo" class="kid-photo" (error)="onImgError($event)" />
                   </div>
                   <div class="kid-intro">
                     <span class="badge badge-program">{{ dashboardData.kid?.program_title }}</span>
@@ -174,8 +174,8 @@ import { MomentsService, StudentMoment } from '../../core/services/moments.servi
                   <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 15px;" *ngIf="parentMoments.length > 0">
                     <div *ngFor="let moment of parentMoments" style="border: 1px solid #e2e8f0; border-radius: 8px; overflow: hidden; background: #f8fafc; display: flex; flex-direction: column;">
                       <div style="position: relative; background: #0f172a; height: 130px; display: flex; align-items: center; justify-content: center;">
-                        <img *ngIf="moment.file_type === 'image'" [src]="'http://localhost:8000' + moment.file_path" style="width: 100%; height: 100%; object-fit: cover;" />
-                        <video *ngIf="moment.file_type === 'video'" [src]="'http://localhost:8000' + moment.file_path" controls style="width: 100%; height: 100%; object-fit: cover;"></video>
+                        <img *ngIf="moment.file_type === 'image'" [src]="mediaBaseUrl + moment.file_path" style="width: 100%; height: 100%; object-fit: cover;" />
+                        <video *ngIf="moment.file_type === 'video'" [src]="mediaBaseUrl + moment.file_path" controls style="width: 100%; height: 100%; object-fit: cover;"></video>
                         
                         <span style="position: absolute; bottom: 8px; right: 8px; background: rgba(239, 68, 68, 0.95); color: white; padding: 2px 6px; border-radius: 4px; font-size: 0.65rem; font-weight: 700;">
                           ⏰ {{ moment.hours_remaining }}h left
@@ -188,7 +188,7 @@ import { MomentsService, StudentMoment } from '../../core/services/moments.servi
                             📅 {{ moment.created_at | date:'mediumDate' }} at {{ moment.created_at | date:'shortTime' }}
                           </span>
                         </div>
-                        <a [href]="'http://localhost:8000' + moment.file_path" [download]="moment.title || 'moment'" target="_blank" style="margin-top: 10px; display: inline-flex; align-items: center; justify-content: center; gap: 4px; font-size: 0.72rem; font-weight: 700; color: var(--primary); text-decoration: none; padding: 5px; border: 1px solid var(--primary); border-radius: 4px; transition: all 0.2s;" onmouseover="this.style.background='var(--primary)'; this.style.color='white'" onmouseout="this.style.background='none'; this.style.color='var(--primary)'">
+                        <a [href]="mediaBaseUrl + moment.file_path" [download]="moment.title || 'moment'" target="_blank" style="margin-top: 10px; display: inline-flex; align-items: center; justify-content: center; gap: 4px; font-size: 0.72rem; font-weight: 700; color: var(--primary); text-decoration: none; padding: 5px; border: 1px solid var(--primary); border-radius: 4px; transition: all 0.2s;" onmouseover="this.style.background='var(--primary)'; this.style.color='white'" onmouseout="this.style.background='none'; this.style.color='var(--primary)'">
                           📥 Download Media
                         </a>
                       </div>
@@ -361,7 +361,7 @@ import { MomentsService, StudentMoment } from '../../core/services/moments.servi
                       <button *ngIf="bill.status === 'Unpaid'" class="btn-action btn-pay" (click)="payWithRazorpay(bill)" [disabled]="processingPayment">
                         💳 {{ processingPayment && selectedBill?.id === bill.id ? 'Processing...' : 'Pay Now' }}
                       </button>
-                      <a *ngIf="bill.status === 'Paid'" [href]="'http://localhost:8000/api/v1/parent/billing/' + bill.id + '/receipt'" target="_blank" class="btn-action btn-receipt">
+                      <a *ngIf="bill.status === 'Paid'" [href]="mediaBaseUrl + '/api/v1/parent/billing/' + bill.id + '/receipt'" target="_blank" class="btn-action btn-receipt">
                         🖨️ Receipt
                       </a>
                     </td>
@@ -1614,6 +1614,7 @@ import { MomentsService, StudentMoment } from '../../core/services/moments.servi
   `]
 })
 export class ParentDashboardComponent implements OnInit {
+  mediaBaseUrl = window.location.hostname === 'localhost' ? 'http://localhost:8000' : '';
   parentName = '';
   loading = true;
   errorMessage = '';
@@ -1914,7 +1915,7 @@ export class ParentDashboardComponent implements OnInit {
     if (this.parentMoments.length === 0) return;
     this.parentMoments.forEach((moment, idx) => {
       const link = document.createElement('a');
-      link.href = 'http://localhost:8000' + moment.file_path;
+      link.href = this.mediaBaseUrl + moment.file_path;
       const ext = moment.file_path.split('.').pop() || (moment.file_type === 'video' ? 'mp4' : 'jpg');
       link.download = moment.title ? `${moment.title.replace(/\s+/g, '_')}.${ext}` : `moment_${moment.id || idx}.${ext}`;
       link.target = '_blank';

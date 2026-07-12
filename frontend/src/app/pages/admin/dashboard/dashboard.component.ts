@@ -145,7 +145,7 @@ export class DashboardComponent implements OnInit {
   toastType: 'success' | 'error' = 'success';
   toastVisible = false;
 
-  // --- MILESTONES & LEAVES STATE ---
+  mediaBaseUrl = window.location.hostname === 'localhost' ? 'http://localhost:8000' : '';
   adminLeaves: any[] = [];
   adminLeavesLoading = false;
   leaveComments: { [key: number]: string } = {};
