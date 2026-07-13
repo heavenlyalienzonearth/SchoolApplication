@@ -14,7 +14,7 @@ import { ContentService } from '../../../core/services/content.service';
         <div class="footer-col brand-col">
           <a routerLink="/" class="logo-area">
             <img [src]="settings.site_logo || '/assets/images/logo.png'" [alt]="settings.site_name || 'Logo'" class="logo" />
-            <h3>{{ settings.site_name || 'Kangaroo Club' }}</h3>
+            <h3>{{ settings.site_name || 'Vidyankuram Club' }}</h3>
           </a>
           <p class="tagline">Providing a vibrant environment for early childhood education, nurturing independence, curiosity, and play.</p>
           <div class="social-links">
@@ -95,7 +95,7 @@ import { ContentService } from '../../../core/services/content.service';
 
       <div class="footer-bottom">
         <div class="container bottom-container">
-          <p>{{ settings.footer_text || '© 2026 Kangaroo Club. All rights reserved.' }}</p>
+          <p>{{ settings.footer_text || '© 2026 Vidyankuram Club. All rights reserved.' }}</p>
           <div class="bottom-links">
             <a routerLink="/privacy-policy">Privacy Policy</a>
             <span class="divider">|</span>

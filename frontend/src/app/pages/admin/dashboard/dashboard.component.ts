@@ -909,7 +909,7 @@ export class DashboardComponent implements OnInit {
         title: '',
         age_group: '',
         duration: '',
-        uniform_items: 'Books, School Blazer, School Shorts, Pants, Kangaroo Shoes, Girls Dress, School Tie',
+        uniform_items: 'Books, School Blazer, School Shorts, Pants, Vidyankuram Shoes, Girls Dress, School Tie',
         description: '',
         highlights: [''],
         weeklyPlan: JSON.parse(JSON.stringify(defaultPlan)),

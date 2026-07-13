@@ -12,7 +12,7 @@ import { AuthService } from '../../../core/services/auth.service';
     <div class="login-wrapper">
       <div class="login-card">
         <div class="brand">
-          <h1>Kangaroo Kids</h1>
+          <h1>Vidyankuram Kids</h1>
           <p>Reset Portal Password</p>
         </div>
 

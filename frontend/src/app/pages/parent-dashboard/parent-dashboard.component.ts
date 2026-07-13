@@ -18,7 +18,7 @@ import { MomentsService, StudentMoment } from '../../core/services/moments.servi
         <div class="header-logo">
           <span class="logo-icon">🦘</span>
           <div class="logo-text">
-            <h1>Kangaroo Kids</h1>
+            <h1>Vidyankuram Kids</h1>
             <p>Parent Portal</p>
           </div>
         </div>
@@ -484,7 +484,7 @@ import { MomentsService, StudentMoment } from '../../core/services/moments.servi
             <div style="display: flex; align-items: center; gap: 12px;">
               <span style="font-size: 1.8rem; background: rgba(255,255,255,0.15); width: 45px; height: 45px; display: flex; align-items: center; justify-content: center; border-radius: 50%;">🦘</span>
               <div>
-                <h4 style="margin: 0; font-size: 1.1rem; font-weight: 800; letter-spacing: 0.3px;">Kangaroo Kids School</h4>
+                <h4 style="margin: 0; font-size: 1.1rem; font-weight: 800; letter-spacing: 0.3px;">Vidyankuram Kids School</h4>
                 <p style="margin: 2px 0 0 0; font-size: 0.72rem; color: #3b82f6; font-weight: 700; text-transform: uppercase;">Razorpay Checkout <span style="background: #2563eb; color: white; padding: 1px 4px; border-radius: 2px; font-size: 0.6rem; margin-left: 4px;">TEST MODE</span></p>
               </div>
             </div>
@@ -1755,7 +1755,7 @@ export class ParentDashboardComponent implements OnInit {
             key: data.key_id,
             amount: data.amount,
             currency: data.currency,
-            name: "Kangaroo Kids School",
+            name: "Vidyankuram Kids School",
             description: data.title,
             order_id: data.order_id,
             handler: (response: any) => {

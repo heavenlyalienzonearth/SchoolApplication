@@ -29,7 +29,7 @@ import { ContentService } from '../../core/services/content.service';
         </div>
         
         <p class="content-desc">
-          Kangaroo Kids has always been ‘learner centric’ and open to change which has reflected in our approach towards preschool, playschool, kindergarten, and nursery learning over the last 30 years. At Kangaroo Kids, it has been a constant endeavour to ensure the best preschool learning for our children with our vision for an exciting future for our children. Our new age iCan Learning System has been developed to prepare our children to live in this thriving and accelerated world. Register for Kangaroo Kids' preschool in India and get admission today!
+          Vidyankuram Kids has always been ‘learner centric’ and open to change which has reflected in our approach towards preschool, playschool, kindergarten, and nursery learning over the last 30 years. At Vidyankuram Kids, it has been a constant endeavour to ensure the best preschool learning for our children with our vision for an exciting future for our children. Our new age iCan Learning System has been developed to prepare our children to live in this thriving and accelerated world. Register for Vidyankuram Kids' preschool in India and get admission today!
         </p>
 
         <div class="admissions-image-box">

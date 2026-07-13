@@ -46,7 +46,7 @@ import { AuthService, User } from '../../../core/services/auth.service';
               <img [src]="settings.site_logo || '/assets/images/logo.png'" [alt]="settings.site_name || 'Logo'" class="logo" />
             </div>
             <div class="brand-text">
-              <span class="site-name">{{ settings.site_name || 'Kangaroo Club' }}</span>
+              <span class="site-name">{{ settings.site_name || 'Vidyankuram Club' }}</span>
               <span class="tagline">INTERNATIONAL SCHOOL</span>
             </div>
           </a>

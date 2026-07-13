@@ -27,9 +27,9 @@ interface Message {
         <!-- Header -->
         <div class="chat-header">
           <div class="bot-info">
-            <img src="/assets/images/logo.png" alt="Kangaroo Mascot" class="bot-avatar-img" />
+            <img src="/assets/images/logo.png" alt="Vidyankuram Mascot" class="bot-avatar-img" />
             <div class="bot-details">
-              <h4>Kangaroo Assistant</h4>
+              <h4>Vidyankuram Assistant</h4>
               <span class="online-status">
                 <span class="dot"></span> Online
               </span>
@@ -440,7 +440,7 @@ export class ChatbotComponent implements OnInit, AfterViewChecked {
     // Initial welcome onboarding message
     this.messages.push({
       sender: 'bot',
-      text: "Hello! Welcome to Kangaroo Club International School Assistant. 🤖\n\nTo help you better, could you please tell me your child's name?",
+      text: "Hello! Welcome to Vidyankuram Club International School Assistant. 🤖\n\nTo help you better, could you please tell me your child's name?",
       timestamp: new Date()
     });
     this.quickReplies = [];

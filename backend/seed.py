@@ -62,9 +62,9 @@ def seed_data():
     if settings_count == 0:
         default_settings = [
             # General
-            ("site_name", "Kangaroo Club International School", "general"),
+            ("site_name", "Vidyankuram Club International School", "general"),
             ("site_logo", "/assets/images/logo.png", "general"),
-            ("footer_text", "© 2026 Kangaroo Club International School. All rights reserved.", "general"),
+            ("footer_text", "© 2026 Vidyankuram Club International School. All rights reserved.", "general"),
             ("primary_color", "#EE5A24", "theme"), # Coral
             ("secondary_color", "#FFD23F", "theme"), # Yellow
             ("accent_color", "#0652DD", "theme"), # Navy blue
@@ -73,7 +73,7 @@ def seed_data():
             
             # Contact
             ("contact_phone", "+91 98765 43210", "contact"),
-            ("contact_email", "admissions@kangarooclub.in", "contact"),
+            ("contact_email", "admissions@vidyankuramclub.in", "contact"),
             ("address", "123 Kid's Avenue, Sunshine Valley, Mumbai, India", "contact"),
             ("opening_hours", "Mon - Fri: 8:00 AM - 4:00 PM, Sat: 9:00 AM - 1:00 PM", "contact"),
             
@@ -92,7 +92,7 @@ def seed_data():
     if sections_count == 0:
         hero_slides = [
             {
-                "title": "Welcome to Kangaroo Club",
+                "title": "Welcome to Vidyankuram Club",
                 "subtitle": "Nurturing Curious Minds, Shaping Brighter Futures",
                 "image": "/assets/images/hero_kids_learning.jpg",
                 "cta_text": "Apply Now",
@@ -128,9 +128,9 @@ def seed_data():
             models.PageSection(
                 page_code="home",
                 section_code="about",
-                title="About Kangaroo Club",
+                title="About Vidyankuram Club",
                 subtitle="Where learning meets playing, and dreams take flight",
-                description="Established with a vision to revolutionize early childhood education, Kangaroo Club provides a nurturing environment where children are encouraged to ask questions, explore their surroundings, and discover their unique talents.",
+                description="Established with a vision to revolutionize early childhood education, Vidyankuram Club provides a nurturing environment where children are encouraged to ask questions, explore their surroundings, and discover their unique talents.",
                 content_json=json.dumps(about_features),
                 media_url="/assets/images/gallery_science.jpg",
                 sort_order=2
@@ -146,7 +146,7 @@ def seed_data():
             models.PageSection(
                 page_code="home",
                 section_code="gallery",
-                title="Glimpses of Kangaroo Club",
+                title="Glimpses of Vidyankuram Club",
                 subtitle="Take a visual tour of our vibrant classrooms and active play areas",
                 description="A peak into the daily activities, school celebrations, and learning projects done by our little achievers.",
                 sort_order=4
@@ -155,7 +155,7 @@ def seed_data():
                 page_code="home",
                 section_code="testimonials",
                 title="What Parents Say",
-                subtitle="Hear directly from families about their Kangaroo Club experience",
+                subtitle="Hear directly from families about their Vidyankuram Club experience",
                 description="Nothing speaks louder than the trust and testimonials of our loving parents.",
                 sort_order=5
             ),
@@ -209,7 +209,7 @@ def seed_data():
                 sort_order=1
             ),
             models.Program(
-                title="Preschool (Junior Kangaroos)",
+                title="Preschool (Junior Vidyankurams)",
                 age_group="2.5 - 3.5 Years",
                 duration="3 Hours / Day",
                 description="Introduces structured group activities, phonics, basic numeracy, writing readiness, and social-emotional growth.",
@@ -218,7 +218,7 @@ def seed_data():
                 sort_order=2
             ),
             models.Program(
-                title="Kindergarten (Senior Kangaroos)",
+                title="Kindergarten (Senior Vidyankurams)",
                 age_group="3.5 - 5.5 Years",
                 duration="4 Hours / Day",
                 description="Prepares children for primary school with core reading, writing, mathematical concepts, scientific curiosity, and team skills.",
@@ -247,7 +247,7 @@ def seed_data():
             models.Testimonial(
                 author_name="Mrs. Shalini Mehta",
                 author_role="Mother of Vivaan (Preschool)",
-                quote="Sending Vivaan to Kangaroo Club was the best decision we made. Within months, we saw massive improvement in his speech and how he interacts with other children. The teachers are incredibly warm and patient.",
+                quote="Sending Vivaan to Vidyankuram Club was the best decision we made. Within months, we saw massive improvement in his speech and how he interacts with other children. The teachers are incredibly warm and patient.",
                 rating=5,
                 image_url="/assets/images/parent_avatar1.jpg",
                 sort_order=1

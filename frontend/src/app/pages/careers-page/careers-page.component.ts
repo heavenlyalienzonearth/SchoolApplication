@@ -23,7 +23,7 @@ import { ContentService } from '../../core/services/content.service';
     <div class="page-content-wrapper container">
       <div class="intro-section">
         <h2>Join Our Team of Passionate Educators</h2>
-        <p>At Kangaroo Club, we believe our educators and staff are our biggest strength. We provide a collaborative work environment, competitive remuneration packages, and continuous professional training program.</p>
+        <p>At Vidyankuram Club, we believe our educators and staff are our biggest strength. We provide a collaborative work environment, competitive remuneration packages, and continuous professional training program.</p>
       </div>
 
       <!-- Loading state -->
@@ -56,7 +56,7 @@ import { ContentService } from '../../core/services/content.service';
       </div>
 
       <div class="no-content" *ngIf="!loading && jobs.length === 0">
-        <p>No open positions currently. You can send your resume to careers&#64;kangarooclub.in for future roles.</p>
+        <p>No open positions currently. You can send your resume to careers&#64;vidyankuramclub.in for future roles.</p>
       </div>
     </div>
 

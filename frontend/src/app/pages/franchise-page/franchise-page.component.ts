@@ -23,7 +23,7 @@ import { ContentService } from '../../core/services/content.service';
     <div class="page-content-wrapper container grid-2">
       <!-- Franchise Info -->
       <div class="franchise-info">
-        <h2>Why Partner with Kangaroo Club?</h2>
+        <h2>Why Partner with Vidyankuram Club?</h2>
         <p class="intro">Join our award-winning network of preschools and make a significant difference in child education while running a highly rewarding business.</p>
         
         <div class="benefits-list">
