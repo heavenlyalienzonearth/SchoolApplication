@@ -14,7 +14,7 @@ def create_database_if_not_exists():
     db_name = url_obj.database
     
     # Connect to master database first to check/create the target database
-    master_url = str(url_obj.set(database="master"))
+    master_url = url_obj.set(database="master").render_as_string(hide_password=False)
     
     print(f"Checking if database '{db_name}' exists on SQL Server...")
     engine_master = create_engine(master_url, connect_args={"autocommit": True})
