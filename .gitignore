@@ -10,7 +10,7 @@ __pycache__/
 .Python
 build/
 develop-eggs/
-dist/
+# dist/
 downloads/
 eggs/
 .eggs/
@@ -145,7 +145,7 @@ cython_debug/
 # Angular
 .angular/
 node_modules/
-dist/
+# dist/
 .sass-cache/
 connect.lock
 input.date
