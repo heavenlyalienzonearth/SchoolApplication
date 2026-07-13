@@ -8,22 +8,26 @@ from app.core.security import get_password_hash
 from app import models
 
 def create_database_if_not_exists():
-    # Extract connection parameters to connect to 'master' db first
+    from sqlalchemy.engine import make_url
     db_url = settings.DATABASE_URL
-    master_url = db_url.replace("SchoolDB", "master")
+    url_obj = make_url(db_url)
+    db_name = url_obj.database
     
-    print("Checking if database 'SchoolDB' exists on SQL Server...")
+    # Connect to master database first to check/create the target database
+    master_url = str(url_obj.set(database="master"))
+    
+    print(f"Checking if database '{db_name}' exists on SQL Server...")
     engine_master = create_engine(master_url, connect_args={"autocommit": True})
     
     # Check sys.databases
     with engine_master.connect() as conn:
-        result = conn.execute(text("SELECT database_id FROM sys.databases WHERE name = 'SchoolDB'")).fetchone()
+        result = conn.execute(text(f"SELECT database_id FROM sys.databases WHERE name = '{db_name}'")).fetchone()
         if not result:
-            print("Database 'SchoolDB' does not exist. Creating database...")
-            conn.execute(text("CREATE DATABASE SchoolDB"))
-            print("Database 'SchoolDB' created successfully.")
+            print(f"Database '{db_name}' does not exist. Creating database...")
+            conn.execute(text(f"CREATE DATABASE {db_name}"))
+            print(f"Database '{db_name}' created successfully.")
         else:
-            print("Database 'SchoolDB' already exists.")
+            print(f"Database '{db_name}' already exists.")
     engine_master.dispose()
 
 def seed_data():
