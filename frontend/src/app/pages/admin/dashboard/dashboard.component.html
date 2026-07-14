@@ -52,6 +52,12 @@
           <li [class.active]="activeTab === 'users'" (click)="setTab('users')" class="submenu-item" *ngIf="currentUser?.role?.toUpperCase() === 'ADMIN'">
             <span class="icon">👥</span> User Management
           </li>
+          <li [class.active]="activeTab === 'circulars'" (click)="setTab('circulars')" class="submenu-item">
+            <span class="icon">📢</span> School Circulars
+          </li>
+          <li [class.active]="activeTab === 'library'" (click)="setTab('library')" class="submenu-item">
+            <span class="icon">📚</span> School Library
+          </li>
         </ng-container>
         <li [class.active]="activeTab === 'testimonials'" (click)="setTab('testimonials')" *ngIf="currentUser?.role?.toUpperCase() === 'ADMIN' || currentUser?.role?.toUpperCase() === 'PRINCIPAL'">
           <span class="icon">💬</span> Parent Reviews
@@ -86,9 +92,6 @@
         </li>
         <li [class.active]="activeTab === 'leaves'" (click)="setTab('leaves')" *ngIf="currentUser?.role?.toUpperCase() === 'ADMIN' || currentUser?.role?.toUpperCase() === 'PRINCIPAL' || currentUser?.role?.toUpperCase() === 'TEACHER'">
           <span class="icon">📅</span> Leave Approvals
-        </li>
-        <li [class.active]="activeTab === 'circulars'" (click)="setTab('circulars')" *ngIf="currentUser?.role?.toUpperCase() === 'ADMIN' || currentUser?.role?.toUpperCase() === 'PRINCIPAL' || currentUser?.role?.toUpperCase() === 'TEACHER'">
-          <span class="icon">📢</span> School Circulars
         </li>
       </ul>
     </aside>
@@ -2057,10 +2060,10 @@
               </div>
 
               <div class="btn-group" style="display: flex; gap: 10px;">
-                <button type="submit" class="btn-table save" style="padding: 10px 20px; font-weight: 700; flex: 1; border-radius: 6px;">
-                  {{ editingCircularId ? 'Update Circular' : 'Publish Circular' }}
+                <button type="submit" class="btn-table save" style="padding: 10px 20px; font-weight: 700; flex: 1; border-radius: 6px; background: var(--primary); color: white; border: none; box-shadow: 0 4px 10px rgba(251, 146, 60, 0.2); transition: all 0.2s ease; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px;">
+                  <span>{{ editingCircularId ? '💾 Update Circular' : '🚀 Publish Circular' }}</span>
                 </button>
-                <button type="button" (click)="resetCircularForm()" class="btn-table reset" style="padding: 10px 20px; font-weight: 700; background: #94A3B8; color: white; border-radius: 6px;">
+                <button type="button" (click)="resetCircularForm()" class="btn-table reset" style="padding: 10px 20px; font-weight: 700; background: #E2E8F0; color: #475569; border: 1px solid #CBD5E1; border-radius: 6px; cursor: pointer; transition: all 0.2s ease;">
                   Cancel
                 </button>
               </div>
@@ -2122,6 +2125,217 @@
                   </tr>
                 </tbody>
               </table>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- --- SCHOOL LIBRARY SECTION --- -->
+      <section *ngIf="activeTab === 'library'" class="tab-section animate-fade-in">
+        <div class="section-header">
+          <h2>📚 School Library & Book Manager</h2>
+          <p>Manage the school library catalog, add children's books, track inventory, and register borrowed/returned books for students.</p>
+        </div>
+
+        <div class="row-flex" style="display: grid; grid-template-columns: 1fr 2fr; gap: 30px; margin-top: 20px;">
+          
+          <!-- Left Panel: Add Book Form / Issue Book Form -->
+          <div style="display: flex; flex-direction: column; gap: 20px;">
+            
+            <!-- Card 1: Add/Edit Book -->
+            <div class="dash-card">
+              <h3>{{ editingBookId ? '✏️ Edit Book Details' : '➕ Add Book to Catalog' }}</h3>
+              <form (ngSubmit)="saveBook()" style="margin-top: 15px;">
+                <div class="form-group" style="margin-bottom: 12px;">
+                  <label class="form-label" style="display: block; font-weight: 600; font-size: 0.82rem; color: #475569; margin-bottom: 4px;">Book Title *</label>
+                  <input type="text" [(ngModel)]="newBook.title" name="b_title" required class="form-control" placeholder="e.g. Green Eggs and Ham" style="width: 100%; border: 1px solid #CBD5E1; border-radius: 6px; padding: 8px 10px;" />
+                </div>
+                
+                <div class="form-group" style="margin-bottom: 12px;">
+                  <label class="form-label" style="display: block; font-weight: 600; font-size: 0.82rem; color: #475569; margin-bottom: 4px;">Author *</label>
+                  <input type="text" [(ngModel)]="newBook.author" name="b_author" required class="form-control" placeholder="e.g. Dr. Seuss" style="width: 100%; border: 1px solid #CBD5E1; border-radius: 6px; padding: 8px 10px;" />
+                </div>
+
+                <div class="form-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px;">
+                  <div class="form-group">
+                    <label class="form-label" style="display: block; font-weight: 600; font-size: 0.82rem; color: #475569; margin-bottom: 4px;">ISBN (Optional)</label>
+                    <input type="text" [(ngModel)]="newBook.isbn" name="b_isbn" class="form-control" placeholder="e.g. 978039480" style="width: 100%; border: 1px solid #CBD5E1; border-radius: 6px; padding: 8px 10px;" />
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label" style="display: block; font-weight: 600; font-size: 0.82rem; color: #475569; margin-bottom: 4px;">Category *</label>
+                    <select [(ngModel)]="newBook.category" name="b_category" required class="form-control" style="width: 100%; border: 1px solid #CBD5E1; border-radius: 6px; padding: 8px 10px; background-color: white;">
+                      <option value="Picture Book">Picture Book</option>
+                      <option value="Beginner Reader">Beginner Reader</option>
+                      <option value="Fiction">Fiction</option>
+                      <option value="Chapter Book">Chapter Book</option>
+                      <option value="Science & Nature">Science & Nature</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div class="form-group" style="margin-bottom: 15px;">
+                  <label class="form-label" style="display: block; font-weight: 600; font-size: 0.82rem; color: #475569; margin-bottom: 4px;">Total Copies *</label>
+                  <input type="number" [(ngModel)]="newBook.total_copies" name="b_copies" min="1" required class="form-control" style="width: 100%; border: 1px solid #CBD5E1; border-radius: 6px; padding: 8px 10px;" />
+                </div>
+
+                <div class="btn-group" style="display: flex; gap: 8px;">
+                  <button type="submit" class="btn-table save" style="padding: 8px 15px; font-weight: 700; flex: 1; border-radius: 6px; background: var(--primary); color: white; border: none; cursor: pointer;">
+                    {{ editingBookId ? 'Update Book' : 'Add Book' }}
+                  </button>
+                  <button type="button" (click)="resetBookForm()" class="btn-table reset" style="padding: 8px 15px; font-weight: 700; background: #94A3B8; color: white; border-radius: 6px; cursor: pointer;">
+                    Cancel
+                  </button>
+                </div>
+              </form>
+            </div>
+
+            <!-- Card 2: Issue Book to Student -->
+            <div class="dash-card">
+              <h3>📖 Issue Book to Student</h3>
+              <form (ngSubmit)="issueBook()" style="margin-top: 15px;">
+                <div class="form-group" style="margin-bottom: 12px;">
+                  <label class="form-label" style="display: block; font-weight: 600; font-size: 0.82rem; color: #475569; margin-bottom: 4px;">Select Book *</label>
+                  <select [(ngModel)]="newBorrow.book_id" name="iss_book" required class="form-control" style="width: 100%; border: 1px solid #CBD5E1; border-radius: 6px; padding: 8px 10px; background-color: white;">
+                    <option [ngValue]="null" disabled>-- Choose Available Book --</option>
+                    <option *ngFor="let b of getAvailableBooks()" [value]="b.id">{{ b.title }} (By {{ b.author }}) - [{{ b.available_copies }} left]</option>
+                  </select>
+                </div>
+
+                <div class="form-group" style="margin-bottom: 12px;">
+                  <label class="form-label" style="display: block; font-weight: 600; font-size: 0.82rem; color: #475569; margin-bottom: 4px;">Select Student *</label>
+                  <select [(ngModel)]="newBorrow.student_id" name="iss_student" required class="form-control" style="width: 100%; border: 1px solid #CBD5E1; border-radius: 6px; padding: 8px 10px; background-color: white;">
+                    <option [ngValue]="null" disabled>-- Choose Student --</option>
+                    <option *ngFor="let s of studentsList" [value]="s.id">{{ s.name }} (Parent: {{ s.parent_name }})</option>
+                  </select>
+                </div>
+
+                <div class="form-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 15px;">
+                  <div class="form-group">
+                    <label class="form-label" style="display: block; font-weight: 600; font-size: 0.82rem; color: #475569; margin-bottom: 4px;">Borrow Date</label>
+                    <input type="date" [(ngModel)]="newBorrow.borrow_date" name="iss_bdate" required class="form-control" style="width: 100%; border: 1px solid #CBD5E1; border-radius: 6px; padding: 8px 10px;" />
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label" style="display: block; font-weight: 600; font-size: 0.82rem; color: #475569; margin-bottom: 4px;">Due Date</label>
+                    <input type="date" [(ngModel)]="newBorrow.due_date" name="iss_ddate" required class="form-control" style="width: 100%; border: 1px solid #CBD5E1; border-radius: 6px; padding: 8px 10px;" />
+                  </div>
+                </div>
+
+                <button type="submit" class="btn-table save" style="width: 100%; padding: 10px; font-weight: 700; border-radius: 6px; background: #0652DD; color: white; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px;">
+                  <span>🚀 Register Borrow</span>
+                </button>
+              </form>
+            </div>
+          </div>
+
+          <!-- Right Panel: Books catalog and Borrow registry -->
+          <div style="display: flex; flex-direction: column; gap: 25px;">
+            
+            <!-- Catalog List Card -->
+            <div class="dash-card">
+              <div style="display: flex; justify-content: space-between; align-items: center;">
+                <h3>📚 Library Catalog</h3>
+                <span class="badge" style="background: #E2E8F0; color: #475569; font-weight: 700; padding: 4px 8px; border-radius: 6px; font-size: 0.75rem;">Total Books: {{ booksList.length }}</span>
+              </div>
+
+              <div style="overflow-x: auto; margin-top: 15px; max-height: 280px;">
+                <table style="width: 100%; border-collapse: collapse; text-align: left;">
+                  <thead>
+                    <tr style="background: #F8FAFC; border-bottom: 2px solid #E2E8F0;">
+                      <th style="padding: 10px; font-weight: 700; color: #475569; font-size: 0.82rem;">Title & Author</th>
+                      <th style="padding: 10px; font-weight: 700; color: #475569; font-size: 0.82rem;">Category</th>
+                      <th style="padding: 10px; font-weight: 700; color: #475569; font-size: 0.82rem; text-align: center;">Copies (Avail/Total)</th>
+                      <th style="padding: 10px; font-weight: 700; color: #475569; font-size: 0.82rem; width: 80px;">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr *ngFor="let b of booksList" style="border-bottom: 1px solid #E2E8F0;">
+                      <td style="padding: 10px;">
+                        <div style="font-weight: 700; color: var(--primary);">{{ b.title }}</div>
+                        <div style="font-size: 0.78rem; color: #64748B; margin-top: 2px;">By {{ b.author }} <span *ngIf="b.isbn" style="margin-left: 5px; opacity: 0.7;">(ISBN: {{ b.isbn }})</span></div>
+                      </td>
+                      <td style="padding: 10px; font-size: 0.85rem; color: #475569;">
+                        {{ b.category }}
+                      </td>
+                      <td style="padding: 10px; text-align: center;">
+                        <span class="badge" [ngStyle]="{
+                          'background-color': b.available_copies > 0 ? '#D1FAE5' : '#FEE2E2',
+                          'color': b.available_copies > 0 ? '#065F46' : '#991B1B',
+                          'font-size': '0.78rem',
+                          'font-weight': '700',
+                          'border-radius': '6px',
+                          'padding': '4px 8px'
+                        }">
+                          {{ b.available_copies }} / {{ b.total_copies }}
+                        </span>
+                      </td>
+                      <td style="padding: 10px;">
+                        <div style="display: flex; gap: 6px;">
+                          <button (click)="editBook(b)" class="btn-table edit" title="Edit" type="button">✏️</button>
+                          <button (click)="deleteBookFromCatalog(b.id)" class="btn-table delete" title="Delete" type="button">🗑️</button>
+                        </div>
+                      </td>
+                    </tr>
+                    <tr *ngIf="booksList.length === 0">
+                      <td colspan="4" style="text-align: center; color: #94a3b8; font-style: italic; padding: 20px;">
+                        Library catalog is empty.
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <!-- Borrow Registry Card -->
+            <div class="dash-card">
+              <h3>📋 Active Borrow & Issue Register</h3>
+              
+              <div style="overflow-x: auto; margin-top: 15px; max-height: 280px;">
+                <table style="width: 100%; border-collapse: collapse; text-align: left;">
+                  <thead>
+                    <tr style="background: #F8FAFC; border-bottom: 2px solid #E2E8F0;">
+                      <th style="padding: 10px; font-weight: 700; color: #475569; font-size: 0.82rem;">Book</th>
+                      <th style="padding: 10px; font-weight: 700; color: #475569; font-size: 0.82rem;">Student</th>
+                      <th style="padding: 10px; font-weight: 700; color: #475569; font-size: 0.82rem;">Borrow ➔ Due</th>
+                      <th style="padding: 10px; font-weight: 700; color: #475569; font-size: 0.82rem; text-align: center;">Status</th>
+                      <th style="padding: 10px; font-weight: 700; color: #475569; font-size: 0.82rem; width: 100px; text-align: center;">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr *ngFor="let br of borrowsList" style="border-bottom: 1px solid #E2E8F0;">
+                      <td style="padding: 10px; font-size: 0.88rem; font-weight: 600; color: #1E293B;">
+                        {{ getBookTitle(br.book_id) }}
+                      </td>
+                      <td style="padding: 10px; font-size: 0.85rem; color: #475569;">
+                        {{ getStudentName(br.student_id) }}
+                      </td>
+                      <td style="padding: 10px; font-size: 0.78rem; color: #64748B;">
+                        <div>{{ br.borrow_date }}</div>
+                        <div style="font-weight: 700; color: #DC2626; margin-top: 2px;">⌛ {{ br.due_date }}</div>
+                      </td>
+                      <td style="padding: 10px; text-align: center;">
+                        <span class="badge" [ngClass]="{
+                          'badge-delivered': br.status.toUpperCase() === 'RETURNED',
+                          'badge-pending': br.status.toUpperCase() === 'BORROWED'
+                        }" style="font-size: 0.72rem; font-weight: 700; border-radius: 4px; padding: 2px 6px;">
+                          {{ br.status }}
+                        </span>
+                        <div *ngIf="br.return_date" style="font-size: 0.7rem; color: #94A3B8; margin-top: 4px;">On {{ br.return_date }}</div>
+                      </td>
+                      <td style="padding: 10px; text-align: center;">
+                        <button *ngIf="br.status.toUpperCase() === 'BORROWED'" (click)="returnBorrowedBook(br.id)" class="btn-table save" style="padding: 4px 8px; font-size: 0.75rem; border-radius: 4px; background: #10B981; color: white; border: none; cursor: pointer;" type="button">
+                          ↩ Return Book
+                        </button>
+                        <span *ngIf="br.status.toUpperCase() === 'RETURNED'" style="color: #94A3B8; font-size: 0.8rem; font-style: italic;">Returned</span>
+                      </td>
+                    </tr>
+                    <tr *ngIf="borrowsList.length === 0">
+                      <td colspan="5" style="text-align: center; color: #94a3b8; font-style: italic; padding: 20px;">
+                        No books currently registered as borrowed.
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
             </div>
           </div>
         </div>

@@ -280,6 +280,33 @@ class Circular(Base):
 
     program = relationship("Program")
 
+class LibraryBook(Base):
+    __tablename__ = "library_books"
+
+    id = Column(Integer, primary_key=True, index=True)
+    title = Column(String(255), nullable=False)
+    author = Column(String(255), nullable=False)
+    isbn = Column(String(100), nullable=True)
+    category = Column(String(100), nullable=False)
+    total_copies = Column(Integer, default=1, nullable=False)
+    available_copies = Column(Integer, default=1, nullable=False)
+    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+
+class LibraryBorrow(Base):
+    __tablename__ = "library_borrows"
+
+    id = Column(Integer, primary_key=True, index=True)
+    book_id = Column(Integer, ForeignKey("library_books.id", ondelete="CASCADE"), nullable=False)
+    student_id = Column(Integer, ForeignKey("students.id", ondelete="CASCADE"), nullable=False)
+    borrow_date = Column(String(50), nullable=False)  # YYYY-MM-DD
+    due_date = Column(String(50), nullable=False)     # YYYY-MM-DD
+    return_date = Column(String(50), nullable=True)  # YYYY-MM-DD
+    status = Column(String(50), default="Borrowed", nullable=False)  # Borrowed, Returned
+    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+
+    book = relationship("LibraryBook")
+    student = relationship("Student")
+
 class StationaryItem(Base):
     __tablename__ = "stationary_items"
 

@@ -483,6 +483,45 @@ class CircularResponse(CircularBase):
     class Config:
         from_attributes = True
 
+# --- LIBRARY SCHEMAS ---
+class BookBase(BaseModel):
+    title: str
+    author: str
+    isbn: Optional[str] = None
+    category: str
+    total_copies: int = 1
+    available_copies: int = 1
+
+class BookCreate(BookBase):
+    pass
+
+class BookResponse(BookBase):
+    id: int
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
+
+class BorrowBase(BaseModel):
+    book_id: int
+    student_id: int
+    borrow_date: str
+    due_date: str
+    return_date: Optional[str] = None
+    status: str = "Borrowed"
+
+class BorrowCreate(BorrowBase):
+    pass
+
+class BorrowResponse(BorrowBase):
+    id: int
+    created_at: datetime
+    book: Optional[BookResponse] = None
+    student: Optional[StudentResponse] = None
+
+    class Config:
+        from_attributes = True
+
 # --- STATIONERY SCHEMAS ---
 
 from decimal import Decimal

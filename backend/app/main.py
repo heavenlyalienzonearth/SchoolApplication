@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.core.config import settings
-from app.api.v1 import auth, settings as api_settings, content, submissions, chatbot, attendance, admissions, holidays, stationary, parent, finance, moments, circulars
+from app.api.v1 import auth, settings as api_settings, content, submissions, chatbot, attendance, admissions, holidays, stationary, parent, finance, moments, circulars, library
 
 from fastapi.staticfiles import StaticFiles
 import os
@@ -31,6 +31,7 @@ app.include_router(admissions.router, prefix="/api/v1")
 app.include_router(chatbot.router, prefix="/api/v1/chatbot", tags=["Chatbot"])
 app.include_router(holidays.router, prefix="/api/v1/holidays", tags=["Holidays"])
 app.include_router(circulars.router, prefix="/api/v1/circulars", tags=["School Circulars"])
+app.include_router(library.router, prefix="/api/v1/library", tags=["School Library"])
 app.include_router(stationary.router, prefix="/api/v1")
 app.include_router(parent.router, prefix="/api/v1")
 app.include_router(finance.router, prefix="/api/v1")

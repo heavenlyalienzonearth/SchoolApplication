@@ -146,6 +146,35 @@ export class ContentService {
     return this.apiService.delete<any>(`/circulars/${id}`);
   }
 
+  // --- LIBRARY ---
+  getBooks(): Observable<any[]> {
+    return this.apiService.get<any[]>('/library/books');
+  }
+
+  createBook(book: any): Observable<any> {
+    return this.apiService.post<any>('/library/books', book);
+  }
+
+  updateBook(id: number, book: any): Observable<any> {
+    return this.apiService.put<any>(`/library/books/${id}`, book);
+  }
+
+  deleteBook(id: number): Observable<any> {
+    return this.apiService.delete<any>(`/library/books/${id}`);
+  }
+
+  getBorrows(): Observable<any[]> {
+    return this.apiService.get<any[]>('/library/borrows');
+  }
+
+  issueBook(borrow: any): Observable<any> {
+    return this.apiService.post<any>('/library/borrows', borrow);
+  }
+
+  returnBook(borrowId: number): Observable<any> {
+    return this.apiService.post<any>(`/library/borrows/${borrowId}/return`, {});
+  }
+
   // --- BLOGS ---
   getBlogs(): Observable<any[]> {
     return this.apiService.get<any[]>('/blogs');

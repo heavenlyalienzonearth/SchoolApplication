@@ -115,6 +115,25 @@ export class DashboardComponent implements OnInit {
   };
   editingCircularId: number | null = null;
 
+  // Library State
+  booksList: any[] = [];
+  borrowsList: any[] = [];
+  studentsList: any[] = [];
+  newBook: { title: string; author: string; isbn: string; category: string; total_copies: number } = {
+    title: '',
+    author: '',
+    isbn: '',
+    category: 'Picture Book',
+    total_copies: 1
+  };
+  editingBookId: number | null = null;
+  newBorrow: { book_id: number | null; student_id: number | null; borrow_date: string; due_date: string } = {
+    book_id: null,
+    student_id: null,
+    borrow_date: new Date().toISOString().split('T')[0],
+    due_date: new Date(Date.now() + 7*24*60*60*1000).toISOString().split('T')[0]
+  };
+
   // Custom Bulk Holiday Email Form State
   customHolidayEmail = { reason: '', start_date: '', end_date: '', reopen_date: '' };
   sendingBulkEmail = false;
@@ -287,6 +306,8 @@ export class DashboardComponent implements OnInit {
       this.onMomentsTabSelect();
     } else if (tab === 'circulars') {
       this.loadCirculars();
+    } else if (tab === 'library') {
+      this.loadLibraryData();
     }
   }
 
@@ -1764,6 +1785,123 @@ export class DashboardComponent implements OnInit {
     if (!id) return 'School-Wide';
     const prog = this.programs.find(p => p.id === id);
     return prog ? prog.title : 'School-Wide';
+  }
+
+  // --- LIBRARY METHODS ---
+  loadLibraryData(): void {
+    this.contentService.getBooks().subscribe({
+      next: (data) => this.booksList = data,
+      error: (err) => this.showToast('❌ Failed to load books: ' + (err.error?.detail || err.message), 'error')
+    });
+    this.contentService.getBorrows().subscribe({
+      next: (data) => this.borrowsList = data,
+      error: (err) => this.showToast('❌ Failed to load borrows: ' + (err.error?.detail || err.message), 'error')
+    });
+    this.contentService.getStudents().subscribe({
+      next: (data) => this.studentsList = data,
+      error: (err) => this.showToast('❌ Failed to load students: ' + (err.error?.detail || err.message), 'error')
+    });
+  }
+
+  saveBook(): void {
+    if (this.editingBookId) {
+      this.contentService.updateBook(this.editingBookId, this.newBook).subscribe({
+        next: () => {
+          this.showToast('🎉 Book updated successfully!');
+          this.loadLibraryData();
+          this.resetBookForm();
+        },
+        error: (err) => this.showToast('❌ Failed to update book: ' + (err.error?.detail || err.message), 'error')
+      });
+    } else {
+      this.contentService.createBook(this.newBook).subscribe({
+        next: () => {
+          this.showToast('🎉 Book added to library catalog!');
+          this.loadLibraryData();
+          this.resetBookForm();
+        },
+        error: (err) => this.showToast('❌ Failed to add book: ' + (err.error?.detail || err.message), 'error')
+      });
+    }
+  }
+
+  editBook(book: any): void {
+    this.editingBookId = book.id;
+    this.newBook = {
+      title: book.title,
+      author: book.author,
+      isbn: book.isbn || '',
+      category: book.category,
+      total_copies: book.total_copies
+    };
+  }
+
+  deleteBookFromCatalog(id: number): void {
+    if (confirm('Are you sure you want to delete this book? This will also delete all its active borrows.')) {
+      this.contentService.deleteBook(id).subscribe({
+        next: () => {
+          this.showToast('🎉 Book deleted from catalog!');
+          this.loadLibraryData();
+        },
+        error: (err) => this.showToast('❌ Failed to delete book: ' + (err.error?.detail || err.message), 'error')
+      });
+    }
+  }
+
+  resetBookForm(): void {
+    this.editingBookId = null;
+    this.newBook = { title: '', author: '', isbn: '', category: 'Picture Book', total_copies: 1 };
+  }
+
+  getAvailableBooks(): any[] {
+    return this.booksList.filter(b => b.available_copies > 0);
+  }
+
+  issueBook(): void {
+    if (!this.newBorrow.book_id || !this.newBorrow.student_id || !this.newBorrow.borrow_date || !this.newBorrow.due_date) {
+      this.showToast('⚠️ Please fill out all borrowing fields.', 'error');
+      return;
+    }
+    const borrowData = {
+      book_id: Number(this.newBorrow.book_id),
+      student_id: Number(this.newBorrow.student_id),
+      borrow_date: this.newBorrow.borrow_date,
+      due_date: this.newBorrow.due_date
+    };
+    this.contentService.issueBook(borrowData).subscribe({
+      next: () => {
+        this.showToast('🎉 Book issued successfully to student!');
+        this.loadLibraryData();
+        // Reset borrow fields
+        this.newBorrow = {
+          book_id: null,
+          student_id: null,
+          borrow_date: new Date().toISOString().split('T')[0],
+          due_date: new Date(Date.now() + 7*24*60*60*1000).toISOString().split('T')[0]
+        };
+      },
+      error: (err) => this.showToast('❌ Failed to issue book: ' + (err.error?.detail || err.message), 'error')
+    });
+  }
+
+  returnBorrowedBook(borrowId: number): void {
+    this.contentService.returnBook(borrowId).subscribe({
+      next: () => {
+        this.showToast('🎉 Book returned successfully to library inventory!');
+        this.loadLibraryData();
+      },
+      error: (err) => this.showToast('❌ Failed to return book: ' + (err.error?.detail || err.message), 'error')
+    });
+  }
+
+  getBookTitle(bookId: number): string {
+    const book = this.booksList.find(b => b.id === bookId);
+    return book ? book.title : 'Unknown Book';
+  }
+
+  getStudentName(studentId: number): string {
+    const student = this.studentsList.find(s => s.id === studentId);
+    return student ? student.name : 'Unknown Student';
   }
 
   sendBulkHolidayEmail(): void {
