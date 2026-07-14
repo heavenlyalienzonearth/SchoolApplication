@@ -158,11 +158,22 @@ export class DashboardComponent implements OnInit {
   // Stationery Management State
   stationaryItems: StationaryItem[] = [];
   stationaryOrders: StationaryOrder[] = [];
-  newStationaryItem = { name: '', description: '', category: 'Books', price: 0, stock: 0 };
+  stationaryCategory: 'school' | 'teacher' | 'student' = 'school';
+  newStationaryItem: any = { name: '', description: '', category: 'Books', price: 0, stock: 0, order_date: '', total_amount: 0, stationery_type: 'school' };
   editingStationaryItemId: number | null = null;
   stationaryLoading = false;
   stationaryError = '';
   stationarySuccess = '';
+
+  // Vendor Management
+  stationaryVendors: { id: number; name: string; contact: string; address?: string }[] = [
+    { id: 1, name: 'Akash Stationery Stores', contact: '98765-43210', address: 'MG Road, Bengaluru' },
+    { id: 2, name: 'NavYug Book Depot', contact: '98001-23456', address: 'Gandhi Nagar, Mysuru' },
+    { id: 3, name: 'Shree Ganesh Traders', contact: '99887-76543', address: 'Jayanagar, Bengaluru' }
+  ];
+  newVendor: { name: string; contact: string; address: string } = { name: '', contact: '', address: '' };
+  selectedVendorId: any = '';
+  nextVendorId = 4;
 
   // Stationery Shopping Cart
   stationaryCart: { item: StationaryItem; quantity: number }[] = [];
@@ -2265,7 +2276,34 @@ export class DashboardComponent implements OnInit {
 
   resetStationaryForm(): void {
     this.editingStationaryItemId = null;
-    this.newStationaryItem = { name: '', description: '', category: 'Uniforms', price: 0, stock: 0 };
+    this.newStationaryItem = { name: '', description: '', category: 'Books', price: 0, stock: 0, order_date: '', total_amount: 0, stationery_type: this.stationaryCategory };
+  }
+
+  getStationaryByCategory(): any[] {
+    return this.stationaryItems.filter(item =>
+      (item as any).stationery_type === this.stationaryCategory || !(item as any).stationery_type
+    );
+  }
+
+  addVendor(): void {
+    if (!this.newVendor.name.trim() || !this.newVendor.contact.trim()) {
+      alert('Vendor name and contact are required.');
+      return;
+    }
+    this.stationaryVendors.push({
+      id: this.nextVendorId++,
+      name: this.newVendor.name.trim(),
+      contact: this.newVendor.contact.trim(),
+      address: this.newVendor.address.trim() || undefined
+    });
+    this.newVendor = { name: '', contact: '', address: '' };
+  }
+
+  deleteVendor(id: number): void {
+    if (confirm('Remove this vendor?')) {
+      this.stationaryVendors = this.stationaryVendors.filter(v => v.id !== id);
+      if (this.selectedVendorId === id) this.selectedVendorId = '';
+    }
   }
 
   // --- SHOPPING CART ---

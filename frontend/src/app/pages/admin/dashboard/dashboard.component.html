@@ -1454,22 +1454,176 @@
 
       <!-- Stationery Center Tab -->
       <section *ngIf="activeTab === 'stationary'" class="tab-section animate-fade-in">
-        <div class="tab-header" style="border-bottom: 2px solid #E2E8F0; padding-bottom: 15px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center;">
+        <div class="tab-header" style="border-bottom: 2px solid #E2E8F0; padding-bottom: 15px; margin-bottom: 24px; display: flex; justify-content: space-between; align-items: center;">
           <div>
             <h2 style="margin: 0; color: var(--primary);">✏️ Stationery Hub</h2>
-            <p style="margin: 3px 0 0 0; color: var(--text-light); font-size: 0.9rem;">Manage school supplies stock and place orders for classes and student requirements.</p>
+            <p style="margin: 3px 0 0 0; color: var(--text-light); font-size: 0.9rem;">Manage stationery supplies, vendors, and orders for school, teachers and students.</p>
           </div>
         </div>
 
-        <div class="alert alert-success" *ngIf="stationarySuccess" style="margin-bottom: 20px; background-color: #ECFDF5; color: #065F46; border: 1px solid #A7F3D0; padding: 12px; border-radius: 6px; font-weight: 600; font-size: 0.9rem;">
+        <div class="alert alert-success" *ngIf="stationarySuccess" style="margin-bottom: 16px; background-color: #ECFDF5; color: #065F46; border: 1px solid #A7F3D0; padding: 12px; border-radius: 6px; font-weight: 600; font-size: 0.9rem;">
           🎉 {{ stationarySuccess }}
         </div>
-        <div class="alert alert-danger" *ngIf="stationaryError" style="margin-bottom: 20px; background-color: #FEE2E2; color: #991B1B; border: 1px solid #FCA5A5; padding: 12px; border-radius: 6px; font-weight: 600; font-size: 0.9rem;">
+        <div class="alert alert-danger" *ngIf="stationaryError" style="margin-bottom: 16px; background-color: #FEE2E2; color: #991B1B; border: 1px solid #FCA5A5; padding: 12px; border-radius: 6px; font-weight: 600; font-size: 0.9rem;">
           ⚠️ {{ stationaryError }}
         </div>
 
-        <!-- Admin Inventory Panel -->
-        <div *ngIf="currentUser?.role?.toUpperCase() === 'ADMIN'" style="margin-bottom: 30px;">
+        <!-- Category Sub-Tabs -->
+        <div style="display: flex; gap: 0; margin-bottom: 24px; border-bottom: 2px solid #E2E8F0;">
+          <button type="button" (click)="stationaryCategory = 'school'" [style.border-bottom]="stationaryCategory === 'school' ? '3px solid var(--secondary)' : '3px solid transparent'" [style.color]="stationaryCategory === 'school' ? 'var(--secondary)' : '#64748B'" style="background: none; border: none; border-radius: 0; padding: 10px 20px; font-weight: 700; font-size: 0.95rem; cursor: pointer; transition: all 0.2s; margin-bottom: -2px;">
+            🏫 School Stationery
+          </button>
+          <button type="button" (click)="stationaryCategory = 'teacher'" [style.border-bottom]="stationaryCategory === 'teacher' ? '3px solid var(--secondary)' : '3px solid transparent'" [style.color]="stationaryCategory === 'teacher' ? 'var(--secondary)' : '#64748B'" style="background: none; border: none; border-radius: 0; padding: 10px 20px; font-weight: 700; font-size: 0.95rem; cursor: pointer; transition: all 0.2s; margin-bottom: -2px;">
+            👩‍🏫 Teacher Stationery
+          </button>
+          <button type="button" (click)="stationaryCategory = 'student'" [style.border-bottom]="stationaryCategory === 'student' ? '3px solid var(--secondary)' : '3px solid transparent'" [style.color]="stationaryCategory === 'student' ? 'var(--secondary)' : '#64748B'" style="background: none; border: none; border-radius: 0; padding: 10px 20px; font-weight: 700; font-size: 0.95rem; cursor: pointer; transition: all 0.2s; margin-bottom: -2px;">
+            🎒 Student Stationery
+          </button>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px; align-items: start; margin-bottom: 24px;">
+          <!-- Vendor Management Card -->
+          <div class="card" style="background: white; border-radius: 12px; border: 1px solid #E2E8F0; padding: 22px; box-shadow: 0 2px 8px rgba(0,0,0,0.04);">
+            <h3 style="margin: 0 0 14px 0; color: var(--primary); font-size: 1.05rem; font-weight: 700; border-bottom: 1px solid #F1F5F9; padding-bottom: 10px;">🏢 Vendor Management</h3>
+            <!-- Vendor Dropdown -->
+            <div class="form-group" style="margin-bottom: 14px;">
+              <label class="form-label" style="display: block; font-weight: 600; font-size: 0.83rem; color: #475569; margin-bottom: 5px;">Select Vendor for Orders</label>
+              <select [(ngModel)]="selectedVendorId" name="sel_vendor" class="form-control" style="width: 100%; border: 1px solid #CBD5E1; border-radius: 6px; padding: 8px 12px; background: white;">
+                <option value="">-- Select a Vendor --</option>
+                <option *ngFor="let v of stationaryVendors" [value]="v.id">{{ v.name }} — {{ v.contact }}</option>
+              </select>
+            </div>
+            <!-- Add Vendor Inline Form -->
+            <div style="border: 1px dashed #CBD5E1; border-radius: 8px; padding: 14px; background: #F8FAFC; margin-bottom: 12px;">
+              <p style="font-weight: 700; font-size: 0.83rem; color: #475569; margin: 0 0 10px 0;">➕ Add New Vendor</p>
+              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 8px;">
+                <input type="text" [(ngModel)]="newVendor.name" name="v_name" placeholder="Vendor Name *" class="form-control" style="border: 1px solid #CBD5E1; border-radius: 6px; padding: 7px 10px; font-size: 0.85rem;" />
+                <input type="text" [(ngModel)]="newVendor.contact" name="v_contact" placeholder="Phone / Email *" class="form-control" style="border: 1px solid #CBD5E1; border-radius: 6px; padding: 7px 10px; font-size: 0.85rem;" />
+              </div>
+              <input type="text" [(ngModel)]="newVendor.address" name="v_addr" placeholder="Address (optional)" class="form-control" style="width: 100%; border: 1px solid #CBD5E1; border-radius: 6px; padding: 7px 10px; font-size: 0.85rem; margin-bottom: 8px; box-sizing: border-box;" />
+              <button type="button" (click)="addVendor()" style="background: var(--primary); color: white; border: none; padding: 8px 16px; border-radius: 6px; font-weight: 700; font-size: 0.85rem; cursor: pointer;">Add Vendor</button>
+            </div>
+            <!-- Vendor List -->
+            <div style="max-height: 180px; overflow-y: auto;">
+              <div *ngFor="let v of stationaryVendors" style="display: flex; justify-content: space-between; align-items: center; padding: 8px 10px; border: 1px solid #E2E8F0; border-radius: 6px; margin-bottom: 6px; background: #FAFAFA; font-size: 0.85rem;">
+                <div>
+                  <strong style="color: #1E293B;">{{ v.name }}</strong>
+                  <span style="color: #64748B; margin-left: 8px;">{{ v.contact }}</span>
+                  <span *ngIf="v.address" style="display:block; font-size:0.75rem; color:#94A3B8;">{{ v.address }}</span>
+                </div>
+                <button type="button" (click)="deleteVendor(v.id)" style="background: #FEE2E2; color: #991B1B; border: none; padding: 3px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: 700; cursor: pointer; flex-shrink: 0;">🗑️ Remove</button>
+              </div>
+              <p *ngIf="stationaryVendors.length === 0" style="color: var(--text-light); text-align: center; padding: 12px 0; font-size: 0.85rem;">No vendors added yet.</p>
+            </div>
+          </div>
+
+          <!-- Add/Edit Item Form -->
+          <div class="card" style="background: white; border-radius: 12px; border: 1px solid #E2E8F0; padding: 22px; box-shadow: 0 2px 8px rgba(0,0,0,0.04);">
+            <h3 style="margin: 0 0 14px 0; color: var(--primary); font-size: 1.05rem; font-weight: 700; border-bottom: 1px solid #F1F5F9; padding-bottom: 10px;">
+              {{ editingStationaryItemId ? '✏️ Edit Item' : '➕ Add Item' }}
+              <span style="font-size: 0.75rem; background: var(--secondary); color: white; padding: 2px 8px; border-radius: 12px; margin-left: 8px; font-weight: 700; text-transform: capitalize;">{{ stationaryCategory }}</span>
+            </h3>
+            <form (ngSubmit)="saveStationaryItem()">
+              <div class="form-group" style="margin-bottom: 12px;">
+                <label class="form-label" style="display: block; font-weight: 600; font-size: 0.83rem; color: #475569; margin-bottom: 4px;">Item Name *</label>
+                <input type="text" [(ngModel)]="newStationaryItem.name" name="s_name" required class="form-control" placeholder="e.g. A4 Notebook, Whiteboard Marker" style="width: 100%; border: 1px solid #CBD5E1; border-radius: 6px; padding: 8px 12px; box-sizing: border-box;" />
+              </div>
+              <div class="form-group" style="margin-bottom: 12px;">
+                <label class="form-label" style="display: block; font-weight: 600; font-size: 0.83rem; color: #475569; margin-bottom: 4px;">Description</label>
+                <textarea [(ngModel)]="newStationaryItem.description" name="s_desc" class="form-control" placeholder="Dimensions, specs, notes..." style="width: 100%; border: 1px solid #CBD5E1; border-radius: 6px; padding: 8px 12px; box-sizing: border-box;" rows="2"></textarea>
+              </div>
+              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px;">
+                <div class="form-group">
+                  <label class="form-label" style="display: block; font-weight: 600; font-size: 0.83rem; color: #475569; margin-bottom: 4px;">Unit Price (₹) *</label>
+                  <input type="number" [(ngModel)]="newStationaryItem.price" name="s_price" step="0.01" min="0.01" required class="form-control" style="width: 100%; border: 1px solid #CBD5E1; border-radius: 6px; padding: 8px 12px; box-sizing: border-box;" />
+                </div>
+                <div class="form-group">
+                  <label class="form-label" style="display: block; font-weight: 600; font-size: 0.83rem; color: #475569; margin-bottom: 4px;">Quantity / Stock *</label>
+                  <input type="number" [(ngModel)]="newStationaryItem.stock" name="s_stock" min="0" required class="form-control" style="width: 100%; border: 1px solid #CBD5E1; border-radius: 6px; padding: 8px 12px; box-sizing: border-box;" />
+                </div>
+              </div>
+              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px;">
+                <div class="form-group">
+                  <label class="form-label" style="display: block; font-weight: 600; font-size: 0.83rem; color: #475569; margin-bottom: 4px;">Order Date</label>
+                  <input type="date" [(ngModel)]="newStationaryItem.order_date" name="s_order_date" class="form-control" style="width: 100%; border: 1px solid #CBD5E1; border-radius: 6px; padding: 8px 12px; box-sizing: border-box;" />
+                </div>
+                <div class="form-group">
+                  <label class="form-label" style="display: block; font-weight: 600; font-size: 0.83rem; color: #475569; margin-bottom: 4px;">Total Amount (₹)</label>
+                  <input type="number" [(ngModel)]="newStationaryItem.total_amount" name="s_total" step="0.01" min="0" class="form-control" placeholder="Auto or override" style="width: 100%; border: 1px solid #CBD5E1; border-radius: 6px; padding: 8px 12px; box-sizing: border-box;" />
+                </div>
+              </div>
+              <div class="form-group" style="margin-bottom: 16px;">
+                <label class="form-label" style="display: block; font-weight: 600; font-size: 0.83rem; color: #475569; margin-bottom: 4px;">Supply Category *</label>
+                <select [(ngModel)]="newStationaryItem.category" name="s_cat" required class="form-control" style="width: 100%; border: 1px solid #CBD5E1; border-radius: 6px; padding: 8px 12px; background: white;">
+                  <option value="Books">Books &amp; Notebooks</option>
+                  <option value="Writing">Pens, Pencils &amp; Cases</option>
+                  <option value="Uniforms">School Uniforms &amp; Bags</option>
+                  <option value="Art">Craft &amp; Painting Supplies</option>
+                  <option value="Office">Office &amp; Classroom Stationery</option>
+                  <option value="Electronics">Electronics &amp; Tech Aids</option>
+                </select>
+              </div>
+              <div style="display: flex; gap: 10px;">
+                <button type="submit" class="btn btn-primary" style="flex: 1; padding: 10px; border-radius: 6px; font-weight: 700;" [disabled]="stationaryLoading">
+                  {{ editingStationaryItemId ? 'Update Item' : 'Add Item' }}
+                </button>
+                <button type="button" class="btn" *ngIf="editingStationaryItemId" (click)="resetStationaryForm()" style="flex: 1; padding: 10px; border-radius: 6px; border: 1px solid #CBD5E1; background: white; font-weight: 700; cursor: pointer;">Cancel</button>
+              </div>
+            </form>
+          </div>
+        </div>
+
+        <!-- Inventory Table by Category -->
+        <div class="card" style="background: white; border-radius: 12px; border: 1px solid #E2E8F0; padding: 22px; box-shadow: 0 2px 8px rgba(0,0,0,0.04); margin-bottom: 24px;">
+          <h3 style="margin: 0 0 16px 0; color: var(--primary); font-size: 1.05rem; font-weight: 700; border-bottom: 1px solid #F1F5F9; padding-bottom: 10px;">
+            📋 Inventory — <span style="text-transform: capitalize;">{{ stationaryCategory }}</span> Stationery
+          </h3>
+          <div style="overflow-x: auto;">
+            <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 0.85rem;">
+              <thead>
+                <tr style="border-bottom: 2px solid #E2E8F0; color: #475569; font-weight: 700;">
+                  <th style="padding: 9px 8px;">Item</th>
+                  <th style="padding: 9px 8px;">Category</th>
+                  <th style="padding: 9px 8px;">Price</th>
+                  <th style="padding: 9px 8px;">Qty</th>
+                  <th style="padding: 9px 8px;">Order Date</th>
+                  <th style="padding: 9px 8px;">Total (₹)</th>
+                  <th style="padding: 9px 8px; text-align: right;">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let item of getStationaryByCategory()" style="border-bottom: 1px solid #F1F5F9;">
+                  <td style="padding: 10px 8px;">
+                    <div style="font-weight: 700; color: #1E293B;">{{ item.name }}</div>
+                    <div style="font-size: 0.75rem; color: var(--text-light);">{{ item.description || '--' }}</div>
+                  </td>
+                  <td style="padding: 10px 8px; color: #475569; font-size: 0.8rem;">{{ item.category }}</td>
+                  <td style="padding: 10px 8px; font-weight: 700; color: #1E293B;">₹{{ item.price }}</td>
+                  <td style="padding: 10px 8px;">
+                    <span class="badge" [style.background-color]="item.stock === 0 ? '#FEE2E2' : item.stock < 10 ? '#FEF3C7' : '#D1FAE5'" [style.color]="item.stock === 0 ? '#991B1B' : item.stock < 10 ? '#D97706' : '#065F46'" style="border-radius: 4px; padding: 2px 8px; font-size: 0.75rem; font-weight: 700;">{{ item.stock }}</span>
+                  </td>
+                  <td style="padding: 10px 8px; color: #64748B; font-size: 0.8rem;">{{ item.order_date ? (item.order_date | date:'dd MMM yy') : '--' }}</td>
+                  <td style="padding: 10px 8px; font-weight: 700; color: var(--primary);">₹{{ item.total_amount || (item.price * item.stock) }}</td>
+                  <td style="padding: 10px 8px; text-align: right;">
+                    <div style="display: inline-flex; gap: 5px;">
+                      <button (click)="editStationaryItem(item)" class="btn-table edit" style="padding: 3px 8px; font-size: 0.78rem;">✏️ Edit</button>
+                      <button (click)="deleteStationaryItem(item.id)" class="btn-table delete" style="padding: 3px 8px; font-size: 0.78rem;">🗑️</button>
+                    </div>
+                  </td>
+                </tr>
+                <tr *ngIf="getStationaryByCategory().length === 0">
+                  <td colspan="7" style="text-align: center; color: var(--text-light); padding: 28px; font-size: 0.9rem;">No items found for <strong>{{ stationaryCategory }}</strong> stationery. Add items using the form above.</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- OLD ADMIN PANEL REMOVED - now replaced by new layout above -->
+        <div *ngIf="false"><!-- placeholder to preserve old admin panel removal --></div>
+
+        <!-- Admin Inventory Panel (LEGACY - hidden, replaced above) -->
+        <div *ngIf="currentUser?.role?.toUpperCase() === 'DISABLED_ADMIN'" style="margin-bottom: 30px;">
           <div style="display: grid; grid-template-columns: 1fr 1.5fr; gap: 30px; align-items: start;">
             <!-- Inventory Item Add/Edit Form -->
             <div class="card" style="background: white; border-radius: 12px; border: 1px solid #E2E8F0; padding: 25px; box-shadow: 0 4px 6px rgba(0,0,0,0.02);">
@@ -1670,9 +1824,18 @@
                   </div>
 
                   <button type="submit" class="btn btn-primary btn-block" style="padding: 10px; border-radius: 6px; font-weight: 700;" [disabled]="stationaryLoading">
-                    Place Supply Order
+                    📦 Place Supply Order
                   </button>
                 </form>
+
+                <!-- Payment Gateway Placeholder -->
+                <div style="border: 2px dashed #CBD5E1; border-radius: 8px; padding: 14px; text-align: center; background: #F8FAFC; margin-top: 12px;">
+                  <p style="margin: 0 0 4px 0; font-size: 0.82rem; color: #64748B; font-weight: 700;">💳 Online Payment (Coming Soon)</p>
+                  <p style="margin: 0 0 10px 0; font-size: 0.75rem; color: #94A3B8;">Pay via Razorpay — UPI, Card, Net Banking</p>
+                  <button type="button" disabled style="background: #E2E8F0; color: #94A3B8; border: none; padding: 9px 22px; border-radius: 6px; font-weight: 700; font-size: 0.85rem; cursor: not-allowed; width: 100%;">
+                    💳 Pay ₹{{ getCartTotal() }} via Razorpay
+                  </button>
+                </div>
               </div>
             </div>
 
