@@ -141,6 +141,22 @@ def get_parent_dashboard(
                 "total": counts["total"]
             })
 
+    # Get classroom teacher details
+    teacher = db.query(models.User).filter(
+        models.User.role == "TEACHER",
+        models.User.assigned_program_id == student.program_id
+    ).first()
+    
+    teacher_board = None
+    if teacher:
+        teacher_board = {
+            "name": teacher.full_name or "Classroom Teacher",
+            "photo_url": teacher.photo_url or "assets/parent_avatar2_1783324796246.png",
+            "education": teacher.education or "Credentials verification in progress",
+            "experience": teacher.experience or "Experienced educator dedicated to Vidyankuram early development framework.",
+            "achievements": teacher.achievements or "Verified early-childhood instructor"
+        }
+
     return {
         "parent_name": current_user.full_name,
         "email": current_user.email,
@@ -167,7 +183,8 @@ def get_parent_dashboard(
         "vaccinations": vaccinations,
         "issued_items": issued_items,
         "stationary_orders": orders_list,
-        "development_radar": radar_data
+        "development_radar": radar_data,
+        "teacher_board": teacher_board
     }
 
 from pydantic import BaseModel

@@ -115,6 +115,36 @@ import { ContentService } from '../../core/services/content.service';
                 </div>
               </div>
 
+              <!-- Teacher's Board Card -->
+              <div class="card teacher-board-card" *ngIf="dashboardData.teacher_board" style="margin-top: 30px; border-left: 4px solid var(--secondary); background: white;">
+                <h3 class="card-title" style="margin-bottom: 15px;">👩‍🏫 Classroom Teacher's Board</h3>
+                <div class="teacher-info" style="display: flex; gap: 16px; align-items: start; margin-bottom: 15px;">
+                  <img [src]="dashboardData.teacher_board.photo_url ? mediaBaseUrl + dashboardData.teacher_board.photo_url : 'assets/parent_avatar2_1783324796246.png'" 
+                       alt="Teacher Photo" 
+                       style="width: 65px; height: 65px; border-radius: 50%; object-fit: cover; border: 2.5px solid #E2E8F0;"
+                       (error)="onImgError($event)" />
+                  <div style="flex: 1;">
+                    <h4 style="margin: 0; font-size: 1.05rem; font-weight: 800; color: #1e293b;">{{ dashboardData.teacher_board.name }}</h4>
+                    <p style="margin: 3px 0 0 0; font-size: 0.76rem; color: var(--secondary); font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;">Class Mentor</p>
+                  </div>
+                </div>
+
+                <div class="teacher-details" style="display: flex; flex-direction: column; gap: 12px; font-size: 0.82rem; line-height: 1.45;">
+                  <div>
+                    <strong style="color: #475569; display: block; margin-bottom: 2px;">🎓 Educational Background:</strong>
+                    <span style="color: #334155;">{{ dashboardData.teacher_board.education }}</span>
+                  </div>
+                  <div>
+                    <strong style="color: #475569; display: block; margin-bottom: 2px;">💼 Overall Experience:</strong>
+                    <span style="color: #334155;">{{ dashboardData.teacher_board.experience }}</span>
+                  </div>
+                  <div>
+                    <strong style="color: #475569; display: block; margin-bottom: 2px;">🌟 Achievements & Awards:</strong>
+                    <span style="color: #334155; white-space: pre-line;">{{ dashboardData.teacher_board.achievements }}</span>
+                  </div>
+                </div>
+              </div>
+
               <!-- Attendance Stats Card -->
               <div class="card attendance-card" style="margin-top: 30px;">
                 <h3 class="card-title">📅 Attendance Track</h3>

@@ -16,9 +16,15 @@ class User(Base):
     two_factor_secret = Column(String(100), nullable=True)
     two_factor_enabled = Column(Boolean, default=False, nullable=False)
     student_id = Column(Integer, ForeignKey("students.id", ondelete="SET NULL"), nullable=True)
+    photo_url = Column(String(255), nullable=True)
+    education = Column(Text, nullable=True)
+    experience = Column(Text, nullable=True)
+    achievements = Column(Text, nullable=True)
+    assigned_program_id = Column(Integer, ForeignKey("programs.id", ondelete="SET NULL"), nullable=True)
 
     refresh_tokens = relationship("RefreshToken", back_populates="user", cascade="all, delete-orphan")
-    student = relationship("Student")
+    student = relationship("Student", foreign_keys=[student_id])
+    assigned_program = relationship("Program", foreign_keys=[assigned_program_id])
 
 class RefreshToken(Base):
     __tablename__ = "refresh_tokens"
