@@ -1162,6 +1162,20 @@
                 <textarea [(ngModel)]="newHoliday.description" name="h_desc" class="form-control" style="width: 100%; border: 1px solid #CBD5E1; border-radius: 6px; padding: 8px 12px; min-height: 80px;" placeholder="Details about this holiday..."></textarea>
               </div>
 
+              <div class="form-group" style="margin-bottom: 15px;">
+                <label class="form-label" style="display: block; font-weight: 600; font-size: 0.85rem; color: #475569; margin-bottom: 6px;">Holiday Image (Optional)</label>
+                <input type="file" (change)="onHolidayFileSelected($event)" accept="image/*" class="form-control" style="width: 100%; border: 1px solid #CBD5E1; border-radius: 6px; padding: 8px 12px; background-color: white; cursor: pointer;" />
+                
+                <div *ngIf="uploadingHolidayImage" style="font-size: 0.8rem; color: var(--primary); margin-top: 5px; font-weight: 600;">
+                  ⏳ Uploading image, please wait...
+                </div>
+                
+                <div *ngIf="newHoliday.image_url" style="margin-top: 10px; display: flex; align-items: center; gap: 10px;">
+                  <img [src]="newHoliday.image_url" alt="Preview" style="width: 60px; height: 60px; object-fit: cover; border-radius: 6px; border: 1px solid #CBD5E1;" />
+                  <button type="button" (click)="removeHolidayImage()" class="btn-table delete" style="padding: 4px 8px; font-size: 0.75rem; border-radius: 4px;">Remove</button>
+                </div>
+              </div>
+
               <div class="form-group" style="margin-bottom: 15px; display: flex; gap: 20px;">
                 <div style="display: flex; align-items: center; gap: 8px;">
                   <input type="checkbox" [(ngModel)]="newHoliday.is_active" name="h_active" id="h_active" style="width: 16px; height: 16px; cursor: pointer;" />

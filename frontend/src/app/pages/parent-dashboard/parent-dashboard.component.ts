@@ -567,7 +567,7 @@ import { ContentService } from '../../core/services/content.service';
                     <p class="event-desc">{{ ev.description || 'No description provided.' }}</p>
                     
                     <div *ngIf="ev.image" class="event-image-container" style="margin-top: 10px; border-radius: 6px; overflow: hidden; max-height: 150px;">
-                      <img [src]="mediaBaseUrl + ev.image" alt="Event Image" style="width: 100%; height: 100%; object-fit: cover;" />
+                      <img [src]="ev.image.startsWith('http') ? ev.image : mediaBaseUrl + ev.image" alt="Event Image" style="width: 100%; height: 100%; object-fit: cover;" />
                     </div>
                   </div>
                 </div>
@@ -2545,7 +2545,8 @@ export class ParentDashboardComponent implements OnInit {
           title: h.title,
           description: h.description,
           dateStr: h.holiday_date,
-          type: h.category || 'National Holiday'
+          type: h.category || 'National Holiday',
+          image: h.image_url
         });
       }
     }

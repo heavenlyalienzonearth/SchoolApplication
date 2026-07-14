@@ -100,8 +100,9 @@ export class DashboardComponent implements OnInit {
   holidaysList: any[] = [];
   selectedHolidayYear = new Date().getFullYear();
   holidayYears = [2025, 2026, 2027, 2028];
-  newHoliday = { title: '', description: '', holiday_date: '', year: 2026, category: 'National Holiday', is_active: true, send_email: false };
+  newHoliday = { title: '', description: '', holiday_date: '', year: 2026, category: 'National Holiday', image_url: '', is_active: true, send_email: false };
   editingHolidayId: number | null = null;
+  uploadingHolidayImage = false;
 
   // Custom Bulk Holiday Email Form State
   customHolidayEmail = { reason: '', start_date: '', end_date: '', reopen_date: '' };
@@ -1614,6 +1615,7 @@ export class DashboardComponent implements OnInit {
       holiday_date: holiday.holiday_date,
       year: holiday.year,
       category: holiday.category || 'National Holiday',
+      image_url: holiday.image_url || '',
       is_active: holiday.is_active,
       send_email: false
     };
@@ -1641,9 +1643,32 @@ export class DashboardComponent implements OnInit {
       holiday_date: '',
       year: this.selectedHolidayYear,
       category: 'National Holiday',
+      image_url: '',
       is_active: true,
       send_email: false
     };
+  }
+
+  onHolidayFileSelected(event: any): void {
+    const file: File = event.target.files[0];
+    if (file) {
+      this.uploadingHolidayImage = true;
+      this.contentService.uploadImage(file).subscribe({
+        next: (res) => {
+          this.newHoliday.image_url = res.url;
+          this.uploadingHolidayImage = false;
+          this.showToast('🎉 Holiday image uploaded successfully!');
+        },
+        error: (err) => {
+          this.uploadingHolidayImage = false;
+          this.showToast('❌ Upload failed: ' + (err.error?.detail || err.message), 'error');
+        }
+      });
+    }
+  }
+
+  removeHolidayImage(): void {
+    this.newHoliday.image_url = '';
   }
 
   sendBulkHolidayEmail(): void {
