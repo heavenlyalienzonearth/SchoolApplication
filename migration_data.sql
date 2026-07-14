@@ -365,18 +365,20 @@ SET IDENTITY_INSERT [gallery_items] OFF;
 -- ----------------------------------------------------------
 SET IDENTITY_INSERT [holidays] ON;
 
-INSERT INTO [holidays] ([id], [title], [description], [holiday_date], [year], [is_active], [created_at]) VALUES (1, 'New Year''s Day', 'Beginning of the year celebration', '2026-01-01', 2026, 1, '2026-07-10 01:27:57.820');
-INSERT INTO [holidays] ([id], [title], [description], [holiday_date], [year], [is_active], [created_at]) VALUES (2, 'Republic Day', 'National holiday of India', '2026-01-26', 2026, 1, '2026-07-10 01:27:57.827');
-INSERT INTO [holidays] ([id], [title], [description], [holiday_date], [year], [is_active], [created_at]) VALUES (3, 'Maha Shivratri', 'Hindu festival dedicated to Lord Shiva', '2026-02-15', 2026, 1, '2026-07-10 01:27:57.827');
-INSERT INTO [holidays] ([id], [title], [description], [holiday_date], [year], [is_active], [created_at]) VALUES (4, 'Ugadi', 'Karnataka New Year Festival', '2026-03-19', 2026, 1, '2026-07-10 01:27:57.830');
-INSERT INTO [holidays] ([id], [title], [description], [holiday_date], [year], [is_active], [created_at]) VALUES (5, 'Good Friday', 'Christian religious holiday', '2026-04-03', 2026, 1, '2026-07-10 01:27:57.830');
-INSERT INTO [holidays] ([id], [title], [description], [holiday_date], [year], [is_active], [created_at]) VALUES (6, 'Labor Day', 'International Workers'' Day', '2026-05-01', 2026, 1, '2026-07-10 01:27:57.837');
-INSERT INTO [holidays] ([id], [title], [description], [holiday_date], [year], [is_active], [created_at]) VALUES (7, 'Bakrid / Eid al-Adha', 'Islamic festival', '2026-05-28', 2026, 1, '2026-07-10 01:27:57.837');
-INSERT INTO [holidays] ([id], [title], [description], [holiday_date], [year], [is_active], [created_at]) VALUES (8, 'Independence Day', 'Celebrating national freedom', '2026-08-15', 2026, 1, '2026-07-10 01:27:57.840');
-INSERT INTO [holidays] ([id], [title], [description], [holiday_date], [year], [is_active], [created_at]) VALUES (9, 'Ganesh Chaturthi', 'Festival honoring Lord Ganesha', '2026-09-15', 2026, 1, '2026-07-10 01:27:57.840');
-INSERT INTO [holidays] ([id], [title], [description], [holiday_date], [year], [is_active], [created_at]) VALUES (10, 'Gandhi Jayanti', 'Birthday of Mahatma Gandhi', '2026-10-02', 2026, 1, '2026-07-10 01:27:57.843');
-INSERT INTO [holidays] ([id], [title], [description], [holiday_date], [year], [is_active], [created_at]) VALUES (11, 'Kannada Rajyotsava', 'Karnataka State Formation Day', '2026-11-01', 2026, 1, '2026-07-10 01:27:57.843');
-INSERT INTO [holidays] ([id], [title], [description], [holiday_date], [year], [is_active], [created_at]) VALUES (12, 'Christmas Day', 'Celebrating the birth of Jesus Christ', '2026-12-25', 2026, 1, '2026-07-10 01:27:57.847');
+INSERT INTO [holidays] ([id], [title], [description], [holiday_date], [year], [category], [image_url], [is_active], [created_at]) VALUES (1, 'New Year''s Day', 'Beginning of the year celebration', '2026-01-01', 2026, 'Public Event', NULL, 1, '2026-07-10 01:27:57.820');
+INSERT INTO [holidays] ([id], [title], [description], [holiday_date], [year], [category], [image_url], [is_active], [created_at]) VALUES (2, 'Republic Day', 'National holiday of India', '2026-01-26', 2026, 'National Holiday', NULL, 1, '2026-07-10 01:27:57.827');
+INSERT INTO [holidays] ([id], [title], [description], [holiday_date], [year], [category], [image_url], [is_active], [created_at]) VALUES (3, 'Maha Shivratri', 'Hindu festival dedicated to Lord Shiva', '2026-02-15', 2026, 'Religious Event', NULL, 1, '2026-07-10 01:27:57.827');
+INSERT INTO [holidays] ([id], [title], [description], [holiday_date], [year], [category], [image_url], [is_active], [created_at]) VALUES (4, 'Ugadi', 'Karnataka New Year Festival', '2026-03-19', 2026, 'Religious Event', NULL, 1, '2026-07-10 01:27:57.830');
+INSERT INTO [holidays] ([id], [title], [description], [holiday_date], [year], [category], [image_url], [is_active], [created_at]) VALUES (5, 'Good Friday', 'Christian religious holiday', '2026-04-03', 2026, 'Religious Event', NULL, 1, '2026-07-10 01:27:57.830');
+INSERT INTO [holidays] ([id], [title], [description], [holiday_date], [year], [category], [image_url], [is_active], [created_at]) VALUES (6, 'Labor Day', 'International Workers'' Day', '2026-05-01', 2026, 'Public Event', NULL, 1, '2026-07-10 01:27:57.837');
+INSERT INTO [holidays] ([id], [title], [description], [holiday_date], [year], [category], [image_url], [is_active], [created_at]) VALUES (7, 'Bakrid / Eid al-Adha', 'Islamic festival', '2026-05-28', 2026, 'Religious Event', NULL, 1, '2026-07-10 01:27:57.837');
+INSERT INTO [holidays] ([id], [title], [description], [holiday_date], [year], [category], [image_url], [is_active], [created_at]) VALUES (8, 'Independence Day', 'Celebrating national freedom', '2026-08-15', 2026, 'National Holiday', NULL, 1, '2026-07-10 01:27:57.840');
+INSERT INTO [holidays] ([id], [title], [description], [holiday_date], [year], [category], [image_url], [is_active], [created_at]) VALUES (9, 'Ganesh Chaturthi', 'Festival honoring Lord Ganesha', '2026-09-15', 2026, 'Religious Event', NULL, 1, '2026-07-10 01:27:57.840');
+INSERT INTO [holidays] ([id], [title], [description], [holiday_date], [year], [category], [image_url], [is_active], [created_at]) VALUES (10, 'Gandhi Jayanti', 'Birthday of Mahatma Gandhi', '2026-10-02', 2026, 'National Holiday', NULL, 1, '2026-07-10 01:27:57.843');
+INSERT INTO [holidays] ([id], [title], [description], [holiday_date], [year], [category], [image_url], [is_active], [created_at]) VALUES (11, 'Kannada Rajyotsava', 'Karnataka State Formation Day', '2026-11-01', 2026, 'Public Event', NULL, 1, '2026-07-10 01:27:57.843');
+INSERT INTO [holidays] ([id], [title], [description], [holiday_date], [year], [category], [image_url], [is_active], [created_at]) VALUES (12, 'Christmas Day', 'Celebrating the birth of Jesus Christ', '2026-12-25', 2026, 'Religious Event', NULL, 1, '2026-07-10 01:27:57.847');
+INSERT INTO [holidays] ([id], [title], [description], [holiday_date], [year], [category], [image_url], [is_active], [created_at]) VALUES (13, 'Summer Vacation', 'Summer break for all standard classes', '2026-04-15', 2026, 'Vacation', NULL, 1, '2026-07-14 16:11:37.900');
+INSERT INTO [holidays] ([id], [title], [description], [holiday_date], [year], [category], [image_url], [is_active], [created_at]) VALUES (14, 'Winter Break', 'Winter holidays and Christmas recess', '2026-12-24', 2026, 'Vacation', NULL, 1, '2026-07-14 16:11:37.900');
 
 SET IDENTITY_INSERT [holidays] OFF;
 
@@ -932,18 +934,9 @@ INSERT INTO [refresh_tokens] ([id], [token], [user_id], [expires_at], [is_revoke
 INSERT INTO [refresh_tokens] ([id], [token], [user_id], [expires_at], [is_revoked], [created_at]) VALUES (47, 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3ODQzOTM4NTQsInN1YiI6ImFkbWluQHNjaG9vbC5jb20iLCJ0eXBlIjoicmVmcmVzaCJ9.Q5IIMebsZjRrKSPpDNOYI3KFt0FLq36mHa59BArxZno', 1, '2026-07-18 16:57:34.343', 1, '2026-07-11 16:57:34.343');
 INSERT INTO [refresh_tokens] ([id], [token], [user_id], [expires_at], [is_revoked], [created_at]) VALUES (48, 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3ODQ0NDY4NDcsInN1YiI6ImFkbWluQHNjaG9vbC5jb20iLCJ0eXBlIjoicmVmcmVzaCJ9.QLcGQyXvclsc3JSR08kYeT1a9StB1B4_DHWxSPAwkhY', 1, '2026-07-19 07:40:47.193', 1, '2026-07-12 07:40:47.200');
 INSERT INTO [refresh_tokens] ([id], [token], [user_id], [expires_at], [is_revoked], [created_at]) VALUES (49, 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3ODQ0NDczMzAsInN1YiI6ImVlZWVAZ21haWwuY29tIiwidHlwZSI6InJlZnJlc2gifQ.iahJ-h0T1GEgAzMFdNvCBRghpchHBvu6T9TPJkyqgSs', 2, '2026-07-19 07:48:50.290', 1, '2026-07-12 07:48:50.293');
+INSERT INTO [refresh_tokens] ([id], [token], [user_id], [expires_at], [is_revoked], [created_at]) VALUES (50, 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3ODQ2MzEzOTIsInN1YiI6ImVlZWVAZ21haWwuY29tIiwidHlwZSI6InJlZnJlc2gifQ.aYJQ36oYVmjSgIXHMg5bksozOvGTMtVIelWx8WyJzTM', 2, '2026-07-21 10:56:32.553', 1, '2026-07-14 10:56:32.553');
+INSERT INTO [refresh_tokens] ([id], [token], [user_id], [expires_at], [is_revoked], [created_at]) VALUES (51, 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3ODQ2MzI2ODAsInN1YiI6ImVlZWVAZ21haWwuY29tIiwidHlwZSI6InJlZnJlc2gifQ.hOyzj3pPQxHL_y1lEsOIMYexr-MUCGnGTHOOhUriR8U', 2, '2026-07-21 11:18:00.280', 0, '2026-07-14 11:18:00.283');
 
 SET IDENTITY_INSERT [refresh_tokens] OFF;
-
--- ----------------------------------------------------------
--- Data for table: student_daily_moments
--- ----------------------------------------------------------
-SET IDENTITY_INSERT [student_daily_moments] ON;
-
-INSERT INTO [student_daily_moments] ([id], [student_id], [teacher_id], [file_path], [file_type], [title], [created_at], [expires_at]) VALUES (1, 20, 3, '/static/moments/moment_20_1783778919_0.jpeg', 'image', 'RRR''s Images', '2026-07-11 14:08:39.937', '2026-07-13 14:08:39.937');
-INSERT INTO [student_daily_moments] ([id], [student_id], [teacher_id], [file_path], [file_type], [title], [created_at], [expires_at]) VALUES (2, 20, 3, '/static/moments/moment_20_1783778919_1.jpeg', 'image', 'RRR''s Images', '2026-07-11 14:08:39.937', '2026-07-13 14:08:39.937');
-INSERT INTO [student_daily_moments] ([id], [student_id], [teacher_id], [file_path], [file_type], [title], [created_at], [expires_at]) VALUES (3, 20, 3, '/static/moments/moment_20_1783778919_2.jpeg', 'image', 'RRR''s Images', '2026-07-11 14:08:39.937', '2026-07-13 14:08:39.937');
-
-SET IDENTITY_INSERT [student_daily_moments] OFF;
 
 EXEC sp_msforeachtable 'ALTER TABLE ? WITH CHECK CHECK CONSTRAINT ALL';
