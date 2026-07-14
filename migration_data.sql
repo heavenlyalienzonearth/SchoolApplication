@@ -2,7 +2,6 @@
 -- DATABASE MIGRATION SCRIPT (LOCAL -> PROD)
 -- Generated dynamically based on local SQL Server data
 -- ==========================================================
-
 -- ----------------------------------------------------------
 -- Ensure holidays table has category and image_url columns
 -- ----------------------------------------------------------
@@ -15,6 +14,25 @@ GO
 IF NOT EXISTS (SELECT * FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'holidays' AND COLUMN_NAME = 'image_url')
 BEGIN
     EXEC('ALTER TABLE holidays ADD image_url VARCHAR(500) NULL');
+END;
+GO
+
+-- ----------------------------------------------------------
+-- Ensure circulars table exists
+-- ----------------------------------------------------------
+IF NOT EXISTS (SELECT * FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = 'circulars')
+BEGIN
+    EXEC('
+        CREATE TABLE circulars (
+            id INT IDENTITY(1,1) PRIMARY KEY,
+            title VARCHAR(255) NOT NULL,
+            content TEXT NOT NULL,
+            program_id INT NULL FOREIGN KEY REFERENCES programs(id) ON DELETE SET NULL,
+            attachment_url VARCHAR(500) NULL,
+            is_active BIT NOT NULL DEFAULT 1,
+            created_at DATETIME NOT NULL DEFAULT GETDATE()
+        );
+    ');
 END;
 GO
 
@@ -38,6 +56,7 @@ DELETE FROM [students];
 DELETE FROM [milestone_templates];
 DELETE FROM [job_applications];
 DELETE FROM [fee_structures];
+DELETE FROM [circulars];
 DELETE FROM [admissions];
 DELETE FROM [vaccinations];
 DELETE FROM [testimonials];
@@ -395,6 +414,8 @@ INSERT INTO [holidays] ([id], [title], [description], [holiday_date], [year], [c
 INSERT INTO [holidays] ([id], [title], [description], [holiday_date], [year], [category], [image_url], [is_active], [created_at]) VALUES (12, 'Christmas Day', 'Celebrating the birth of Jesus Christ', '2026-12-25', 2026, 'Religious Event', NULL, 1, '2026-07-10 01:27:57.847');
 INSERT INTO [holidays] ([id], [title], [description], [holiday_date], [year], [category], [image_url], [is_active], [created_at]) VALUES (13, 'Summer Vacation', 'Summer break for all standard classes', '2026-04-15', 2026, 'Vacation', NULL, 1, '2026-07-14 16:11:37.900');
 INSERT INTO [holidays] ([id], [title], [description], [holiday_date], [year], [category], [image_url], [is_active], [created_at]) VALUES (14, 'Winter Break', 'Winter holidays and Christmas recess', '2026-12-24', 2026, 'Vacation', NULL, 1, '2026-07-14 16:11:37.900');
+INSERT INTO [holidays] ([id], [title], [description], [holiday_date], [year], [category], [image_url], [is_active], [created_at]) VALUES (15, 'ddsffsd', 'dgdfgfg', '2026-07-30', 2026, 'Religious Event', '', 1, '2026-07-14 11:50:25.363');
+INSERT INTO [holidays] ([id], [title], [description], [holiday_date], [year], [category], [image_url], [is_active], [created_at]) VALUES (16, 'fff', 'fgg', '2026-07-21', 2026, 'School Event', '', 1, '2026-07-14 11:55:58.110');
 
 SET IDENTITY_INSERT [holidays] OFF;
 
@@ -506,6 +527,17 @@ INSERT INTO [admissions] ([id], [child_name], [parent_name], [email], [phone], [
 INSERT INTO [admissions] ([id], [child_name], [parent_name], [email], [phone], [date_of_birth], [program_id], [allergies], [photo_url], [issued_items_json], [blood_group], [emergency_phone], [status], [created_at]) VALUES (2, 'rrr', 'aaa', 'eeee@gmail.com', '7338342211', '2025-01-10', 1, NULL, '/photos/8d0d040a-08ac-412b-8429-8f996b4eb6e8.jpeg', '["Books","School Shorts","Vidyankuram Shoes","Bags"]', 'B+', '4554444441', 'APPROVED', '2026-07-10 16:36:59.287');
 
 SET IDENTITY_INSERT [admissions] OFF;
+
+-- ----------------------------------------------------------
+-- Data for table: circulars
+-- ----------------------------------------------------------
+SET IDENTITY_INSERT [circulars] ON;
+
+INSERT INTO [circulars] ([id], [title], [content], [program_id], [attachment_url], [is_active], [created_at]) VALUES (1, 'Vidyankuram Uniform & Welcome Kits Distribution', 'Dear Parents, we are pleased to announce that school uniforms and academic welcome kits are ready for pickup. Please collect them from the administrative office on weekdays between 9:00 AM and 2:00 PM.', NULL, NULL, 1, '2026-07-14 17:46:57.923');
+INSERT INTO [circulars] ([id], [title], [content], [program_id], [attachment_url], [is_active], [created_at]) VALUES (2, 'Toddler Outdoor Messy Play Kit Guidelines', 'Dear Toddler Parents, next week we are initiating our sensory outdoor play activities. Please pack a spare change of clothes, a small towel, and water-friendly sandals in your child''s bag labeled with their name.', 1, NULL, 1, '2026-07-14 17:46:57.923');
+INSERT INTO [circulars] ([id], [title], [content], [program_id], [attachment_url], [is_active], [created_at]) VALUES (3, 'Kindergarten Science Exhibition & Projects', 'Dear Parents, our annual Kindergarten Science Fair is scheduled for next month. Please assist your child in choosing a simple experiment or topic. A detailed project format document has been attached to this announcement.', 3, NULL, 1, '2026-07-14 17:46:57.927');
+
+SET IDENTITY_INSERT [circulars] OFF;
 
 -- ----------------------------------------------------------
 -- Data for table: fee_structures
@@ -952,6 +984,9 @@ INSERT INTO [refresh_tokens] ([id], [token], [user_id], [expires_at], [is_revoke
 INSERT INTO [refresh_tokens] ([id], [token], [user_id], [expires_at], [is_revoked], [created_at]) VALUES (49, 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3ODQ0NDczMzAsInN1YiI6ImVlZWVAZ21haWwuY29tIiwidHlwZSI6InJlZnJlc2gifQ.iahJ-h0T1GEgAzMFdNvCBRghpchHBvu6T9TPJkyqgSs', 2, '2026-07-19 07:48:50.290', 1, '2026-07-12 07:48:50.293');
 INSERT INTO [refresh_tokens] ([id], [token], [user_id], [expires_at], [is_revoked], [created_at]) VALUES (50, 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3ODQ2MzEzOTIsInN1YiI6ImVlZWVAZ21haWwuY29tIiwidHlwZSI6InJlZnJlc2gifQ.aYJQ36oYVmjSgIXHMg5bksozOvGTMtVIelWx8WyJzTM', 2, '2026-07-21 10:56:32.553', 1, '2026-07-14 10:56:32.553');
 INSERT INTO [refresh_tokens] ([id], [token], [user_id], [expires_at], [is_revoked], [created_at]) VALUES (51, 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3ODQ2MzI2ODAsInN1YiI6ImVlZWVAZ21haWwuY29tIiwidHlwZSI6InJlZnJlc2gifQ.hOyzj3pPQxHL_y1lEsOIMYexr-MUCGnGTHOOhUriR8U', 2, '2026-07-21 11:18:00.280', 0, '2026-07-14 11:18:00.283');
+INSERT INTO [refresh_tokens] ([id], [token], [user_id], [expires_at], [is_revoked], [created_at]) VALUES (52, 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3ODQ2MzM5NjMsInN1YiI6ImVlZWVAZ21haWwuY29tIiwidHlwZSI6InJlZnJlc2gifQ.6rjagSBmioITvM5TkfHZKBDWiUawHQ4CrKJjPZ1u_18', 2, '2026-07-21 11:39:23.260', 1, '2026-07-14 11:39:23.260');
+INSERT INTO [refresh_tokens] ([id], [token], [user_id], [expires_at], [is_revoked], [created_at]) VALUES (53, 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3ODQ2MzQwMDEsInN1YiI6ImFkbWluQHNjaG9vbC5jb20iLCJ0eXBlIjoicmVmcmVzaCJ9.DZ1TLm79OC-JmLhWty7QBfnyx96Jjs0JnE-CAHnLQqk', 1, '2026-07-21 11:40:01.077', 1, '2026-07-14 11:40:01.077');
+INSERT INTO [refresh_tokens] ([id], [token], [user_id], [expires_at], [is_revoked], [created_at]) VALUES (54, 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3ODQ2MzQ5NTgsInN1YiI6ImFkbWluQHNjaG9vbC5jb20iLCJ0eXBlIjoicmVmcmVzaCJ9.yIl4zYDOXZR9q4mA5qrCsTzP6M4zf4Dh7VO5Wp9GCgU', 1, '2026-07-21 11:55:58.093', 0, '2026-07-14 11:55:58.097');
 
 SET IDENTITY_INSERT [refresh_tokens] OFF;
 
