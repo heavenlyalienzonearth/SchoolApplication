@@ -44,6 +44,9 @@ import { ContentService } from '../../core/services/content.service';
           <button class="tab-btn" [class.active]="activeTab === 'milestones'" (click)="setTab('milestones')">
             🎯 Milestones Tracker
           </button>
+          <button class="tab-btn" [class.active]="activeTab === 'meals'" (click)="setTab('meals')">
+            🍽️ Weekly Menu
+          </button>
           <button class="tab-btn" [class.active]="activeTab === 'leaves'" (click)="setTab('leaves')">
             📅 Absence Requests
           </button>
@@ -390,6 +393,58 @@ import { ContentService } from '../../core/services/content.service';
             <p>Track your child's key developmental milestones verified by the classroom supervisor.</p>
           </div>
 
+          <!-- Radar Chart Card -->
+          <div class="card radar-chart-card" style="background: white; border-radius: 12px; border: 1px solid #E2E8F0; padding: 25px; margin-bottom: 30px; display: grid; grid-template-columns: 1.2fr 1fr; gap: 30px; align-items: center; box-shadow: 0 4px 6px rgba(0,0,0,0.02);" *ngIf="dashboardData?.development_radar?.length > 0">
+            <div>
+              <h3 style="margin-top: 0; color: var(--primary); font-size: 1.2rem; font-weight: 800; display: flex; align-items: center; gap: 8px;">
+                📊 Child Growth Radar Chart
+              </h3>
+              <p style="color: var(--text-light); font-size: 0.9rem; line-height: 1.6; margin-bottom: 20px;">
+                This visualization displays your child's developmental progress across 5 key educational categories. 
+                Values represent the percentage of milestones marked as <strong>"Completed"</strong> by the class teacher.
+              </p>
+              <div style="display: flex; flex-direction: column; gap: 10px;">
+                <div *ngFor="let cat of dashboardData?.development_radar" style="display: flex; justify-content: space-between; align-items: center; font-size: 0.88rem; border-bottom: 1px solid #F1F5F9; padding-bottom: 6px;">
+                  <span style="font-weight: 600; color: #475569;">
+                    {{ cat.category === 'Cognitive' ? '🧠 Cognitive & Learning' : cat.category === 'Physical' ? '🏃 Physical & Motor' : cat.category === 'Emotional' ? '🤝 Social & Emotional' : '🎯 ' + cat.category }}
+                  </span>
+                  <div style="display: flex; align-items: center; gap: 10px;">
+                    <span style="font-weight: 800; color: var(--primary);">{{ cat.percentage }}%</span>
+                    <span style="font-size: 0.75rem; color: #94A3B8;">({{ cat.completed }}/{{ cat.total }} Met)</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <div style="display: flex; justify-content: center; align-items: center;">
+              <!-- Concentric Grid SVG Pentagon -->
+              <svg viewBox="0 0 300 300" style="width: 100%; max-width: 280px; height: auto;">
+                <polygon [attr.points]="getRadarGridPoints(0.2)" fill="none" stroke="#E2E8F0" stroke-width="1" />
+                <polygon [attr.points]="getRadarGridPoints(0.4)" fill="none" stroke="#E2E8F0" stroke-width="1" />
+                <polygon [attr.points]="getRadarGridPoints(0.6)" fill="none" stroke="#E2E8F0" stroke-width="1" />
+                <polygon [attr.points]="getRadarGridPoints(0.8)" fill="none" stroke="#E2E8F0" stroke-width="1" />
+                <polygon [attr.points]="getRadarGridPoints(1.0)" fill="none" stroke="#CBD5E1" stroke-width="1.5" />
+
+                <line x1="150" y1="150" x2="150" y2="50" stroke="#CBD5E1" stroke-dasharray="2" />
+                <line x1="150" y1="150" [attr.x2]="getAxisX(72)" [attr.y2]="getAxisY(72)" stroke="#CBD5E1" stroke-dasharray="2" />
+                <line x1="150" y1="150" [attr.x2]="getAxisX(144)" [attr.y2]="getAxisY(144)" stroke="#CBD5E1" stroke-dasharray="2" />
+                <line x1="150" y1="150" [attr.x2]="getAxisX(216)" [attr.y2]="getAxisY(216)" stroke="#CBD5E1" stroke-dasharray="2" />
+                <line x1="150" y1="150" [attr.x2]="getAxisX(288)" [attr.y2]="getAxisY(288)" stroke="#CBD5E1" stroke-dasharray="2" />
+
+                <polygon [attr.points]="getRadarPolygonPoints(dashboardData?.development_radar)" fill="rgba(99, 102, 241, 0.2)" stroke="var(--primary)" stroke-width="2.5" />
+
+                <circle *ngFor="let pt of getRadarCircles(dashboardData?.development_radar)" [attr.cx]="pt.x" [attr.cy]="pt.y" r="5" fill="var(--secondary)" stroke="white" stroke-width="1.5" />
+
+                <text x="150" y="32" text-anchor="middle" font-size="11" font-weight="700" fill="#475569">🧠 Cognitive</text>
+                <text x="268" y="112" text-anchor="start" font-size="11" font-weight="700" fill="#475569">🏃 Physical</text>
+                <text x="235" y="272" text-anchor="start" font-size="11" font-weight="700" fill="#475569">🤝 Emotional</text>
+                <text x="65" y="272" text-anchor="end" font-size="11" font-weight="700" fill="#475569">🎨 Creative</text>
+                <text x="32" y="112" text-anchor="end" font-size="11" font-weight="700" fill="#475569">🗣️ Language</text>
+              </svg>
+            </div>
+          </div>
+
+
           <div class="milestones-columns" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px;">
             <!-- Dynamic columns -->
             <div class="milestone-column" *ngFor="let catKey of getMilestonesCategories()">
@@ -685,6 +740,89 @@ import { ContentService } from '../../core/services/content.service';
                   <h4 style="font-weight: 700; color: #475569; margin-bottom: 5px;">No Circular Selected</h4>
                   <p style="font-size: 0.85rem; color: #64748B; max-width: 250px; margin: auto;">Select any circular from the list on the left to read its full official details.</p>
                 </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 7. WEEKLY MENU & MEAL PLANNER TAB -->
+        <div *ngIf="activeTab === 'meals'" class="tab-content animate-fade-in" style="padding: 20px 0;">
+          <div style="border-bottom: 2px solid #E2E8F0; padding-bottom: 15px; margin-bottom: 25px;">
+            <h2 style="margin: 0; color: var(--primary);">🍽️ School Nutrition & Meal Planner</h2>
+            <p style="margin: 3px 0 0 0; color: var(--text-light); font-size: 0.9rem;">View the weekly breakfast, lunch, and snack menu curated for healthy growing kids.</p>
+          </div>
+
+          <!-- Allergen Alert Banner -->
+          <div class="alert alert-danger" *ngIf="allergenWarningFlag" style="margin-bottom: 25px; display: flex; align-items: center; gap: 15px; border-left: 5px solid #EF4444; background: #FEF2F2; color: #991B1B; padding: 15px; border-radius: 8px;">
+            <span style="font-size: 1.5rem;">⚠️</span>
+            <div>
+              <strong style="font-size: 0.95rem; display: block;">Allergen Alert Detected!</strong>
+              <span style="font-size: 0.85rem;">This week's menu contains items matching your child's logged food allergies (<strong>{{ dashboardData?.kid?.allergies }}</strong>). Please review the warning labels below.</span>
+            </div>
+          </div>
+
+          <!-- Loading state for meals -->
+          <div *ngIf="mealsLoading" style="text-align: center; padding: 40px; color: #64748B;">
+            <div class="spinner" style="margin: 0 auto 10px auto;"></div>
+            <p>Loading weekly menu details...</p>
+          </div>
+
+          <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 30px; align-items: start;" *ngIf="!mealsLoading">
+            <!-- Weekly Menu Grid -->
+            <div style="display: flex; flex-direction: column; gap: 20px;">
+              <div *ngFor="let day of ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday']" class="card" style="background: white; border-radius: 12px; border: 1px solid #E2E8F0; padding: 22px; box-shadow: 0 4px 6px rgba(0,0,0,0.01);">
+                <h4 style="margin: 0 0 15px 0; color: var(--primary); font-size: 1.1rem; font-weight: 800; border-bottom: 2px solid #F1F5F9; padding-bottom: 8px; display: flex; justify-content: space-between; align-items: center;">
+                  <span>📅 {{ day }}</span>
+                  <span style="font-size: 0.78rem; font-weight: 600; color: #64748B; background: #F1F5F9; padding: 2px 10px; border-radius: 20px;">Nutritious Day Plan</span>
+                </h4>
+
+                <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px;">
+                  <!-- Breakfast, Lunch, Snack cards -->
+                  <div *ngFor="let type of ['Breakfast', 'Lunch', 'Snack']" [style.border]="hasMealAllergenConflict(getMealForDayAndType(day, type)) ? '1.5px solid #FCA5A5' : '1px solid #E2E8F0'" [style.background]="hasMealAllergenConflict(getMealForDayAndType(day, type)) ? '#FEF2F2' : '#F8FAFC'" style="border-radius: 8px; padding: 12px; display: flex; flex-direction: column; justify-content: space-between; min-height: 130px;">
+                    <div>
+                      <span [style.background]="type === 'Breakfast' ? '#FFE4E6' : type === 'Lunch' ? '#D1FAE5' : '#FEF3C7'" [style.color]="type === 'Breakfast' ? '#9F1239' : type === 'Lunch' ? '#065F46' : '#92400E'" style="font-size: 0.7rem; font-weight: 800; text-transform: uppercase; padding: 2px 8px; border-radius: 12px; display: inline-block; margin-bottom: 8px;">
+                        {{ type }}
+                      </span>
+                      <strong style="display: block; font-size: 0.88rem; color: #1E293B; margin-bottom: 4px;">{{ getMealForDayAndType(day, type)?.menu_item || 'Not Scheduled' }}</strong>
+                      <p style="font-size: 0.75rem; color: #64748B; margin: 0; line-height: 1.4;">{{ getMealForDayAndType(day, type)?.description || '--' }}</p>
+                    </div>
+
+                    <div style="margin-top: 10px; border-top: 1px dashed #E2E8F0; padding-top: 6px; display: flex; justify-content: space-between; align-items: center; font-size: 0.72rem;">
+                      <span style="color: #94A3B8; font-weight: 600;">🔥 {{ getMealForDayAndType(day, type)?.calories || '0' }} kcal</span>
+                      <span *ngIf="getMealForDayAndType(day, type)?.allergens && getMealForDayAndType(day, type)?.allergens !== 'None'" [style.color]="hasMealAllergenConflict(getMealForDayAndType(day, type)) ? '#B91C1C' : '#475569'" style="font-weight: 700;">
+                        ⚠️ {{ hasMealAllergenConflict(getMealForDayAndType(day, type)) ? 'Allergy Warning!' : 'Contains: ' + getMealForDayAndType(day, type)?.allergens }}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Allergy Panel & Information -->
+            <div class="card" style="background: white; border-radius: 12px; border: 1px solid #E2E8F0; padding: 22px; box-shadow: 0 4px 6px rgba(0,0,0,0.02); display: flex; flex-direction: column; gap: 15px;">
+              <h3 style="margin: 0; color: var(--primary); font-size: 1.1rem; font-weight: 800; border-bottom: 1px solid #F1F5F9; padding-bottom: 8px;">
+                🧬 Child Allergy Profile
+              </h3>
+              
+              <p style="font-size: 0.85rem; color: #64748B; line-height: 1.5; margin: 0;">
+                Allergies are automatically matched against ingredients in the daily menu planner. Contact admin if you need to update this profile.
+              </p>
+
+              <div style="background: #F8FAFC; border-radius: 8px; padding: 15px; border: 1px solid #E2E8F0;">
+                <span style="font-size: 0.72rem; text-transform: uppercase; font-weight: 700; color: #94A3B8; display: block; margin-bottom: 4px;">Registered Allergies</span>
+                <strong style="font-size: 1rem; color: #EF4444; display: block;">{{ dashboardData?.kid?.allergies || 'None' }}</strong>
+              </div>
+
+              <div style="border-top: 1px solid #F1F5F9; padding-top: 15px;">
+                <h4 style="margin: 0 0 10px 0; font-size: 0.88rem; color: #1E293B; font-weight: 700;">Nutrition Guidelines</h4>
+                <p style="font-size: 0.75rem; color: #64748B; line-height: 1.5; margin: 0 0 8px 0;">
+                  Our menus are designed by certified pediatric nutritionists to provide:
+                </p>
+                <ul style="font-size: 0.75rem; color: #64748B; padding-left: 15px; margin: 0; line-height: 1.6;">
+                  <li>High protein content for muscle growth</li>
+                  <li>Low sugar to prevent energy crashes</li>
+                  <li>Locally sourced organic fruits and grains</li>
+                </ul>
               </div>
             </div>
           </div>
@@ -2343,6 +2481,117 @@ export class ParentDashboardComponent implements OnInit {
   // Milestones State
   milestonesGroup: MilestoneGroup | null = null;
 
+  // Radar Chart Helper Methods
+  getRadarGridPoints(scale: number): string {
+    const cx = 150;
+    const cy = 150;
+    const maxRadius = 100;
+    const r = maxRadius * scale;
+    const angles = [0, 72, 144, 216, 288];
+    const points: string[] = [];
+    for (let angle of angles) {
+      const angleRad = ((angle - 90) * Math.PI) / 180;
+      points.push(`${cx + r * Math.cos(angleRad)},${cy + r * Math.sin(angleRad)}`);
+    }
+    return points.join(' ');
+  }
+
+  getAxisX(angle: number): number {
+    return 150 + 100 * Math.cos(((angle - 90) * Math.PI) / 180);
+  }
+
+  getAxisY(angle: number): number {
+    return 150 + 100 * Math.sin(((angle - 90) * Math.PI) / 180);
+  }
+
+  getRadarPolygonPoints(radarData: any[]): string {
+    if (!radarData || radarData.length === 0) return '150,150 150,150 150,150 150,150 150,150';
+    const cx = 150;
+    const cy = 150;
+    const maxRadius = 100;
+    const angles = [0, 72, 144, 216, 288];
+    const points: string[] = [];
+    
+    const categoriesOrder = ["Cognitive", "Physical", "Emotional", "Creative", "Language"];
+    for (let i = 0; i < categoriesOrder.length; i++) {
+      const cat = categoriesOrder[i];
+      const match = radarData.find(d => d.category.toLowerCase().includes(cat.toLowerCase()) || cat.toLowerCase().includes(d.category.toLowerCase()));
+      const pct = match ? (match.percentage / 100) : 0;
+      const r = maxRadius * pct;
+      const angleRad = ((angles[i] - 90) * Math.PI) / 180;
+      points.push(`${cx + r * Math.cos(angleRad)},${cy + r * Math.sin(angleRad)}`);
+    }
+    return points.join(' ');
+  }
+
+  getRadarCircles(radarData: any[]): any[] {
+    if (!radarData || radarData.length === 0) return [];
+    const cx = 150;
+    const cy = 150;
+    const maxRadius = 100;
+    const angles = [0, 72, 144, 216, 288];
+    const circles: any[] = [];
+    
+    const categoriesOrder = ["Cognitive", "Physical", "Emotional", "Creative", "Language"];
+    for (let i = 0; i < categoriesOrder.length; i++) {
+      const cat = categoriesOrder[i];
+      const match = radarData.find(d => d.category.toLowerCase().includes(cat.toLowerCase()) || cat.toLowerCase().includes(d.category.toLowerCase()));
+      const pct = match ? (match.percentage / 100) : 0;
+      const r = maxRadius * pct;
+      const angleRad = ((angles[i] - 90) * Math.PI) / 180;
+      circles.push({
+        x: cx + r * Math.cos(angleRad),
+        y: cy + r * Math.sin(angleRad)
+      });
+    }
+    return circles;
+  }
+
+  // Weekly Menu Planner State & Methods
+  mealPlansList: any[] = [];
+  mealsLoading = false;
+  allergenWarningFlag = false;
+
+  loadMealsData(): void {
+    this.mealsLoading = true;
+    this.apiService.get<any[]>('/meals').subscribe({
+      next: (data) => {
+        this.mealPlansList = data;
+        this.mealsLoading = false;
+        this.checkAllergenWarnings();
+      },
+      error: (err) => {
+        this.mealsLoading = false;
+        console.error('Failed to load meal plans:', err);
+      }
+    });
+  }
+
+  checkAllergenWarnings(): void {
+    if (!this.dashboardData?.kid?.allergies || this.dashboardData.kid.allergies.toLowerCase() === 'none') {
+      this.allergenWarningFlag = false;
+      return;
+    }
+    const kidAllergies = this.dashboardData.kid.allergies.toLowerCase().split(',').map((a: string) => a.trim());
+    this.allergenWarningFlag = this.mealPlansList.some(meal => {
+      if (!meal.allergens || meal.allergens.toLowerCase() === 'none') return false;
+      const mealAllergens = meal.allergens.toLowerCase().split(',').map((a: string) => a.trim());
+      return kidAllergies.some((allergy: string) => mealAllergens.includes(allergy));
+    });
+  }
+
+  hasMealAllergenConflict(meal: any): boolean {
+    if (!this.dashboardData?.kid?.allergies || !meal || !meal.allergens || meal.allergens.toLowerCase() === 'none') return false;
+    const kidAllergies = this.dashboardData.kid.allergies.toLowerCase().split(',').map((a: string) => a.trim());
+    const mealAllergens = meal.allergens.toLowerCase().split(',').map((a: string) => a.trim());
+    return kidAllergies.some((allergy: string) => mealAllergens.includes(allergy));
+  }
+
+  getMealForDayAndType(day: string, type: string): any {
+    return this.mealPlansList.find(meal => meal.day_of_week === day && meal.meal_type === type);
+  }
+
+
   // Leave State
   leavesList: LeaveRequest[] = [];
   submittingLeave = false;
@@ -2438,6 +2687,8 @@ export class ParentDashboardComponent implements OnInit {
       this.loadBilling();
     } else if (tab === 'milestones') {
       this.loadMilestones();
+    } else if (tab === 'meals') {
+      this.loadMealsData();
     } else if (tab === 'leaves') {
       this.loadLeaves();
     } else if (tab === 'calendar') {
