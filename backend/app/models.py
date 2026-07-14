@@ -316,8 +316,12 @@ class StationaryItem(Base):
     category = Column(String(100), nullable=False)
     price = Column(Numeric(10, 2), nullable=False)
     stock = Column(Integer, default=0, nullable=False)
+    stationery_type = Column(String(50), default="school", nullable=False)  # school | teacher | student
+    order_date = Column(DateTime, nullable=True)
+    total_amount = Column(Numeric(10, 2), nullable=True)
     is_active = Column(Boolean, default=True, nullable=False)
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+
 
 class StationaryOrder(Base):
     __tablename__ = "stationary_orders"
