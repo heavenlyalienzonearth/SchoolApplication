@@ -259,11 +259,18 @@ import { ContentService } from '../../core/services/content.service';
                     </thead>
                     <tbody>
                       <tr *ngFor="let day of getDaysKeys()">
-                        <td class="day-cell"><strong>{{ day }}</strong></td>
-                        <td>{{ dashboardData.weekly_plan?.[day]?.study || '--' }}</td>
-                        <td>{{ dashboardData.weekly_plan?.[day]?.physical || '--' }}</td>
-                        <td>{{ dashboardData.weekly_plan?.[day]?.games || '--' }}</td>
-                        <td class="breakfast-cell">🥞 {{ dashboardData.weekly_plan?.[day]?.breakfast || '--' }}</td>
+                        <td class="day-cell"><strong>{{ getDayName(day) }}</strong></td>
+                        <ng-container *ngIf="getHolidayForDay(day) as holiday; else regularRow">
+                          <td colspan="4" style="background-color: #FEF2F2; color: #DC2626; text-align: center; font-weight: 700; padding: 12px; font-size: 0.85rem; border-left: 4px solid #EF4444;">
+                            🎉 Holiday: {{ holiday.title }} ({{ holiday.category || 'School Holiday' }})
+                          </td>
+                        </ng-container>
+                        <ng-template #regularRow>
+                          <td>{{ dashboardData.weekly_plan?.[day]?.study || '--' }}</td>
+                          <td>{{ dashboardData.weekly_plan?.[day]?.physical || '--' }}</td>
+                          <td>{{ dashboardData.weekly_plan?.[day]?.games || '--' }}</td>
+                          <td class="breakfast-cell">🥞 {{ dashboardData.weekly_plan?.[day]?.breakfast || '--' }}</td>
+                        </ng-template>
                       </tr>
                       <tr *ngIf="!dashboardData.weekly_plan">
                         <td colspan="5" class="no-records" style="text-align: center; padding: 20px;">No weekly plan scheduled for this program.</td>
@@ -2859,6 +2866,7 @@ export class ParentDashboardComponent implements OnInit {
     this.parentName = user.full_name || 'Parent';
     this.loadDashboardData();
     this.loadParentMoments();
+    this.loadCalendarData();
     this.loadRazorpayScript().then(() => {
       this.razorpayScriptLoaded = true;
     });
@@ -3147,6 +3155,44 @@ export class ParentDashboardComponent implements OnInit {
     if (!this.dashboardData?.weekly_plan) return [];
     return Object.keys(this.dashboardData.weekly_plan);
   }
+
+  getDayName(dayKey: string): string {
+    const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
+    const idx = parseInt(dayKey, 10);
+    if (!isNaN(idx) && idx >= 0 && idx < days.length) {
+      return days[idx];
+    }
+    return dayKey;
+  }
+
+  getCurrentWeekDates(): { [day: string]: string } {
+    const dates: { [day: string]: string } = {};
+    const today = new Date();
+    const currentDay = today.getDay(); // 0 is Sunday, 1 is Monday...
+    const mondayDist = currentDay === 0 ? -6 : 1 - currentDay;
+    
+    const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
+    for (let i = 0; i < 5; i++) {
+      const d = new Date(today);
+      d.setDate(today.getDate() + mondayDist + i);
+      const yyyy = d.getFullYear();
+      const mm = String(d.getMonth() + 1).padStart(2, '0');
+      const dd = String(d.getDate()).padStart(2, '0');
+      dates[days[i]] = `${yyyy}-${mm}-${dd}`;
+    }
+    return dates;
+  }
+
+  getHolidayForDay(dayKey: string): any {
+    const dayName = this.getDayName(dayKey);
+    const weekDates = this.getCurrentWeekDates();
+    const targetDateStr = weekDates[dayName];
+    if (!targetDateStr) return null;
+    
+    if (!this.holidaysList || this.holidaysList.length === 0) return null;
+    return this.holidaysList.find(h => h.holiday_date === targetDateStr && h.is_active);
+  }
+
 
   onImgError(event: any): void {
     event.target.src = 'assets/parent_avatar1_1783324784413.png';
