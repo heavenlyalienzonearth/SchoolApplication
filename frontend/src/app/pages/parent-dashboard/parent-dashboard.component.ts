@@ -394,55 +394,96 @@ import { ContentService } from '../../core/services/content.service';
           </div>
 
           <!-- Radar Chart Card -->
-          <div class="card radar-chart-card" style="background: white; border-radius: 12px; border: 1px solid #E2E8F0; padding: 25px; margin-bottom: 30px; display: grid; grid-template-columns: 1.2fr 1fr; gap: 30px; align-items: center; box-shadow: 0 4px 6px rgba(0,0,0,0.02);" *ngIf="dashboardData?.development_radar?.length > 0">
+          <div class="card radar-chart-card" style="background: white; border-radius: 16px; border: 1px solid #E2E8F0; padding: 30px; margin-bottom: 35px; display: grid; grid-template-columns: 1.1fr 1fr; gap: 40px; align-items: center; box-shadow: 0 10px 30px rgba(0,0,0,0.03);" *ngIf="dashboardData?.development_radar?.length > 0">
             <div>
-              <h3 style="margin-top: 0; color: var(--primary); font-size: 1.2rem; font-weight: 800; display: flex; align-items: center; gap: 8px;">
-                📊 Child Growth Radar Chart
+              <span style="font-size: 0.72rem; text-transform: uppercase; letter-spacing: 1.5px; font-weight: 800; color: var(--secondary); background: #EFF6FF; padding: 4px 12px; border-radius: 20px; display: inline-block; margin-bottom: 12px;">Development Analytics</span>
+              <h3 style="margin: 0 0 12px 0; color: var(--primary); font-size: 1.4rem; font-weight: 800; display: flex; align-items: center; gap: 8px;">
+                📊 Holistic Progress Spectrum
               </h3>
-              <p style="color: var(--text-light); font-size: 0.9rem; line-height: 1.6; margin-bottom: 20px;">
-                This visualization displays your child's developmental progress across 5 key educational categories. 
-                Values represent the percentage of milestones marked as <strong>"Completed"</strong> by the class teacher.
+              <p style="color: var(--text-light); font-size: 0.88rem; line-height: 1.6; margin-bottom: 25px;">
+                This interactive chart visualizes verified milestones completed by class teachers. The concentric rings highlight key developmental bands.
               </p>
-              <div style="display: flex; flex-direction: column; gap: 10px;">
-                <div *ngFor="let cat of dashboardData?.development_radar" style="display: flex; justify-content: space-between; align-items: center; font-size: 0.88rem; border-bottom: 1px solid #F1F5F9; padding-bottom: 6px;">
-                  <span style="font-weight: 600; color: #475569;">
-                    {{ cat.category === 'Cognitive' ? '🧠 Cognitive & Learning' : cat.category === 'Physical' ? '🏃 Physical & Motor' : cat.category === 'Emotional' ? '🤝 Social & Emotional' : '🎯 ' + cat.category }}
-                  </span>
-                  <div style="display: flex; align-items: center; gap: 10px;">
-                    <span style="font-weight: 800; color: var(--primary);">{{ cat.percentage }}%</span>
-                    <span style="font-size: 0.75rem; color: #94A3B8;">({{ cat.completed }}/{{ cat.total }} Met)</span>
+              
+              <!-- Development Bands Legend -->
+              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 25px; background: #F8FAFC; padding: 15px; border-radius: 10px; border: 1px solid #F1F5F9;">
+                <div>
+                  <span style="display: block; font-size: 0.7rem; font-weight: 700; color: #94A3B8; text-transform: uppercase;">Grid Bands (Scale)</span>
+                  <div style="display: flex; flex-direction: column; gap: 4px; margin-top: 6px; font-size: 0.8rem; color: #475569;">
+                    <span style="display: flex; align-items: center; gap: 6px;"><span style="width: 8px; height: 8px; border-radius: 50%; background: #E2E8F0;"></span> Outer Ring: 100% Mastery</span>
+                    <span style="display: flex; align-items: center; gap: 6px;"><span style="width: 8px; height: 8px; border-radius: 50%; background: #CBD5E1;"></span> Mid Rings: 40% - 80%</span>
+                  </div>
+                </div>
+                <div>
+                  <span style="display: block; font-size: 0.7rem; font-weight: 700; color: #94A3B8; text-transform: uppercase;">Growth Legend</span>
+                  <div style="display: flex; flex-direction: column; gap: 4px; margin-top: 6px; font-size: 0.8rem; color: #475569;">
+                    <span style="display: flex; align-items: center; gap: 6px;"><span style="width: 14px; height: 10px; background: rgba(99, 102, 241, 0.2); border: 1.5px solid var(--primary); border-radius: 2px;"></span> Completed Growth</span>
+                    <span style="display: flex; align-items: center; gap: 6px;"><span style="width: 8px; height: 8px; border-radius: 50%; background: var(--secondary);"></span> Active Nodes</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- List Details with Progress Bars -->
+              <div style="display: flex; flex-direction: column; gap: 12px;">
+                <div *ngFor="let cat of dashboardData?.development_radar" style="font-size: 0.88rem;">
+                  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;">
+                    <span style="font-weight: 700; color: #334155; display: flex; align-items: center; gap: 6px;">
+                      <span>{{ cat.category === 'Cognitive' ? '🧠' : cat.category === 'Physical' ? '🏃' : cat.category === 'Emotional' ? '🤝' : cat.category === 'Creative' ? '🎨' : '🗣️' }}</span>
+                      {{ cat.category === 'Cognitive' ? 'Cognitive & Learning' : cat.category === 'Physical' ? 'Physical & Motor' : cat.category === 'Emotional' ? 'Social & Emotional' : cat.category }}
+                    </span>
+                    <span style="font-weight: 800; color: var(--primary);">{{ cat.percentage }}% <span style="font-weight: 600; color: #94A3B8; font-size: 0.78rem;">({{ cat.completed }}/{{ cat.total }})</span></span>
+                  </div>
+                  <!-- Progress Bar -->
+                  <div style="width: 100%; height: 6px; background: #F1F5F9; border-radius: 10px; overflow: hidden;">
+                    <div [style.width.%]="cat.percentage" style="height: 100%; background: linear-gradient(90deg, var(--primary), var(--secondary)); border-radius: 10px;"></div>
                   </div>
                 </div>
               </div>
             </div>
             
-            <div style="display: flex; justify-content: center; align-items: center;">
-              <!-- Concentric Grid SVG Pentagon -->
-              <svg viewBox="0 0 300 300" style="width: 100%; max-width: 280px; height: auto;">
-                <polygon [attr.points]="getRadarGridPoints(0.2)" fill="none" stroke="#E2E8F0" stroke-width="1" />
-                <polygon [attr.points]="getRadarGridPoints(0.4)" fill="none" stroke="#E2E8F0" stroke-width="1" />
-                <polygon [attr.points]="getRadarGridPoints(0.6)" fill="none" stroke="#E2E8F0" stroke-width="1" />
-                <polygon [attr.points]="getRadarGridPoints(0.8)" fill="none" stroke="#E2E8F0" stroke-width="1" />
-                <polygon [attr.points]="getRadarGridPoints(1.0)" fill="none" stroke="#CBD5E1" stroke-width="1.5" />
+            <!-- Professional SVG Plotting -->
+            <div style="display: flex; justify-content: center; align-items: center; background: #FAFAFA; border-radius: 16px; padding: 20px; border: 1px dashed #E2E8F0;">
+              <svg viewBox="0 0 320 320" style="width: 100%; max-width: 300px; height: auto;">
+                <defs>
+                  <!-- Premium Radial / Linear Gradients for Pentagon Fill -->
+                  <linearGradient id="radarGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stop-color="var(--primary)" stop-opacity="0.35" />
+                    <stop offset="100%" stop-color="var(--secondary)" stop-opacity="0.15" />
+                  </linearGradient>
+                </defs>
 
-                <line x1="150" y1="150" x2="150" y2="50" stroke="#CBD5E1" stroke-dasharray="2" />
-                <line x1="150" y1="150" [attr.x2]="getAxisX(72)" [attr.y2]="getAxisY(72)" stroke="#CBD5E1" stroke-dasharray="2" />
-                <line x1="150" y1="150" [attr.x2]="getAxisX(144)" [attr.y2]="getAxisY(144)" stroke="#CBD5E1" stroke-dasharray="2" />
-                <line x1="150" y1="150" [attr.x2]="getAxisX(216)" [attr.y2]="getAxisY(216)" stroke="#CBD5E1" stroke-dasharray="2" />
-                <line x1="150" y1="150" [attr.x2]="getAxisX(288)" [attr.y2]="getAxisY(288)" stroke="#CBD5E1" stroke-dasharray="2" />
+                <!-- Grid concentric circles/pentagons -->
+                <polygon [attr.points]="getRadarGridPoints(0.2)" fill="none" stroke="#F1F5F9" stroke-width="1.2" />
+                <polygon [attr.points]="getRadarGridPoints(0.4)" fill="none" stroke="#E2E8F0" stroke-width="1.2" />
+                <polygon [attr.points]="getRadarGridPoints(0.6)" fill="none" stroke="#CBD5E1" stroke-width="1.2" stroke-dasharray="3" />
+                <polygon [attr.points]="getRadarGridPoints(0.8)" fill="none" stroke="#94A3B8" stroke-width="1.2" stroke-dasharray="3" />
+                <polygon [attr.points]="getRadarGridPoints(1.0)" fill="none" stroke="#64748B" stroke-width="1.8" />
 
-                <polygon [attr.points]="getRadarPolygonPoints(dashboardData?.development_radar)" fill="rgba(99, 102, 241, 0.2)" stroke="var(--primary)" stroke-width="2.5" />
+                <!-- Axes -->
+                <line x1="150" y1="150" x2="150" y2="50" stroke="#94A3B8" stroke-width="1" stroke-dasharray="2" />
+                <line x1="150" y1="150" [attr.x2]="getAxisX(72)" [attr.y2]="getAxisY(72)" stroke="#94A3B8" stroke-width="1" stroke-dasharray="2" />
+                <line x1="150" y1="150" [attr.x2]="getAxisX(144)" [attr.y2]="getAxisY(144)" stroke="#94A3B8" stroke-width="1" stroke-dasharray="2" />
+                <line x1="150" y1="150" [attr.x2]="getAxisX(216)" [attr.y2]="getAxisY(216)" stroke="#94A3B8" stroke-width="1" stroke-dasharray="2" />
+                <line x1="150" y1="150" [attr.x2]="getAxisX(288)" [attr.y2]="getAxisY(288)" stroke="#94A3B8" stroke-width="1" stroke-dasharray="2" />
 
-                <circle *ngFor="let pt of getRadarCircles(dashboardData?.development_radar)" [attr.cx]="pt.x" [attr.cy]="pt.y" r="5" fill="var(--secondary)" stroke="white" stroke-width="1.5" />
+                <!-- Solid center node -->
+                <circle cx="150" cy="150" r="3.5" fill="#64748B" />
 
-                <text x="150" y="32" text-anchor="middle" font-size="11" font-weight="700" fill="#475569">🧠 Cognitive</text>
-                <text x="268" y="112" text-anchor="start" font-size="11" font-weight="700" fill="#475569">🏃 Physical</text>
-                <text x="235" y="272" text-anchor="start" font-size="11" font-weight="700" fill="#475569">🤝 Emotional</text>
-                <text x="65" y="272" text-anchor="end" font-size="11" font-weight="700" fill="#475569">🎨 Creative</text>
-                <text x="32" y="112" text-anchor="end" font-size="11" font-weight="700" fill="#475569">🗣️ Language</text>
+                <!-- Main Radar Growth Shape -->
+                <polygon [attr.points]="getRadarPolygonPoints(dashboardData?.development_radar)" fill="url(#radarGrad)" stroke="var(--primary)" stroke-width="2.5" />
+
+                <!-- Markers -->
+                <circle *ngFor="let pt of getRadarCircles(dashboardData?.development_radar)" [attr.cx]="pt.x" [attr.cy]="pt.y" r="5" fill="var(--secondary)" stroke="white" stroke-width="1.8" />
+
+                <!-- Labels with Percentage Markers -->
+                <text x="150" y="32" text-anchor="middle" font-size="10.5" font-weight="800" fill="#334155">🧠 Cognitive</text>
+                <text x="272" y="112" text-anchor="start" font-size="10.5" font-weight="800" fill="#334155">🏃 Physical</text>
+                <text x="240" y="272" text-anchor="start" font-size="10.5" font-weight="800" fill="#334155">🤝 Emotional</text>
+                <text x="60" y="272" text-anchor="end" font-size="10.5" font-weight="800" fill="#334155">🎨 Creative</text>
+                <text x="28" y="112" text-anchor="end" font-size="10.5" font-weight="800" fill="#334155">🗣️ Language</text>
               </svg>
             </div>
           </div>
+
 
 
           <div class="milestones-columns" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px;">
