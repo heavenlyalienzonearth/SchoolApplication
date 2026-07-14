@@ -154,6 +154,22 @@ BEGIN
 END;
 GO
 
+IF NOT EXISTS (SELECT 1 FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = 'meal_plans')
+BEGIN
+    CREATE TABLE meal_plans (
+    	id INTEGER NOT NULL IDENTITY, 
+    	day_of_week VARCHAR(50) NOT NULL, 
+    	meal_type VARCHAR(50) NOT NULL, 
+    	menu_item VARCHAR(255) NOT NULL, 
+    	description TEXT NULL, 
+    	allergens VARCHAR(255) NULL, 
+    	calories INTEGER NULL, 
+    	created_at DATETIME NOT NULL, 
+    	PRIMARY KEY (id)
+    )
+END;
+GO
+
 IF NOT EXISTS (SELECT 1 FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = 'page_sections')
 BEGIN
     CREATE TABLE page_sections (
@@ -571,6 +587,7 @@ DELETE FROM [stationary_items];
 DELETE FROM [site_settings];
 DELETE FROM [programs];
 DELETE FROM [page_sections];
+DELETE FROM [meal_plans];
 DELETE FROM [library_books];
 DELETE FROM [holidays];
 DELETE FROM [gallery_items];
@@ -926,6 +943,27 @@ INSERT INTO [library_books] ([id], [title], [author], [isbn], [category], [total
 INSERT INTO [library_books] ([id], [title], [author], [isbn], [category], [total_copies], [available_copies], [created_at]) VALUES (4, 'Charlotte''s Web', 'E.B. White', '9780064400558', 'Chapter Book', 2, 2, '2026-07-14 18:05:43.680');
 
 SET IDENTITY_INSERT [library_books] OFF;
+
+-- Data for table: meal_plans
+SET IDENTITY_INSERT [meal_plans] ON;
+
+INSERT INTO [meal_plans] ([id], [day_of_week], [meal_type], [menu_item], [description], [allergens], [calories], [created_at]) VALUES (1, 'Monday', 'Breakfast', 'Ragi Porridge & Fresh Fruits', 'Nutritious finger millet porridge served with fresh banana slices and honey.', 'None', 220, '2026-07-14 16:17:57.463');
+INSERT INTO [meal_plans] ([id], [day_of_week], [meal_type], [menu_item], [description], [allergens], [calories], [created_at]) VALUES (2, 'Monday', 'Lunch', 'Veg Pulao with Cucumber Raita', 'Fragrant basmati rice cooked with peas, carrots, beans, served with yogurt raita.', 'Dairy', 380, '2026-07-14 16:17:57.463');
+INSERT INTO [meal_plans] ([id], [day_of_week], [meal_type], [menu_item], [description], [allergens], [calories], [created_at]) VALUES (3, 'Monday', 'Snack', 'Roasted Makhana (Lotus Seeds)', 'Lightly roasted with ghee and mild turmeric powder.', 'Dairy', 110, '2026-07-14 16:17:57.463');
+INSERT INTO [meal_plans] ([id], [day_of_week], [meal_type], [menu_item], [description], [allergens], [calories], [created_at]) VALUES (4, 'Tuesday', 'Breakfast', 'Whole Wheat Pancakes', 'Fluffy wheat pancakes with organic maple syrup and fresh blueberries.', 'Gluten', 250, '2026-07-14 16:17:57.463');
+INSERT INTO [meal_plans] ([id], [day_of_week], [meal_type], [menu_item], [description], [allergens], [calories], [created_at]) VALUES (5, 'Tuesday', 'Lunch', 'Dal Tadka & Steamed Rice', 'Yellow lentil soup served with soft steamed rice, carrots, and cucumber sticks.', 'None', 340, '2026-07-14 16:17:57.463');
+INSERT INTO [meal_plans] ([id], [day_of_week], [meal_type], [menu_item], [description], [allergens], [calories], [created_at]) VALUES (6, 'Tuesday', 'Snack', 'Apple Slices with Peanut Butter', 'Fresh red apple slices served with cream peanut dip.', 'Peanuts', 180, '2026-07-14 16:17:57.463');
+INSERT INTO [meal_plans] ([id], [day_of_week], [meal_type], [menu_item], [description], [allergens], [calories], [created_at]) VALUES (7, 'Wednesday', 'Breakfast', 'Vegetable Idli with Coconut Chutney', 'Steamed rice cakes loaded with finely grated carrots and beans.', 'Coconut', 190, '2026-07-14 16:17:57.463');
+INSERT INTO [meal_plans] ([id], [day_of_week], [meal_type], [menu_item], [description], [allergens], [calories], [created_at]) VALUES (8, 'Wednesday', 'Lunch', 'Paneer Bhurji & Roti', 'Scrambled paneer (cottage cheese) with tomatoes, served with whole wheat flatbread.', 'Dairy, Gluten', 410, '2026-07-14 16:17:57.463');
+INSERT INTO [meal_plans] ([id], [day_of_week], [meal_type], [menu_item], [description], [allergens], [calories], [created_at]) VALUES (9, 'Wednesday', 'Snack', 'Banana Oat Muffins', 'Home-baked eggless muffins made with ripe bananas and rolled oats.', 'Gluten', 150, '2026-07-14 16:17:57.463');
+INSERT INTO [meal_plans] ([id], [day_of_week], [meal_type], [menu_item], [description], [allergens], [calories], [created_at]) VALUES (10, 'Thursday', 'Breakfast', 'Moong Dal Cheela', 'Savoury green gram pancakes stuffed with mild grated cottage cheese.', 'Dairy', 210, '2026-07-14 16:17:57.463');
+INSERT INTO [meal_plans] ([id], [day_of_week], [meal_type], [menu_item], [description], [allergens], [calories], [created_at]) VALUES (11, 'Thursday', 'Lunch', 'Sambar Rice with Potato Wedges', 'Rice mashed with lentils and mixed vegetables, served with baked potato wedges.', 'None', 370, '2026-07-14 16:17:57.463');
+INSERT INTO [meal_plans] ([id], [day_of_week], [meal_type], [menu_item], [description], [allergens], [calories], [created_at]) VALUES (12, 'Thursday', 'Snack', 'Mixed Fruit Cup', 'Papaya, pomegranate, watermelon, and pineapple cubes.', 'None', 90, '2026-07-14 16:17:57.463');
+INSERT INTO [meal_plans] ([id], [day_of_week], [meal_type], [menu_item], [description], [allergens], [calories], [created_at]) VALUES (13, 'Friday', 'Breakfast', 'Oatmeal with Honey & Chia Seeds', 'Warm rolled oats cooked in milk, topped with organic honey and chia seeds.', 'Dairy', 240, '2026-07-14 16:17:57.463');
+INSERT INTO [meal_plans] ([id], [day_of_week], [meal_type], [menu_item], [description], [allergens], [calories], [created_at]) VALUES (14, 'Friday', 'Lunch', 'Aloo Paratha with Curd', 'Whole wheat flatbread stuffed with spiced potato mash, served with fresh yogurt.', 'Dairy, Gluten', 450, '2026-07-14 16:17:57.463');
+INSERT INTO [meal_plans] ([id], [day_of_week], [meal_type], [menu_item], [description], [allergens], [calories], [created_at]) VALUES (15, 'Friday', 'Snack', 'Sweet Corn Salad', 'Steamed sweet corn kernels tossed with butter and cucumber.', 'Dairy', 130, '2026-07-14 16:17:57.463');
+
+SET IDENTITY_INSERT [meal_plans] OFF;
 
 -- Data for table: page_sections
 SET IDENTITY_INSERT [page_sections] ON;

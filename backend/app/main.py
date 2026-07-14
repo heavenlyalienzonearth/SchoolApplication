@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.core.config import settings
-from app.api.v1 import auth, settings as api_settings, content, submissions, chatbot, attendance, admissions, holidays, stationary, parent, finance, moments, circulars, library
+from app.api.v1 import auth, settings as api_settings, content, submissions, chatbot, attendance, admissions, holidays, stationary, parent, finance, moments, circulars, library, meals
 
 from fastapi.staticfiles import StaticFiles
 import os
@@ -36,6 +36,8 @@ app.include_router(stationary.router, prefix="/api/v1")
 app.include_router(parent.router, prefix="/api/v1")
 app.include_router(finance.router, prefix="/api/v1")
 app.include_router(moments.router, prefix="/api/v1")
+app.include_router(meals.router, prefix="/api/v1")
+
 
 # Create and mount static directory
 static_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "static"))

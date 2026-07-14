@@ -582,3 +582,24 @@ class StationaryOrderResponse(StationaryOrderBase):
 
 class StationaryOrderStatusUpdate(BaseModel):
     status: str
+
+# --- MEAL PLAN SCHEMAS ---
+
+class MealPlanBase(BaseModel):
+    day_of_week: str
+    meal_type: str
+    menu_item: str
+    description: Optional[str] = None
+    allergens: Optional[str] = None
+    calories: Optional[int] = None
+
+class MealPlanCreate(MealPlanBase):
+    pass
+
+class MealPlanResponse(MealPlanBase):
+    id: int
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
+

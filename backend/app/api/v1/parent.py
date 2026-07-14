@@ -106,6 +106,41 @@ def get_parent_dashboard(
             "items": items
         })
 
+    # Calculate milestone development progress for the radar chart
+    milestones = db.query(models.ParentMilestone).filter(models.ParentMilestone.student_id == student.id).all()
+    milestone_summary = {}
+    for m in milestones:
+        cat = m.category or "Other"
+        if cat not in milestone_summary:
+            milestone_summary[cat] = {"total": 0, "completed": 0}
+        milestone_summary[cat]["total"] += 1
+        if m.status.upper() == "COMPLETED":
+            milestone_summary[cat]["completed"] += 1
+            
+    radar_data = []
+    # Order categories logically for radar charts
+    standard_categories = ["Cognitive", "Physical", "Emotional", "Creative", "Language", "Social-Emotional"]
+    for cat in standard_categories:
+        if cat in milestone_summary:
+            counts = milestone_summary[cat]
+            pct = (counts["completed"] / counts["total"] * 100) if counts["total"] > 0 else 0
+            radar_data.append({
+                "category": cat,
+                "percentage": round(pct, 1),
+                "completed": counts["completed"],
+                "total": counts["total"]
+            })
+    # Add any other custom categories
+    for cat, counts in milestone_summary.items():
+        if cat not in standard_categories:
+            pct = (counts["completed"] / counts["total"] * 100) if counts["total"] > 0 else 0
+            radar_data.append({
+                "category": cat,
+                "percentage": round(pct, 1),
+                "completed": counts["completed"],
+                "total": counts["total"]
+            })
+
     return {
         "parent_name": current_user.full_name,
         "email": current_user.email,
@@ -131,7 +166,8 @@ def get_parent_dashboard(
         "weekly_plan": weekly_plan,
         "vaccinations": vaccinations,
         "issued_items": issued_items,
-        "stationary_orders": orders_list
+        "stationary_orders": orders_list,
+        "development_radar": radar_data
     }
 
 from pydantic import BaseModel

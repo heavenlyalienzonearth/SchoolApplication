@@ -434,3 +434,16 @@ class StudentDailyMoment(Base):
 
     student = relationship("Student")
     teacher = relationship("User")
+
+class MealPlan(Base):
+    __tablename__ = "meal_plans"
+
+    id = Column(Integer, primary_key=True, index=True)
+    day_of_week = Column(String(50), nullable=False)  # Monday, Tuesday, etc.
+    meal_type = Column(String(50), nullable=False)    # Breakfast, Lunch, Snack
+    menu_item = Column(String(255), nullable=False)
+    description = Column(Text, nullable=True)
+    allergens = Column(String(255), nullable=True)     # e.g. "Dairy, Nuts"
+    calories = Column(Integer, nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+
