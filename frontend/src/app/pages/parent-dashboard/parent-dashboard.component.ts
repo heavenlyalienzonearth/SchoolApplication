@@ -32,33 +32,6 @@ import { ContentService } from '../../core/services/content.service';
         </div>
       </header>
 
-      <!-- Subheader Tabs Bar -->
-      <div class="tabs-bar-container">
-        <div class="tabs-bar">
-          <button class="tab-btn" [class.active]="activeTab === 'overview'" (click)="setTab('overview')">
-            📋 Portal Overview
-          </button>
-          <button class="tab-btn" [class.active]="activeTab === 'billing'" (click)="setTab('billing')">
-            💳 Fees & Ledger
-          </button>
-          <button class="tab-btn" [class.active]="activeTab === 'milestones'" (click)="setTab('milestones')">
-            🎯 Milestones Tracker
-          </button>
-          <button class="tab-btn" [class.active]="activeTab === 'meals'" (click)="setTab('meals')">
-            🍽️ Weekly Menu
-          </button>
-          <button class="tab-btn" [class.active]="activeTab === 'leaves'" (click)="setTab('leaves')">
-            📅 Absence Requests
-          </button>
-          <button class="tab-btn" [class.active]="activeTab === 'calendar'" (click)="setTab('calendar')">
-            🗓️ School Calendar
-          </button>
-          <button class="tab-btn" [class.active]="activeTab === 'circulars'" (click)="setTab('circulars')">
-            📢 School Circulars
-          </button>
-        </div>
-      </div>
-
       <!-- Alert banners -->
       <div class="alert alert-danger" *ngIf="errorMessage" style="margin: 20px auto; max-width: 1200px;">
         ⚠️ {{ errorMessage }}
@@ -73,8 +46,36 @@ import { ContentService } from '../../core/services/content.service';
         <p>Retrieving kid's portal data...</p>
       </div>
 
-      <!-- Main Portal Layout -->
-      <main class="dashboard-main" *ngIf="!loading && dashboardData">
+      <!-- Main Portal Layout with Vertical Sidebar Tabs -->
+      <div class="dashboard-body-container" *ngIf="!loading && dashboardData" style="display: flex; gap: 30px; max-width: 1280px; margin: 30px auto; padding: 0 20px; align-items: start;">
+        
+        <!-- Left Sidebar Navigation -->
+        <aside class="sidebar-tabs">
+          <button class="tab-btn-vertical" [class.active]="activeTab === 'overview'" (click)="setTab('overview')">
+            <span>📋</span> Portal Overview
+          </button>
+          <button class="tab-btn-vertical" [class.active]="activeTab === 'billing'" (click)="setTab('billing')">
+            <span>💳</span> Fees & Ledger
+          </button>
+          <button class="tab-btn-vertical" [class.active]="activeTab === 'milestones'" (click)="setTab('milestones')">
+            <span>🎯</span> Milestones Tracker
+          </button>
+          <button class="tab-btn-vertical" [class.active]="activeTab === 'meals'" (click)="setTab('meals')">
+            <span>🍽️</span> Weekly Menu
+          </button>
+          <button class="tab-btn-vertical" [class.active]="activeTab === 'leaves'" (click)="setTab('leaves')">
+            <span>📅</span> Absence Requests
+          </button>
+          <button class="tab-btn-vertical" [class.active]="activeTab === 'calendar'" (click)="setTab('calendar')">
+            <span>🗓️</span> School Calendar
+          </button>
+          <button class="tab-btn-vertical" [class.active]="activeTab === 'circulars'" (click)="setTab('circulars')">
+            <span>📢</span> School Circulars
+          </button>
+        </aside>
+
+        <!-- Right Side Main Content Panel -->
+        <main class="dashboard-main" style="flex: 1; min-width: 0;">
 
         <!-- 1. OVERVIEW TAB -->
         <div *ngIf="activeTab === 'overview'" class="tab-content animate-fade-in">
@@ -890,6 +891,7 @@ import { ContentService } from '../../core/services/content.service';
         </div>
 
       </main>
+    </div>
 
       <!-- SIMULATED RAZORPAY CHECKOUT MODAL -->
       <div class="modal-backdrop" *ngIf="showRazorpayMockModal">
@@ -1015,49 +1017,45 @@ import { ContentService } from '../../core/services/content.service';
     }
 
     /* Tabs Bar styling */
-    .tabs-bar-container {
+    /* Vertical Sidebar Tabs Styling */
+    .sidebar-tabs {
       background: white;
-      border-bottom: 1px solid #E2E8F0;
-      padding: 0 40px;
+      border-radius: 12px;
+      border: 1px solid #E2E8F0;
+      padding: 16px;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.02);
+      align-self: flex-start;
+      position: sticky;
+      top: 20px;
     }
 
-    .tabs-bar {
-      display: flex;
-      max-width: 1200px;
-      margin: 0 auto;
-      gap: 30px;
-    }
-
-    .tab-btn {
+    .tab-btn-vertical {
       background: none;
       border: none;
-      padding: 16px 8px;
-      font-size: 0.95rem;
+      width: 100%;
+      text-align: left;
+      padding: 12px 16px;
+      font-size: 0.92rem;
       font-weight: 700;
       color: #64748B;
       cursor: pointer;
-      position: relative;
-      transition: color 0.2s;
+      border-radius: 8px;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      gap: 10px;
     }
 
-    .tab-btn:hover {
+    .tab-btn-vertical:hover {
+      background: #F8FAFC;
       color: #1E293B;
     }
 
-    .tab-btn.active {
+    .tab-btn-vertical.active {
+      background: #FFF0EB;
       color: #EE5A24;
     }
 
-    .tab-btn.active::after {
-      content: '';
-      position: absolute;
-      bottom: -1px;
-      left: 0;
-      right: 0;
-      height: 3px;
-      background: #EE5A24;
-      border-radius: 3px 3px 0 0;
-    }
 
     .loading-container {
       display: flex;
