@@ -3111,7 +3111,7 @@ export class ParentDashboardComponent implements OnInit {
   }
 
   loadMealSuspensions(): void {
-    this.apiService.get<any[]>('/meals/suspensions').subscribe({
+    this.apiService.get<any[]>('/parent/meals/suspensions').subscribe({
       next: (res) => {
         this.suspensionsList = res;
       },
@@ -3132,7 +3132,7 @@ export class ParentDashboardComponent implements OnInit {
     this.errorMessage = '';
     this.successMessage = '';
 
-    this.apiService.post<any>('/meals/suspensions', {
+    this.apiService.post<any>('/parent/meals/suspensions', {
       request_date: this.suspensionForm.requestDate,
       reason: this.suspensionForm.reason
     }).subscribe({
