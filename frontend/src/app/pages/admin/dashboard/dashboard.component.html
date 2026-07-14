@@ -1148,6 +1148,16 @@
               </div>
 
               <div class="form-group" style="margin-bottom: 15px;">
+                <label class="form-label" style="display: block; font-weight: 600; font-size: 0.85rem; color: #475569; margin-bottom: 6px;">Holiday Category *</label>
+                <select [(ngModel)]="newHoliday.category" name="h_category" required class="form-control" style="width: 100%; border: 1px solid #CBD5E1; border-radius: 6px; padding: 8px 12px; background-color: white; cursor: pointer;">
+                  <option value="National Holiday">National Holiday</option>
+                  <option value="Vacation">Vacation</option>
+                  <option value="Public Event">Public Event</option>
+                  <option value="Religious Event">Religious Event</option>
+                </select>
+              </div>
+
+              <div class="form-group" style="margin-bottom: 15px;">
                 <label class="form-label" style="display: block; font-weight: 600; font-size: 0.85rem; color: #475569; margin-bottom: 6px;">Description / Details</label>
                 <textarea [(ngModel)]="newHoliday.description" name="h_desc" class="form-control" style="width: 100%; border: 1px solid #CBD5E1; border-radius: 6px; padding: 8px 12px; min-height: 80px;" placeholder="Details about this holiday..."></textarea>
               </div>
@@ -1222,10 +1232,11 @@
               <table class="table" style="width: 100%; border-collapse: collapse; text-align: left;">
                 <thead>
                   <tr style="border-bottom: 2px solid #CBD5E1; color: #475569; font-weight: 700; font-size: 0.9rem;">
-                    <th style="padding: 10px; width: 25%;">Date</th>
-                    <th style="padding: 10px; width: 30%;">Holiday Title</th>
-                    <th style="padding: 10px; width: 30%;">Description</th>
-                    <th style="padding: 10px; width: 15%;">Actions</th>
+                    <th style="padding: 10px; width: 20%;">Date</th>
+                    <th style="padding: 10px; width: 25%;">Holiday Title</th>
+                    <th style="padding: 10px; width: 20%;">Category</th>
+                    <th style="padding: 10px; width: 25%;">Description</th>
+                    <th style="padding: 10px; width: 10%;">Actions</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -1235,7 +1246,24 @@
                     </td>
                     <td style="padding: 12px 10px;">
                       <div style="font-weight: 700; color: var(--primary);">{{ h.title }}</div>
-                      <span *ngIf="!h.is_active" class="badge" style="background-color: #F3F4F6; color: #9CA3AF; font-size: 0.7rem; border-radius: 4px; padding: 2px 4px;">Draft</span>
+                      <span *ngIf="!h.is_active" class="badge" style="background-color: #F3F4F6; color: #9CA3AF; font-size: 0.7rem; border-radius: 4px; padding: 2px 4px; margin-top: 4px; display: inline-block;">Draft</span>
+                    </td>
+                    <td style="padding: 12px 10px;">
+                      <span class="badge" [ngStyle]="{
+                        'background-color': h.category === 'National Holiday' ? '#FEE2E2' : 
+                                            h.category === 'Vacation' ? '#FFEDD5' : 
+                                            h.category === 'Public Event' ? '#D1FAE5' : '#F3E8FF',
+                        'color': h.category === 'National Holiday' ? '#EF4444' : 
+                                 h.category === 'Vacation' ? '#F97316' : 
+                                 h.category === 'Public Event' ? '#10B981' : '#A855F7',
+                        'font-size': '0.75rem',
+                        'font-weight': '700',
+                        'border-radius': '6px',
+                        'padding': '4px 8px',
+                        'display': 'inline-block'
+                      }">
+                        {{ h.category || 'National Holiday' }}
+                      </span>
                     </td>
                     <td style="padding: 12px 10px; color: #475569; font-size: 0.85rem;">
                       {{ h.description || '--' }}
@@ -1248,7 +1276,7 @@
                     </td>
                   </tr>
                   <tr *ngIf="holidaysList.length === 0">
-                    <td colspan="4" style="text-align: center; color: var(--text-light); padding: 40px; font-style: italic;">
+                    <td colspan="5" style="text-align: center; color: var(--text-light); padding: 40px; font-style: italic;">
                       No holidays scheduled for year {{ selectedHolidayYear }}.
                     </td>
                   </tr>

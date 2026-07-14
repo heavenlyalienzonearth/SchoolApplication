@@ -445,6 +445,7 @@ class HolidayBase(BaseModel):
     description: Optional[str] = None
     holiday_date: str  # YYYY-MM-DD
     year: int
+    category: Optional[str] = "National Holiday"
     is_active: bool = True
 
 class HolidayCreate(HolidayBase):

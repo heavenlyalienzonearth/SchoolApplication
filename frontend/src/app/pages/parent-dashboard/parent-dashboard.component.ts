@@ -6,6 +6,7 @@ import { AuthService } from '../../core/services/auth.service';
 import { ApiService } from '../../core/services/api.service';
 import { ParentService, Bill, Milestone, MilestoneGroup, LeaveRequest } from '../../core/services/parent.service';
 import { MomentsService, StudentMoment } from '../../core/services/moments.service';
+import { ContentService } from '../../core/services/content.service';
 
 @Component({
   selector: 'app-parent-dashboard',
@@ -45,6 +46,9 @@ import { MomentsService, StudentMoment } from '../../core/services/moments.servi
           </button>
           <button class="tab-btn" [class.active]="activeTab === 'leaves'" (click)="setTab('leaves')">
             📅 Absence Requests
+          </button>
+          <button class="tab-btn" [class.active]="activeTab === 'calendar'" (click)="setTab('calendar')">
+            🗓️ School Calendar
           </button>
         </div>
       </div>
@@ -470,6 +474,123 @@ import { MomentsService, StudentMoment } from '../../core/services/moments.servi
                 </div>
               </div>
             </div>
+          </div>
+        </div>
+
+        <!-- 5. CALENDAR & EVENTS TAB -->
+        <div *ngIf="activeTab === 'calendar'" class="tab-content animate-fade-in">
+          <div class="calendar-layout">
+            
+            <!-- Left Panel: Calendar Grid -->
+            <div class="card calendar-card">
+              <div class="calendar-header">
+                <button class="calendar-nav-btn" (click)="prevMonth()">◀</button>
+                <h3 class="calendar-title">{{ monthNames[currentMonth] }} {{ currentYear }}</h3>
+                <button class="calendar-nav-btn" (click)="nextMonth()">▶</button>
+              </div>
+              
+              <div class="calendar-grid">
+                <!-- Weekdays Header -->
+                <div class="weekday-name">Sun</div>
+                <div class="weekday-name">Mon</div>
+                <div class="weekday-name">Tue</div>
+                <div class="weekday-name">Wed</div>
+                <div class="weekday-name">Thu</div>
+                <div class="weekday-name">Fri</div>
+                <div class="weekday-name">Sat</div>
+                
+                <!-- Calendar Day Cells -->
+                <div *ngFor="let day of calendarDays" 
+                     class="calendar-day" 
+                     [class.empty]="!day.date"
+                     [class.today]="day.isToday"
+                     [class.selected]="selectedDateStr === day.dateStr"
+                     (click)="selectDate(day.date, day.dateStr)">
+                  
+                  <span class="day-number">{{ day.dayNum }}</span>
+                  
+                  <!-- Event Indicator Dots -->
+                  <div class="event-dots" *ngIf="day.events && day.events.length > 0">
+                    <span *ngFor="let ev of day.events" 
+                          class="event-dot" 
+                          [style.background-color]="getEventCategoryColor(ev.type)"
+                          [title]="ev.type + ': ' + ev.title"></span>
+                  </div>
+                </div>
+              </div>
+              
+              <!-- Legend Indicator Panel -->
+              <div class="calendar-legend">
+                <div class="legend-item"><span class="legend-dot" style="background-color: #0652DD;"></span> School Events</div>
+                <div class="legend-item"><span class="legend-dot" style="background-color: #EF4444;"></span> National Holidays</div>
+                <div class="legend-item"><span class="legend-dot" style="background-color: #F97316;"></span> Vacations</div>
+                <div class="legend-item"><span class="legend-dot" style="background-color: #10B981;"></span> Public Events</div>
+                <div class="legend-item"><span class="legend-dot" style="background-color: #A855F7;"></span> Religious Events</div>
+              </div>
+            </div>
+            
+            <!-- Right Panel: Selected Day Details & Upcoming Events -->
+            <div class="calendar-details-panel">
+              <!-- Selected Day Events List -->
+              <div class="card selected-day-card">
+                <h4 class="details-hdr">📅 Events for {{ formatEventDate(selectedDateStr) }}</h4>
+                
+                <div class="selected-events-list" *ngIf="selectedDateEvents && selectedDateEvents.length > 0">
+                  <div class="selected-event-item" *ngFor="let ev of selectedDateEvents">
+                    <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 8px;">
+                      <span class="event-badge" [ngStyle]="{
+                        'background-color': ev.type === 'School Event' ? '#DBEAFE' : 
+                                            ev.type === 'National Holiday' ? '#FEE2E2' : 
+                                            ev.type === 'Vacation' ? '#FFEDD5' : 
+                                            ev.type === 'Public Event' ? '#D1FAE5' : '#F3E8FF',
+                        'color': ev.type === 'School Event' ? '#1E40AF' : 
+                                 ev.type === 'National Holiday' ? '#991B1B' : 
+                                 ev.type === 'Vacation' ? '#C2410C' : 
+                                 ev.type === 'Public Event' ? '#065F46' : '#6B21A8'
+                      }">
+                        {{ ev.type }}
+                      </span>
+                      <span class="event-location" *ngIf="ev.location">📍 {{ ev.location }}</span>
+                    </div>
+                    
+                    <h5 class="event-title">{{ ev.title }}</h5>
+                    <p class="event-desc">{{ ev.description || 'No description provided.' }}</p>
+                    
+                    <div *ngIf="ev.image" class="event-image-container" style="margin-top: 10px; border-radius: 6px; overflow: hidden; max-height: 150px;">
+                      <img [src]="mediaBaseUrl + ev.image" alt="Event Image" style="width: 100%; height: 100%; object-fit: cover;" />
+                    </div>
+                  </div>
+                </div>
+                
+                <div class="no-events-selected" *ngIf="!selectedDateEvents || selectedDateEvents.length === 0">
+                  <div style="font-size: 2rem; margin-bottom: 10px; opacity: 0.5;">🍂</div>
+                  <p>No events or holidays scheduled for this date.</p>
+                </div>
+              </div>
+              
+              <!-- Upcoming Events List -->
+              <div class="card upcoming-events-card">
+                <h4 class="details-hdr">🚀 Upcoming School Events</h4>
+                
+                <div class="upcoming-events-list">
+                  <div class="upcoming-item" *ngFor="let ev of getUpcomingEvents()" (click)="selectUpcomingEvent(ev)">
+                    <div class="upcoming-date-box" [style.border-color]="getEventCategoryColor(ev.type)">
+                      <span class="upcoming-date-day">{{ ev.dateStr.split('-')[2] }}</span>
+                      <span class="upcoming-date-month">{{ getMonthNameAbbreviation(ev.dateStr) }}</span>
+                    </div>
+                    <div class="upcoming-details">
+                      <h5 class="upcoming-title">{{ ev.title }}</h5>
+                      <span class="upcoming-type" [style.color]="getEventCategoryColor(ev.type)">{{ ev.type }}</span>
+                    </div>
+                  </div>
+                  
+                  <div class="no-events-selected" *ngIf="getUpcomingEvents().length === 0" style="padding: 20px;">
+                    <p>No upcoming events scheduled.</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
           </div>
         </div>
 
@@ -1611,6 +1732,335 @@ import { MomentsService, StudentMoment } from '../../core/services/moments.servi
       from { opacity: 0; transform: translateY(8px); }
       to { opacity: 1; transform: translateY(0); }
     }
+
+    /* Calendar Tab Layout */
+    .calendar-layout {
+      display: grid;
+      grid-template-columns: 7fr 4fr;
+      gap: 25px;
+      margin-top: 5px;
+    }
+    
+    .calendar-card {
+      background: white;
+      border-radius: 16px;
+      border: 1px solid #E2E8F0;
+      padding: 25px;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.02);
+    }
+    
+    .calendar-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 25px;
+      padding-bottom: 15px;
+      border-bottom: 1px solid #F1F5F9;
+    }
+    
+    .calendar-title {
+      font-size: 1.3rem;
+      font-weight: 800;
+      color: #1E293B;
+      margin: 0;
+    }
+    
+    .calendar-nav-btn {
+      background: #F1F5F9;
+      border: none;
+      color: #475569;
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      font-weight: bold;
+      transition: all 0.2s ease;
+    }
+    
+    .calendar-nav-btn:hover {
+      background: var(--primary);
+      color: white;
+    }
+    
+    .calendar-grid {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 10px;
+    }
+    
+    .weekday-name {
+      text-align: center;
+      font-weight: 700;
+      color: #64748B;
+      font-size: 0.85rem;
+      padding-bottom: 10px;
+      border-bottom: 2px solid #F1F5F9;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    
+    .calendar-day {
+      aspect-ratio: 1.2;
+      border-radius: 12px;
+      border: 1px solid #F1F5F9;
+      background: #FFFFFF;
+      padding: 10px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      position: relative;
+    }
+    
+    .calendar-day:not(.empty):hover {
+      border-color: var(--primary);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+      transform: translateY(-2px);
+    }
+    
+    .calendar-day.empty {
+      background: #F8FAFC;
+      border-color: transparent;
+      cursor: default;
+      pointer-events: none;
+    }
+    
+    .calendar-day.today {
+      background: #EFF6FF;
+      border-color: #3B82F6;
+    }
+    
+    .calendar-day.today .day-number {
+      color: #2563EB;
+      font-weight: 800;
+    }
+    
+    .calendar-day.selected {
+      background: var(--primary-light, #FFF4E5);
+      border-color: var(--primary);
+    }
+    
+    .calendar-day.selected .day-number {
+      color: var(--primary);
+      font-weight: 800;
+    }
+    
+    .day-number {
+      font-size: 1rem;
+      font-weight: 600;
+      color: #334155;
+    }
+    
+    .event-dots {
+      display: flex;
+      gap: 4px;
+      flex-wrap: wrap;
+      margin-top: 5px;
+      justify-content: center;
+    }
+    
+    .event-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+    }
+    
+    .calendar-legend {
+      display: flex;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-top: 25px;
+      padding-top: 20px;
+      border-top: 1px solid #F1F5F9;
+    }
+    
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.82rem;
+      font-weight: 600;
+      color: #475569;
+    }
+    
+    .legend-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      display: inline-block;
+    }
+    
+    /* Details Panel Column */
+    .calendar-details-panel {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+    
+    .selected-day-card {
+      background: white;
+      border-radius: 16px;
+      border: 1px solid #E2E8F0;
+      padding: 25px;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.02);
+      flex: 1;
+      min-height: 250px;
+      display: flex;
+      flex-direction: column;
+    }
+    
+    .details-hdr {
+      font-size: 1.05rem;
+      font-weight: 800;
+      color: #1E293B;
+      margin-top: 0;
+      margin-bottom: 20px;
+      border-bottom: 1px solid #F1F5F9;
+      padding-bottom: 12px;
+    }
+    
+    .selected-events-list {
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+      overflow-y: auto;
+      max-height: 350px;
+      padding-right: 5px;
+    }
+    
+    .selected-event-item {
+      border: 1px solid #E2E8F0;
+      border-radius: 12px;
+      padding: 15px;
+      background: #F8FAFC;
+    }
+    
+    .event-badge {
+      font-size: 0.72rem;
+      font-weight: 700;
+      padding: 4px 10px;
+      border-radius: 20px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    
+    .event-location {
+      font-size: 0.75rem;
+      color: #64748B;
+      font-weight: 600;
+    }
+    
+    .event-title {
+      font-size: 1.05rem;
+      font-weight: 700;
+      color: #1E293B;
+      margin: 10px 0 6px 0;
+    }
+    
+    .event-desc {
+      font-size: 0.85rem;
+      color: #475569;
+      margin: 0;
+      line-height: 1.5;
+    }
+    
+    .no-events-selected {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      flex: 1;
+      color: #64748B;
+      font-size: 0.9rem;
+      font-weight: 600;
+      text-align: center;
+      padding: 20px 0;
+    }
+    
+    /* Upcoming Events Panel */
+    .upcoming-events-card {
+      background: white;
+      border-radius: 16px;
+      border: 1px solid #E2E8F0;
+      padding: 25px;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.02);
+    }
+    
+    .upcoming-events-list {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    
+    .upcoming-item {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+      padding: 10px;
+      border-radius: 12px;
+      border: 1px solid #F1F5F9;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    
+    .upcoming-item:hover {
+      background: #F8FAFC;
+      border-color: var(--primary);
+    }
+    
+    .upcoming-date-box {
+      width: 50px;
+      height: 50px;
+      border-radius: 10px;
+      border: 2px solid #E2E8F0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      background: white;
+      flex-shrink: 0;
+    }
+    
+    .upcoming-date-day {
+      font-size: 1.1rem;
+      font-weight: 800;
+      color: #1E293B;
+      line-height: 1;
+    }
+    
+    .upcoming-date-month {
+      font-size: 0.65rem;
+      font-weight: 700;
+      color: #64748B;
+      text-transform: uppercase;
+    }
+    
+    .upcoming-details {
+      flex: 1;
+      min-width: 0;
+    }
+    
+    .upcoming-title {
+      font-size: 0.88rem;
+      font-weight: 700;
+      color: #1E293B;
+      margin: 0 0 2px 0;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    
+    .upcoming-type {
+      font-size: 0.72rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+    }
   `]
 })
 export class ParentDashboardComponent implements OnInit {
@@ -1651,12 +2101,29 @@ export class ParentDashboardComponent implements OnInit {
   parentMoments: StudentMoment[] = [];
   parentMomentsLoading = false;
 
+  // Calendar & Events State
+  eventsList: any[] = [];
+  holidaysList: any[] = [];
+  allCalendarEvents: any[] = [];
+  calendarEventsLoading = false;
+  currentMonth: number = new Date().getMonth();
+  currentYear: number = new Date().getFullYear();
+  calendarDays: any[] = [];
+  monthNames = [
+    'January', 'February', 'March', 'April', 'May', 'June',
+    'July', 'August', 'September', 'October', 'November', 'December'
+  ];
+  selectedDateEvents: any[] = [];
+  selectedDateStr: string = '';
+  selectedDate: Date = new Date();
+
   constructor(
     public authService: AuthService,
     private apiService: ApiService,
     private parentService: ParentService,
     private router: Router,
-    private momentsService: MomentsService
+    private momentsService: MomentsService,
+    private contentService: ContentService
   ) {}
 
   ngOnInit(): void {
@@ -1718,6 +2185,8 @@ export class ParentDashboardComponent implements OnInit {
       this.loadMilestones();
     } else if (tab === 'leaves') {
       this.loadLeaves();
+    } else if (tab === 'calendar') {
+      this.loadCalendarData();
     } else if (tab === 'overview') {
       this.loadDashboardData();
     }
@@ -1930,8 +2399,200 @@ export class ParentDashboardComponent implements OnInit {
     return Object.keys(this.milestonesGroup);
   }
 
+  getMonthNameAbbreviation(dateStr: string): string {
+    const parts = dateStr.split('-');
+    if (parts.length === 3) {
+      const monthIdx = Number(parts[1]) - 1;
+      if (monthIdx >= 0 && monthIdx < 12) {
+        return this.monthNames[monthIdx].slice(0, 3);
+      }
+    }
+    return '';
+  }
+
   getMilestonesByCategory(category: string): any[] {
     if (!this.milestonesGroup) return [];
     return (this.milestonesGroup as any)[category] || [];
+  }
+
+  loadCalendarData(): void {
+    this.calendarEventsLoading = true;
+    this.contentService.getHolidays(this.currentYear).subscribe({
+      next: (holidays) => {
+        this.holidaysList = holidays;
+        this.contentService.getEvents().subscribe({
+          next: (events) => {
+            this.eventsList = events;
+            this.combineAndMapEvents();
+            this.calendarEventsLoading = false;
+          },
+          error: (err) => {
+            console.error('Failed to load events:', err);
+            this.combineAndMapEvents();
+            this.calendarEventsLoading = false;
+          }
+        });
+      },
+      error: (err) => {
+        console.error('Failed to load holidays:', err);
+        this.calendarEventsLoading = false;
+      }
+    });
+  }
+
+  combineAndMapEvents(): void {
+    const combined = [];
+
+    // Add school events
+    for (const event of this.eventsList) {
+      if (event.is_active !== false) {
+        const dateStr = new Date(event.event_date).toISOString().split('T')[0];
+        combined.push({
+          id: 'event_' + event.id,
+          title: event.title,
+          description: event.description,
+          dateStr: dateStr,
+          type: 'School Event',
+          location: event.location,
+          image: event.image_url
+        });
+      }
+    }
+
+    // Add holidays
+    for (const h of this.holidaysList) {
+      if (h.is_active) {
+        combined.push({
+          id: 'holiday_' + h.id,
+          title: h.title,
+          description: h.description,
+          dateStr: h.holiday_date,
+          type: h.category || 'National Holiday'
+        });
+      }
+    }
+
+    this.allCalendarEvents = combined;
+    this.generateCalendarGrid();
+    
+    // Auto-select active date details
+    const selectedExists = this.calendarDays.find(d => d.dateStr === this.selectedDateStr);
+    if (!selectedExists) {
+      const today = new Date();
+      const offset = today.getTimezoneOffset();
+      const localToday = new Date(today.getTime() - (offset * 60 * 1000));
+      this.selectDate(today, localToday.toISOString().split('T')[0]);
+    } else {
+      this.selectDate(this.selectedDate, this.selectedDateStr);
+    }
+  }
+
+  generateCalendarGrid(): void {
+    const firstDayIndex = new Date(this.currentYear, this.currentMonth, 1).getDay();
+    const totalDays = new Date(this.currentYear, this.currentMonth + 1, 0).getDate();
+    
+    const days = [];
+    
+    // Add empty placeholders
+    for (let i = 0; i < firstDayIndex; i++) {
+      days.push({ date: null, dateStr: '', events: [] });
+    }
+    
+    // Add days
+    for (let d = 1; d <= totalDays; d++) {
+      const date = new Date(this.currentYear, this.currentMonth, d);
+      const offset = date.getTimezoneOffset();
+      const localDate = new Date(date.getTime() - (offset * 60 * 1000));
+      const dateStr = localDate.toISOString().split('T')[0];
+      
+      const dayEvents = this.allCalendarEvents.filter(e => e.dateStr === dateStr);
+      
+      days.push({
+        date: date,
+        dayNum: d,
+        dateStr: dateStr,
+        events: dayEvents,
+        isToday: this.isToday(date)
+      });
+    }
+    
+    this.calendarDays = days;
+  }
+
+  prevMonth(): void {
+    if (this.currentMonth === 0) {
+      this.currentMonth = 11;
+      this.currentYear--;
+    } else {
+      this.currentMonth--;
+    }
+    this.loadCalendarData();
+  }
+
+  nextMonth(): void {
+    if (this.currentMonth === 11) {
+      this.currentMonth = 0;
+      this.currentYear++;
+    } else {
+      this.currentMonth++;
+    }
+    this.loadCalendarData();
+  }
+
+  selectDate(date: Date, dateStr: string): void {
+    if (!dateStr) return;
+    this.selectedDate = date;
+    this.selectedDateStr = dateStr;
+    this.selectedDateEvents = this.allCalendarEvents.filter(e => e.dateStr === dateStr);
+  }
+
+  selectUpcomingEvent(ev: any): void {
+    const parts = ev.dateStr.split('-');
+    if (parts.length === 3) {
+      const date = new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]));
+      this.selectDate(date, ev.dateStr);
+    }
+  }
+
+  isToday(date: Date): boolean {
+    const today = new Date();
+    return date.getDate() === today.getDate() &&
+           date.getMonth() === today.getMonth() &&
+           date.getFullYear() === today.getFullYear();
+  }
+
+  getEventCategoryColor(type: string): string {
+    switch (type) {
+      case 'School Event':
+        return '#0652DD';
+      case 'National Holiday':
+        return '#EF4444';
+      case 'Vacation':
+        return '#F97316';
+      case 'Public Event':
+        return '#10B981';
+      case 'Religious Event':
+        return '#A855F7';
+      default:
+        return '#64748B';
+    }
+  }
+
+  getUpcomingEvents(): any[] {
+    const today = new Date();
+    const offset = today.getTimezoneOffset();
+    const localToday = new Date(today.getTime() - (offset * 60 * 1000));
+    const todayStr = localToday.toISOString().split('T')[0];
+    return this.allCalendarEvents
+      .filter(e => e.dateStr >= todayStr)
+      .sort((a, b) => a.dateStr.localeCompare(b.dateStr))
+      .slice(0, 5);
+  }
+
+  formatEventDate(dateStr: string): string {
+    const parts = dateStr.split('-');
+    if (parts.length !== 3) return dateStr;
+    const date = new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]));
+    return date.toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' });
   }
 }

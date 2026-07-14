@@ -262,6 +262,7 @@ class Holiday(Base):
     description = Column(Text, nullable=True)
     holiday_date = Column(String(50), nullable=False)  # YYYY-MM-DD
     year = Column(Integer, nullable=False, index=True)
+    category = Column(String(100), default="National Holiday", nullable=True)
     is_active = Column(Boolean, default=True, nullable=False)
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
 

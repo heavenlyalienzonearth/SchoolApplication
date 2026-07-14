@@ -100,7 +100,7 @@ export class DashboardComponent implements OnInit {
   holidaysList: any[] = [];
   selectedHolidayYear = new Date().getFullYear();
   holidayYears = [2025, 2026, 2027, 2028];
-  newHoliday = { title: '', description: '', holiday_date: '', year: 2026, is_active: true, send_email: false };
+  newHoliday = { title: '', description: '', holiday_date: '', year: 2026, category: 'National Holiday', is_active: true, send_email: false };
   editingHolidayId: number | null = null;
 
   // Custom Bulk Holiday Email Form State
@@ -1613,6 +1613,7 @@ export class DashboardComponent implements OnInit {
       description: holiday.description || '',
       holiday_date: holiday.holiday_date,
       year: holiday.year,
+      category: holiday.category || 'National Holiday',
       is_active: holiday.is_active,
       send_email: false
     };
@@ -1639,6 +1640,7 @@ export class DashboardComponent implements OnInit {
       description: '',
       holiday_date: '',
       year: this.selectedHolidayYear,
+      category: 'National Holiday',
       is_active: true,
       send_email: false
     };
