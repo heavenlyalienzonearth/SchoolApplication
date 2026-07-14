@@ -205,6 +205,10 @@ export class DashboardComponent implements OnInit {
   schoolManagementExpanded = false;
   publicSettingsExpanded = false;
   financeExpanded = false;
+  reviewsExpanded = false;
+  attendanceExpanded = false;
+  stationeryExpanded = false;
+  dailyUpdatesExpanded = false;
 
   feeStructures: any[] = [];
   invoices: any[] = [];
@@ -242,7 +246,7 @@ export class DashboardComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
-    const schoolMgmtTabs = ['programs', 'holidays', 'gallery', 'inquiries', 'users'];
+    const schoolMgmtTabs = ['programs', 'holidays', 'gallery', 'inquiries', 'users', 'circulars', 'library', 'admissions', 'milestones'];
     if (schoolMgmtTabs.includes(this.activeTab)) {
       this.schoolManagementExpanded = true;
     }
@@ -253,6 +257,18 @@ export class DashboardComponent implements OnInit {
     const financeMgmtTabs = ['finance-structures', 'finance-ledger'];
     if (financeMgmtTabs.includes(this.activeTab)) {
       this.financeExpanded = true;
+    }
+    if (['testimonials'].includes(this.activeTab)) {
+      this.reviewsExpanded = true;
+    }
+    if (['attendance'].includes(this.activeTab)) {
+      this.attendanceExpanded = true;
+    }
+    if (['stationary'].includes(this.activeTab)) {
+      this.stationeryExpanded = true;
+    }
+    if (['moments', 'leaves'].includes(this.activeTab)) {
+      this.dailyUpdatesExpanded = true;
     }
     this.authService.currentUser$.subscribe(user => {
       this.currentUser = user;
@@ -321,6 +337,22 @@ export class DashboardComponent implements OnInit {
 
   toggleFinance(): void {
     this.financeExpanded = !this.financeExpanded;
+  }
+
+  toggleReviews(): void {
+    this.reviewsExpanded = !this.reviewsExpanded;
+  }
+
+  toggleAttendance(): void {
+    this.attendanceExpanded = !this.attendanceExpanded;
+  }
+
+  toggleStationery(): void {
+    this.stationeryExpanded = !this.stationeryExpanded;
+  }
+
+  toggleDailyUpdates(): void {
+    this.dailyUpdatesExpanded = !this.dailyUpdatesExpanded;
   }
 
   // --- ADMIN FINANCE & BILLING METHODS ---

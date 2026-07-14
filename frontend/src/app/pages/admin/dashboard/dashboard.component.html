@@ -65,12 +65,29 @@
             <span class="icon">🎯</span> Milestone Config
           </li>
         </ng-container>
-        <li [class.active]="activeTab === 'testimonials'" (click)="setTab('testimonials')" *ngIf="currentUser?.role?.toUpperCase() === 'ADMIN' || currentUser?.role?.toUpperCase() === 'PRINCIPAL'">
-          <span class="icon">💬</span> Parent Reviews
+
+        <!-- Reviews Group -->
+        <li class="sidebar-header" (click)="toggleReviews()" *ngIf="currentUser?.role?.toUpperCase() === 'ADMIN' || currentUser?.role?.toUpperCase() === 'PRINCIPAL'" style="cursor: pointer; display: flex; justify-content: space-between; align-items: center; width: 100%; box-sizing: border-box;">
+          <span>💬 Reviews</span>
+          <span style="font-size: 0.7rem; color: #94a3b8; font-weight: 800; margin-left: auto;">{{ reviewsExpanded ? '▼' : '▶' }}</span>
         </li>
-        <li [class.active]="activeTab === 'attendance'" (click)="setTab('attendance')">
-          <span class="icon">📅</span> Kid Attendance
+        <ng-container *ngIf="reviewsExpanded && (currentUser?.role?.toUpperCase() === 'ADMIN' || currentUser?.role?.toUpperCase() === 'PRINCIPAL')">
+          <li [class.active]="activeTab === 'testimonials'" (click)="setTab('testimonials')" class="submenu-item">
+            <span class="icon">💬</span> Parent Reviews
+          </li>
+        </ng-container>
+
+        <!-- Attendance Group -->
+        <li class="sidebar-header" (click)="toggleAttendance()" style="cursor: pointer; display: flex; justify-content: space-between; align-items: center; width: 100%; box-sizing: border-box;">
+          <span>📅 Attendance</span>
+          <span style="font-size: 0.7rem; color: #94a3b8; font-weight: 800; margin-left: auto;">{{ attendanceExpanded ? '▼' : '▶' }}</span>
         </li>
+        <ng-container *ngIf="attendanceExpanded">
+          <li [class.active]="activeTab === 'attendance'" (click)="setTab('attendance')" class="submenu-item">
+            <span class="icon">📅</span> Student Attendance
+          </li>
+        </ng-container>
+
         <!-- Finance & Billing Group -->
         <li class="sidebar-header" (click)="toggleFinance()" *ngIf="currentUser?.role?.toUpperCase() === 'ADMIN' || currentUser?.role?.toUpperCase() === 'PRINCIPAL'" style="cursor: pointer; display: flex; justify-content: space-between; align-items: center; width: 100%; box-sizing: border-box;">
           <span>💰 Finance & Billing</span>
@@ -84,15 +101,31 @@
             <span class="icon">📊</span> Invoices & Ledger
           </li>
         </ng-container>
-        <li [class.active]="activeTab === 'stationary'" (click)="setTab('stationary')" *ngIf="currentUser?.role?.toUpperCase() === 'ADMIN' || currentUser?.role?.toUpperCase() === 'PRINCIPAL'">
-          <span class="icon">✏️</span> Stationery Center
+
+        <!-- Stationery Group -->
+        <li class="sidebar-header" (click)="toggleStationery()" *ngIf="currentUser?.role?.toUpperCase() === 'ADMIN' || currentUser?.role?.toUpperCase() === 'PRINCIPAL'" style="cursor: pointer; display: flex; justify-content: space-between; align-items: center; width: 100%; box-sizing: border-box;">
+          <span>✏️ Stationery</span>
+          <span style="font-size: 0.7rem; color: #94a3b8; font-weight: 800; margin-left: auto;">{{ stationeryExpanded ? '▼' : '▶' }}</span>
         </li>
-        <li [class.active]="activeTab === 'moments'" (click)="setTab('moments')" *ngIf="currentUser?.role?.toUpperCase() === 'ADMIN' || currentUser?.role?.toUpperCase() === 'PRINCIPAL' || currentUser?.role?.toUpperCase() === 'TEACHER'">
-          <span class="icon">📸</span> Daily Moments
+        <ng-container *ngIf="stationeryExpanded && (currentUser?.role?.toUpperCase() === 'ADMIN' || currentUser?.role?.toUpperCase() === 'PRINCIPAL')">
+          <li [class.active]="activeTab === 'stationary'" (click)="setTab('stationary')" class="submenu-item">
+            <span class="icon">✏️</span> Stationery Center
+          </li>
+        </ng-container>
+
+        <!-- Daily Updates Group -->
+        <li class="sidebar-header" (click)="toggleDailyUpdates()" *ngIf="currentUser?.role?.toUpperCase() === 'ADMIN' || currentUser?.role?.toUpperCase() === 'PRINCIPAL' || currentUser?.role?.toUpperCase() === 'TEACHER'" style="cursor: pointer; display: flex; justify-content: space-between; align-items: center; width: 100%; box-sizing: border-box;">
+          <span>📸 Daily Updates</span>
+          <span style="font-size: 0.7rem; color: #94a3b8; font-weight: 800; margin-left: auto;">{{ dailyUpdatesExpanded ? '▼' : '▶' }}</span>
         </li>
-        <li [class.active]="activeTab === 'leaves'" (click)="setTab('leaves')" *ngIf="currentUser?.role?.toUpperCase() === 'ADMIN' || currentUser?.role?.toUpperCase() === 'PRINCIPAL' || currentUser?.role?.toUpperCase() === 'TEACHER'">
-          <span class="icon">📅</span> Leave Approvals
-        </li>
+        <ng-container *ngIf="dailyUpdatesExpanded && (currentUser?.role?.toUpperCase() === 'ADMIN' || currentUser?.role?.toUpperCase() === 'PRINCIPAL' || currentUser?.role?.toUpperCase() === 'TEACHER')">
+          <li [class.active]="activeTab === 'moments'" (click)="setTab('moments')" class="submenu-item">
+            <span class="icon">📸</span> Daily Moments
+          </li>
+          <li [class.active]="activeTab === 'leaves'" (click)="setTab('leaves')" class="submenu-item">
+            <span class="icon">📅</span> Leave Approvals
+          </li>
+        </ng-container>
       </ul>
     </aside>
 
@@ -109,7 +142,7 @@
           <option value="testimonials" *ngIf="currentUser?.role?.toUpperCase() === 'ADMIN' || currentUser?.role?.toUpperCase() === 'PRINCIPAL'">💬 Parent Reviews</option>
           <option value="gallery" *ngIf="currentUser?.role?.toUpperCase() === 'ADMIN' || currentUser?.role?.toUpperCase() === 'PRINCIPAL'">📷 School Gallery</option>
           <option value="inquiries" *ngIf="currentUser?.role?.toUpperCase() === 'ADMIN' || currentUser?.role?.toUpperCase() === 'PRINCIPAL'">📩 Admission Enquiries</option>
-          <option value="attendance">📅 Kid Attendance</option>
+          <option value="attendance">📅 Student Attendance</option>
           <option value="admissions" *ngIf="currentUser?.role?.toUpperCase() === 'ADMIN' || currentUser?.role?.toUpperCase() === 'PRINCIPAL'">🏫 Student Admissions</option>
           <option value="holidays">📅 School Holidays</option>
           <option value="users" *ngIf="currentUser?.role?.toUpperCase() === 'ADMIN'">👥 School Teacher(s)</option>
@@ -737,10 +770,10 @@
         </div>
       </section>
 
-      <!-- KID ATTENDANCE TAB -->
+      <!-- STUDENT ATTENDANCE TAB -->
       <section *ngIf="activeTab === 'attendance'" class="tab-section">
         <div class="section-title-bar">
-          <h2>Kid Attendance Manager</h2>
+          <h2>Student Attendance Manager</h2>
           <div class="inquiry-selector">
             <button [class.active]="attendanceActiveSubTab === 'mark'" (click)="setAttendanceSubTab('mark')">📅 Mark Attendance</button>
             <button [class.active]="attendanceActiveSubTab === 'roster'" (click)="setAttendanceSubTab('roster')">👦 Class Roster</button>
