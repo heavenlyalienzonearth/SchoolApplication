@@ -457,43 +457,26 @@ import { ContentService } from '../../core/services/content.service';
                   </linearGradient>
                 </defs>
 
-                <!-- Grid concentric circles/pentagons -->
+                <!-- Grid concentric scale bands (20%, 40%, 60%, 80%, 100%) -->
                 <polygon [attr.points]="getRadarGridPoints(0.2)" fill="none" stroke="#F1F5F9" stroke-width="1.2" />
                 <polygon [attr.points]="getRadarGridPoints(0.4)" fill="none" stroke="#E2E8F0" stroke-width="1.2" />
                 <polygon [attr.points]="getRadarGridPoints(0.6)" fill="none" stroke="#CBD5E1" stroke-width="1.2" stroke-dasharray="3" />
                 <polygon [attr.points]="getRadarGridPoints(0.8)" fill="none" stroke="#94A3B8" stroke-width="1.2" stroke-dasharray="3" />
                 <polygon [attr.points]="getRadarGridPoints(1.0)" fill="none" stroke="#64748B" stroke-width="1.8" />
 
-                <!-- Axes -->
-                <line x1="240" y1="180" x2="240" y2="70" 
-                      [attr.stroke]="hoveredCategory === 'Cognitive' ? 'var(--secondary)' : '#94A3B8'" 
-                      [attr.stroke-width]="hoveredCategory === 'Cognitive' ? 2.5 : 1" 
-                      [attr.stroke-dasharray]="hoveredCategory === 'Cognitive' ? 'none' : '2'" style="transition: all 0.2s;" />
-                      
-                <line x1="240" y1="180" [attr.x2]="getAxisX(72)" [attr.y2]="getAxisY(72)" 
-                      [attr.stroke]="hoveredCategory === 'Physical' ? 'var(--secondary)' : '#94A3B8'" 
-                      [attr.stroke-width]="hoveredCategory === 'Physical' ? 2.5 : 1" 
-                      [attr.stroke-dasharray]="hoveredCategory === 'Physical' ? 'none' : '2'" style="transition: all 0.2s;" />
-                      
-                <line x1="240" y1="180" [attr.x2]="getAxisX(144)" [attr.y2]="getAxisY(144)" 
-                      [attr.stroke]="hoveredCategory === 'Emotional' || hoveredCategory === 'Social-Emotional' ? 'var(--secondary)' : '#94A3B8'" 
-                      [attr.stroke-width]="hoveredCategory === 'Emotional' || hoveredCategory === 'Social-Emotional' ? 2.5 : 1" 
-                      [attr.stroke-dasharray]="hoveredCategory === 'Emotional' || hoveredCategory === 'Social-Emotional' ? 'none' : '2'" style="transition: all 0.2s;" />
-                      
-                <line x1="240" y1="180" [attr.x2]="getAxisX(216)" [attr.y2]="getAxisY(216)" 
-                      [attr.stroke]="hoveredCategory === 'Creative' ? 'var(--secondary)' : '#94A3B8'" 
-                      [attr.stroke-width]="hoveredCategory === 'Creative' ? 2.5 : 1" 
-                      [attr.stroke-dasharray]="hoveredCategory === 'Creative' ? 'none' : '2'" style="transition: all 0.2s;" />
-                      
-                <line x1="240" y1="180" [attr.x2]="getAxisX(288)" [attr.y2]="getAxisY(288)" 
-                      [attr.stroke]="hoveredCategory === 'Language' ? 'var(--secondary)' : '#94A3B8'" 
-                      [attr.stroke-width]="hoveredCategory === 'Language' ? 2.5 : 1" 
-                      [attr.stroke-dasharray]="hoveredCategory === 'Language' ? 'none' : '2'" style="transition: all 0.2s;" />
+                <!-- Dynamic Axis Lines -->
+                <line *ngFor="let axis of getRadarAxes()" 
+                      [attr.x1]="axis.x1" [attr.y1]="axis.y1" 
+                      [attr.x2]="axis.x2" [attr.y2]="axis.y2" 
+                      [attr.stroke]="hoveredCategory === axis.category ? 'var(--secondary)' : '#94A3B8'" 
+                      [attr.stroke-width]="hoveredCategory === axis.category ? 2.5 : 1" 
+                      [attr.stroke-dasharray]="hoveredCategory === axis.category ? 'none' : '2'" 
+                      style="transition: all 0.2s;" />
 
-                <!-- Solid center node -->
+                <!-- Solid center hub node -->
                 <circle cx="240" cy="180" r="4.5" fill="#475569" />
 
-                <!-- Main Radar Growth Shape -->
+                <!-- Main Dynamic Radar Growth Polygon Shape -->
                 <polygon [attr.points]="getRadarPolygonPoints(dashboardData?.development_radar)" fill="url(#radarGrad)" stroke="var(--primary)" stroke-width="2.5" />
 
                 <!-- Markers (Interactive Hover Dots) -->
@@ -505,36 +488,17 @@ import { ContentService } from '../../core/services/content.service';
                         style="cursor: pointer; transition: all 0.2s;"
                         (mouseenter)="hoveredCategory = pt.category" (mouseleave)="hoveredCategory = null" />
 
-                <!-- Labels with Percentage Highlight Toggles -->
-                <text x="240" y="48" text-anchor="middle" font-size="11.5" font-weight="800" 
-                      [attr.fill]="hoveredCategory === 'Cognitive' ? 'var(--primary)' : '#475569'" 
-                      [style.font-size]="hoveredCategory === 'Cognitive' ? '14px' : '11.5px'" 
-                      style="cursor: pointer; transition: all 0.2s;"
-                      (mouseenter)="hoveredCategory = 'Cognitive'" (mouseleave)="hoveredCategory = null">🧠 Cognitive</text>
-                      
-                <text x="355" y="146" text-anchor="start" font-size="11.5" font-weight="800" 
-                      [attr.fill]="hoveredCategory === 'Physical' ? 'var(--primary)' : '#475569'" 
-                      [style.font-size]="hoveredCategory === 'Physical' ? '14px' : '11.5px'" 
-                      style="cursor: pointer; transition: all 0.2s;"
-                      (mouseenter)="hoveredCategory = 'Physical'" (mouseleave)="hoveredCategory = null">🏃 Physical</text>
-                      
-                <text x="315" y="292" text-anchor="start" font-size="11.5" font-weight="800" 
-                      [attr.fill]="hoveredCategory === 'Emotional' || hoveredCategory === 'Social-Emotional' ? 'var(--primary)' : '#475569'" 
-                      [style.font-size]="hoveredCategory === 'Emotional' || hoveredCategory === 'Social-Emotional' ? '14px' : '11.5px'" 
-                      style="cursor: pointer; transition: all 0.2s;"
-                      (mouseenter)="hoveredCategory = 'Emotional'" (mouseleave)="hoveredCategory = null">🤝 Emotional</text>
-                      
-                <text x="165" y="292" text-anchor="end" font-size="11.5" font-weight="800" 
-                      [attr.fill]="hoveredCategory === 'Creative' ? 'var(--primary)' : '#475569'" 
-                      [style.font-size]="hoveredCategory === 'Creative' ? '14px' : '11.5px'" 
-                      style="cursor: pointer; transition: all 0.2s;"
-                      (mouseenter)="hoveredCategory = 'Creative'" (mouseleave)="hoveredCategory = null">🎨 Creative</text>
-                      
-                <text x="125" y="146" text-anchor="end" font-size="11.5" font-weight="800" 
-                      [attr.fill]="hoveredCategory === 'Language' ? 'var(--primary)' : '#475569'" 
-                      [style.font-size]="hoveredCategory === 'Language' ? '14px' : '11.5px'" 
-                      style="cursor: pointer; transition: all 0.2s;"
-                      (mouseenter)="hoveredCategory = 'Language'" (mouseleave)="hoveredCategory = null">🗣️ Language</text>
+                <!-- Dynamic Labels with Percentage Highlight Toggles -->
+                <text *ngFor="let axis of getRadarAxes()" 
+                      [attr.x]="axis.textX" [attr.y]="axis.textY" 
+                      [attr.text-anchor]="axis.textAnchor" 
+                      font-size="11" font-weight="800" 
+                      [attr.fill]="hoveredCategory === axis.category ? 'var(--primary)' : '#475569'" 
+                      [style.font-size]="hoveredCategory === axis.category ? '13px' : '11px'" 
+                      style="cursor: pointer; transition: all 0.2s; user-select: none;"
+                      (mouseenter)="hoveredCategory = axis.category" (mouseleave)="hoveredCategory = null">
+                  {{ axis.emoji }} {{ axis.label }} ({{ axis.percentage }}%)
+                </text>
               </svg>
             </div>
           </div>
@@ -2581,43 +2545,93 @@ export class ParentDashboardComponent implements OnInit {
   // Radar Chart Helper Methods & Hover State
   hoveredCategory: string | null = null;
 
-  getRadarGridPoints(scale: number): string {
+  getRadarAxes(): any[] {
+    const radarData = this.dashboardData?.development_radar || [];
+    if (radarData.length === 0) return [];
+    
     const cx = 240;
     const cy = 180;
-    const maxRadius = 110;
-    const r = maxRadius * scale;
-    const angles = [0, 72, 144, 216, 288];
-    const points: string[] = [];
-    for (let angle of angles) {
+    const maxRadius = 105;
+    const N = radarData.length;
+    const axes: any[] = [];
+    
+    for (let i = 0; i < N; i++) {
+      const item = radarData[i];
+      const angle = i * (360 / N);
       const angleRad = ((angle - 90) * Math.PI) / 180;
+      
+      const x2 = cx + maxRadius * Math.cos(angleRad);
+      const y2 = cy + maxRadius * Math.sin(angleRad);
+      
+      const textRadius = maxRadius + 22;
+      const textX = cx + textRadius * Math.cos(angleRad);
+      const textY = cy + textRadius * Math.sin(angleRad);
+      
+      let textAnchor = 'middle';
+      const angleDeg = angle % 360;
+      if (angleDeg > 15 && angleDeg < 165) {
+        textAnchor = 'start';
+      } else if (angleDeg > 195 && angleDeg < 345) {
+        textAnchor = 'end';
+      }
+      
+      let emoji = '🎯';
+      const catLower = item.category.toLowerCase();
+      if (catLower.includes('cognitive')) emoji = '🧠';
+      else if (catLower.includes('physical')) emoji = '🏃';
+      else if (catLower.includes('emotional') || catLower.includes('social')) emoji = '🤝';
+      else if (catLower.includes('creative')) emoji = '🎨';
+      else if (catLower.includes('language')) emoji = '🗣️';
+      
+      axes.push({
+        category: item.category,
+        label: item.category,
+        emoji: emoji,
+        x1: cx,
+        y1: cy,
+        x2: x2,
+        y2: y2,
+        textX: textX,
+        textY: textY,
+        textAnchor: textAnchor,
+        percentage: item.percentage
+      });
+    }
+    return axes;
+  }
+
+  getRadarGridPoints(scale: number): string {
+    const radarData = this.dashboardData?.development_radar || [];
+    const cx = 240;
+    const cy = 180;
+    const maxRadius = 105;
+    const N = radarData.length;
+    if (N === 0) return '';
+    
+    const points: string[] = [];
+    for (let i = 0; i < N; i++) {
+      const angle = i * (360 / N);
+      const angleRad = ((angle - 90) * Math.PI) / 180;
+      const r = maxRadius * scale;
       points.push(`${cx + r * Math.cos(angleRad)},${cy + r * Math.sin(angleRad)}`);
     }
     return points.join(' ');
   }
 
-  getAxisX(angle: number): number {
-    return 240 + 110 * Math.cos(((angle - 90) * Math.PI) / 180);
-  }
-
-  getAxisY(angle: number): number {
-    return 180 + 110 * Math.sin(((angle - 90) * Math.PI) / 180);
-  }
-
   getRadarPolygonPoints(radarData: any[]): string {
     const cx = 240;
     const cy = 180;
-    const maxRadius = 110;
-    if (!radarData || radarData.length === 0) return `${cx},${cy} ${cx},${cy} ${cx},${cy} ${cx},${cy} ${cx},${cy}`;
-    const angles = [0, 72, 144, 216, 288];
+    const maxRadius = 105;
+    if (!radarData || radarData.length === 0) return `${cx},${cy} ${cx},${cy} ${cx},${cy}`;
+    const N = radarData.length;
     const points: string[] = [];
     
-    const categoriesOrder = ["Cognitive", "Physical", "Emotional", "Creative", "Language"];
-    for (let i = 0; i < categoriesOrder.length; i++) {
-      const cat = categoriesOrder[i];
-      const match = radarData.find(d => d.category.toLowerCase().includes(cat.toLowerCase()) || cat.toLowerCase().includes(d.category.toLowerCase()));
-      const pct = match ? (match.percentage / 100) : 0;
+    for (let i = 0; i < N; i++) {
+      const item = radarData[i];
+      const angle = i * (360 / N);
+      const angleRad = ((angle - 90) * Math.PI) / 180;
+      const pct = item.percentage / 100;
       const r = maxRadius * pct;
-      const angleRad = ((angles[i] - 90) * Math.PI) / 180;
       points.push(`${cx + r * Math.cos(angleRad)},${cy + r * Math.sin(angleRad)}`);
     }
     return points.join(' ');
@@ -2626,20 +2640,19 @@ export class ParentDashboardComponent implements OnInit {
   getRadarCircles(radarData: any[]): any[] {
     const cx = 240;
     const cy = 180;
-    const maxRadius = 110;
+    const maxRadius = 105;
     if (!radarData || radarData.length === 0) return [];
-    const angles = [0, 72, 144, 216, 288];
+    const N = radarData.length;
     const circles: any[] = [];
     
-    const categoriesOrder = ["Cognitive", "Physical", "Emotional", "Creative", "Language"];
-    for (let i = 0; i < categoriesOrder.length; i++) {
-      const cat = categoriesOrder[i];
-      const match = radarData.find(d => d.category.toLowerCase().includes(cat.toLowerCase()) || cat.toLowerCase().includes(d.category.toLowerCase()));
-      const pct = match ? (match.percentage / 100) : 0;
+    for (let i = 0; i < N; i++) {
+      const item = radarData[i];
+      const angle = i * (360 / N);
+      const angleRad = ((angle - 90) * Math.PI) / 180;
+      const pct = item.percentage / 100;
       const r = maxRadius * pct;
-      const angleRad = ((angles[i] - 90) * Math.PI) / 180;
       circles.push({
-        category: cat,
+        category: item.category,
         x: cx + r * Math.cos(angleRad),
         y: cy + r * Math.sin(angleRad)
       });
