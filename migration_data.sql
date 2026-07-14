@@ -3,7 +3,23 @@
 -- Generated dynamically based on local SQL Server data
 -- ==========================================================
 
+-- ----------------------------------------------------------
+-- Ensure holidays table has category and image_url columns
+-- ----------------------------------------------------------
+IF NOT EXISTS (SELECT * FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'holidays' AND COLUMN_NAME = 'category')
+BEGIN
+    EXEC('ALTER TABLE holidays ADD category VARCHAR(100) NULL DEFAULT ''National Holiday''');
+END;
+GO
+
+IF NOT EXISTS (SELECT * FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'holidays' AND COLUMN_NAME = 'image_url')
+BEGIN
+    EXEC('ALTER TABLE holidays ADD image_url VARCHAR(500) NULL');
+END;
+GO
+
 EXEC sp_msforeachtable 'ALTER TABLE ? NOCHECK CONSTRAINT ALL';
+GO
 
 -- ----------------------------------------------------------
 -- Clear existing data in production database
