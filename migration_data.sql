@@ -1,80 +1,549 @@
 -- ==========================================================
--- DATABASE MIGRATION SCRIPT (LOCAL -> PROD)
--- Generated dynamically based on local SQL Server data
+-- COMPLETE DATABASE MIGRATION SCRIPT (LOCAL -> PROD)
+-- Includes Table Definitions (DDL) + Data Seeds
 -- ==========================================================
+
 -- ----------------------------------------------------------
--- Ensure holidays table has category and image_url columns
+-- STEP 1: Create Tables (DDL)
 -- ----------------------------------------------------------
-IF NOT EXISTS (SELECT * FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'holidays' AND COLUMN_NAME = 'category')
+
+IF NOT EXISTS (SELECT 1 FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = 'blogs')
 BEGIN
-    EXEC('ALTER TABLE holidays ADD category VARCHAR(100) NULL DEFAULT ''National Holiday''');
+    CREATE TABLE blogs (
+    	id INTEGER NOT NULL IDENTITY, 
+    	title VARCHAR(255) NOT NULL, 
+    	slug VARCHAR(255) NOT NULL, 
+    	summary TEXT NULL, 
+    	content TEXT NOT NULL, 
+    	author_name VARCHAR(255) NULL, 
+    	category VARCHAR(100) NULL, 
+    	image_url VARCHAR(500) NULL, 
+    	is_published BIT NOT NULL, 
+    	published_at DATETIME NULL, 
+    	created_at DATETIME NOT NULL, 
+    	PRIMARY KEY (id)
+    )
 END;
 GO
 
-IF NOT EXISTS (SELECT * FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'holidays' AND COLUMN_NAME = 'image_url')
+IF NOT EXISTS (SELECT 1 FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = 'careers')
 BEGIN
-    EXEC('ALTER TABLE holidays ADD image_url VARCHAR(500) NULL');
+    CREATE TABLE careers (
+    	id INTEGER NOT NULL IDENTITY, 
+    	title VARCHAR(255) NOT NULL, 
+    	department VARCHAR(255) NULL, 
+    	location VARCHAR(255) NULL, 
+    	description TEXT NOT NULL, 
+    	requirements_json TEXT NULL, 
+    	is_active BIT NOT NULL, 
+    	created_at DATETIME NOT NULL, 
+    	PRIMARY KEY (id)
+    )
 END;
 GO
 
--- ----------------------------------------------------------
--- Ensure circulars table exists
--- ----------------------------------------------------------
-IF NOT EXISTS (SELECT * FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = 'circulars')
+IF NOT EXISTS (SELECT 1 FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = 'contact_submissions')
 BEGIN
-    EXEC('
-        CREATE TABLE circulars (
-            id INT IDENTITY(1,1) PRIMARY KEY,
-            title VARCHAR(255) NOT NULL,
-            content TEXT NOT NULL,
-            program_id INT NULL FOREIGN KEY REFERENCES programs(id) ON DELETE SET NULL,
-            attachment_url VARCHAR(500) NULL,
-            is_active BIT NOT NULL DEFAULT 1,
-            created_at DATETIME NOT NULL DEFAULT GETDATE()
-        );
-    ');
+    CREATE TABLE contact_submissions (
+    	id INTEGER NOT NULL IDENTITY, 
+    	name VARCHAR(255) NOT NULL, 
+    	email VARCHAR(255) NOT NULL, 
+    	phone VARCHAR(100) NOT NULL, 
+    	subject VARCHAR(255) NULL, 
+    	message TEXT NOT NULL, 
+    	status VARCHAR(50) NOT NULL, 
+    	created_at DATETIME NOT NULL, 
+    	PRIMARY KEY (id)
+    )
 END;
 GO
 
--- ----------------------------------------------------------
--- Ensure library tables exist
--- ----------------------------------------------------------
-IF NOT EXISTS (SELECT * FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = 'library_books')
+IF NOT EXISTS (SELECT 1 FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = 'events')
 BEGIN
-    EXEC('
-        CREATE TABLE library_books (
-            id INT IDENTITY(1,1) PRIMARY KEY,
-            title VARCHAR(255) NOT NULL,
-            author VARCHAR(255) NOT NULL,
-            isbn VARCHAR(100) NULL,
-            category VARCHAR(100) NOT NULL,
-            total_copies INT NOT NULL DEFAULT 1,
-            available_copies INT NOT NULL DEFAULT 1,
-            created_at DATETIME NOT NULL DEFAULT GETDATE()
-        );
-    ');
+    CREATE TABLE events (
+    	id INTEGER NOT NULL IDENTITY, 
+    	title VARCHAR(255) NOT NULL, 
+    	description TEXT NULL, 
+    	event_date DATETIME NOT NULL, 
+    	location VARCHAR(255) NULL, 
+    	image_url VARCHAR(500) NULL, 
+    	is_active BIT NOT NULL, 
+    	created_at DATETIME NOT NULL, 
+    	PRIMARY KEY (id)
+    )
 END;
 GO
 
-IF NOT EXISTS (SELECT * FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = 'library_borrows')
+IF NOT EXISTS (SELECT 1 FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = 'faqs')
 BEGIN
-    EXEC('
-        CREATE TABLE library_borrows (
-            id INT IDENTITY(1,1) PRIMARY KEY,
-            book_id INT NOT NULL FOREIGN KEY REFERENCES library_books(id) ON DELETE CASCADE,
-            student_id INT NOT NULL FOREIGN KEY REFERENCES students(id) ON DELETE CASCADE,
-            borrow_date VARCHAR(50) NOT NULL,
-            due_date VARCHAR(50) NOT NULL,
-            return_date VARCHAR(50) NULL,
-            status VARCHAR(50) NOT NULL DEFAULT ''Borrowed'',
-            created_at DATETIME NOT NULL DEFAULT GETDATE()
-        );
-    ');
+    CREATE TABLE faqs (
+    	id INTEGER NOT NULL IDENTITY, 
+    	question VARCHAR(500) NOT NULL, 
+    	answer TEXT NOT NULL, 
+    	category VARCHAR(100) NOT NULL, 
+    	is_active BIT NOT NULL, 
+    	sort_order INTEGER NOT NULL, 
+    	PRIMARY KEY (id)
+    )
+END;
+GO
+
+IF NOT EXISTS (SELECT 1 FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = 'franchise_inquiries')
+BEGIN
+    CREATE TABLE franchise_inquiries (
+    	id INTEGER NOT NULL IDENTITY, 
+    	name VARCHAR(255) NOT NULL, 
+    	email VARCHAR(255) NOT NULL, 
+    	phone VARCHAR(100) NOT NULL, 
+    	city VARCHAR(255) NOT NULL, 
+    	state VARCHAR(255) NOT NULL, 
+    	investment_range VARCHAR(100) NULL, 
+    	message TEXT NULL, 
+    	status VARCHAR(50) NOT NULL, 
+    	created_at DATETIME NOT NULL, 
+    	PRIMARY KEY (id)
+    )
+END;
+GO
+
+IF NOT EXISTS (SELECT 1 FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = 'gallery_items')
+BEGIN
+    CREATE TABLE gallery_items (
+    	id INTEGER NOT NULL IDENTITY, 
+    	title VARCHAR(255) NULL, 
+    	media_url VARCHAR(500) NOT NULL, 
+    	media_type VARCHAR(50) NOT NULL, 
+    	category VARCHAR(100) NOT NULL, 
+    	is_active BIT NOT NULL, 
+    	sort_order INTEGER NOT NULL, 
+    	PRIMARY KEY (id)
+    )
+END;
+GO
+
+IF NOT EXISTS (SELECT 1 FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = 'holidays')
+BEGIN
+    CREATE TABLE holidays (
+    	id INTEGER NOT NULL IDENTITY, 
+    	title VARCHAR(255) NOT NULL, 
+    	description TEXT NULL, 
+    	holiday_date VARCHAR(50) NOT NULL, 
+    	year INTEGER NOT NULL, 
+    	category VARCHAR(100) NULL, 
+    	image_url VARCHAR(500) NULL, 
+    	is_active BIT NOT NULL, 
+    	created_at DATETIME NOT NULL, 
+    	PRIMARY KEY (id)
+    )
+END;
+GO
+
+IF NOT EXISTS (SELECT 1 FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = 'library_books')
+BEGIN
+    CREATE TABLE library_books (
+    	id INTEGER NOT NULL IDENTITY, 
+    	title VARCHAR(255) NOT NULL, 
+    	author VARCHAR(255) NOT NULL, 
+    	isbn VARCHAR(100) NULL, 
+    	category VARCHAR(100) NOT NULL, 
+    	total_copies INTEGER NOT NULL, 
+    	available_copies INTEGER NOT NULL, 
+    	created_at DATETIME NOT NULL, 
+    	PRIMARY KEY (id)
+    )
+END;
+GO
+
+IF NOT EXISTS (SELECT 1 FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = 'page_sections')
+BEGIN
+    CREATE TABLE page_sections (
+    	id INTEGER NOT NULL IDENTITY, 
+    	page_code VARCHAR(100) NOT NULL, 
+    	section_code VARCHAR(100) NOT NULL, 
+    	title VARCHAR(255) NULL, 
+    	subtitle VARCHAR(255) NULL, 
+    	description TEXT NULL, 
+    	content_json TEXT NULL, 
+    	media_url VARCHAR(500) NULL, 
+    	is_active BIT NOT NULL, 
+    	sort_order INTEGER NOT NULL, 
+    	PRIMARY KEY (id)
+    )
+END;
+GO
+
+IF NOT EXISTS (SELECT 1 FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = 'programs')
+BEGIN
+    CREATE TABLE programs (
+    	id INTEGER NOT NULL IDENTITY, 
+    	title VARCHAR(255) NOT NULL, 
+    	age_group VARCHAR(100) NULL, 
+    	duration VARCHAR(100) NULL, 
+    	description TEXT NULL, 
+    	highlights_json TEXT NULL, 
+    	weekly_plan_json TEXT NULL, 
+    	uniform_items_json TEXT NULL, 
+    	image_url VARCHAR(500) NULL, 
+    	is_active BIT NOT NULL, 
+    	sort_order INTEGER NOT NULL, 
+    	PRIMARY KEY (id)
+    )
+END;
+GO
+
+IF NOT EXISTS (SELECT 1 FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = 'site_settings')
+BEGIN
+    CREATE TABLE site_settings (
+    	id INTEGER NOT NULL IDENTITY, 
+    	config_key VARCHAR(255) NOT NULL, 
+    	config_value TEXT NULL, 
+    	category VARCHAR(100) NOT NULL, 
+    	PRIMARY KEY (id)
+    )
+END;
+GO
+
+IF NOT EXISTS (SELECT 1 FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = 'stationary_items')
+BEGIN
+    CREATE TABLE stationary_items (
+    	id INTEGER NOT NULL IDENTITY, 
+    	name VARCHAR(255) NOT NULL, 
+    	description TEXT NULL, 
+    	category VARCHAR(100) NOT NULL, 
+    	price NUMERIC(10, 2) NOT NULL, 
+    	stock INTEGER NOT NULL, 
+    	stationery_type VARCHAR(50) NOT NULL, 
+    	order_date DATETIME NULL, 
+    	total_amount NUMERIC(10, 2) NULL, 
+    	is_active BIT NOT NULL, 
+    	created_at DATETIME NOT NULL, 
+    	PRIMARY KEY (id)
+    )
+END;
+GO
+
+IF NOT EXISTS (SELECT 1 FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = 'testimonials')
+BEGIN
+    CREATE TABLE testimonials (
+    	id INTEGER NOT NULL IDENTITY, 
+    	author_name VARCHAR(255) NOT NULL, 
+    	author_role VARCHAR(255) NULL, 
+    	quote TEXT NOT NULL, 
+    	rating INTEGER NOT NULL, 
+    	image_url VARCHAR(500) NULL, 
+    	is_active BIT NOT NULL, 
+    	sort_order INTEGER NOT NULL, 
+    	PRIMARY KEY (id)
+    )
+END;
+GO
+
+IF NOT EXISTS (SELECT 1 FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = 'vaccinations')
+BEGIN
+    CREATE TABLE vaccinations (
+    	id INTEGER NOT NULL IDENTITY, 
+    	name VARCHAR(255) NOT NULL, 
+    	age_group VARCHAR(255) NOT NULL, 
+    	PRIMARY KEY (id)
+    )
+END;
+GO
+
+IF NOT EXISTS (SELECT 1 FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = 'admissions')
+BEGIN
+    CREATE TABLE admissions (
+    	id INTEGER NOT NULL IDENTITY, 
+    	child_name VARCHAR(255) NOT NULL, 
+    	parent_name VARCHAR(255) NOT NULL, 
+    	email VARCHAR(255) NOT NULL, 
+    	phone VARCHAR(100) NOT NULL, 
+    	date_of_birth VARCHAR(100) NOT NULL, 
+    	program_id INTEGER NOT NULL, 
+    	allergies VARCHAR(255) NULL, 
+    	photo_url VARCHAR(255) NULL, 
+    	issued_items_json TEXT NULL, 
+    	blood_group VARCHAR(50) NULL, 
+    	emergency_phone VARCHAR(100) NULL, 
+    	status VARCHAR(50) NOT NULL, 
+    	created_at DATETIME NOT NULL, 
+    	PRIMARY KEY (id), 
+    	FOREIGN KEY(program_id) REFERENCES programs (id) ON DELETE CASCADE
+    )
+END;
+GO
+
+IF NOT EXISTS (SELECT 1 FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = 'circulars')
+BEGIN
+    CREATE TABLE circulars (
+    	id INTEGER NOT NULL IDENTITY, 
+    	title VARCHAR(255) NOT NULL, 
+    	content TEXT NOT NULL, 
+    	program_id INTEGER NULL, 
+    	attachment_url VARCHAR(500) NULL, 
+    	is_active BIT NOT NULL, 
+    	created_at DATETIME NOT NULL, 
+    	PRIMARY KEY (id), 
+    	FOREIGN KEY(program_id) REFERENCES programs (id) ON DELETE SET NULL
+    )
+END;
+GO
+
+IF NOT EXISTS (SELECT 1 FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = 'fee_structures')
+BEGIN
+    CREATE TABLE fee_structures (
+    	id INTEGER NOT NULL IDENTITY, 
+    	name VARCHAR(255) NOT NULL, 
+    	category VARCHAR(50) NOT NULL, 
+    	amount NUMERIC(10, 2) NOT NULL, 
+    	frequency VARCHAR(50) NOT NULL, 
+    	program_id INTEGER NULL, 
+    	is_active BIT NOT NULL, 
+    	created_at DATETIME NOT NULL, 
+    	PRIMARY KEY (id), 
+    	FOREIGN KEY(program_id) REFERENCES programs (id) ON DELETE SET NULL
+    )
+END;
+GO
+
+IF NOT EXISTS (SELECT 1 FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = 'job_applications')
+BEGIN
+    CREATE TABLE job_applications (
+    	id INTEGER NOT NULL IDENTITY, 
+    	career_id INTEGER NOT NULL, 
+    	applicant_name VARCHAR(255) NOT NULL, 
+    	applicant_email VARCHAR(255) NOT NULL, 
+    	applicant_phone VARCHAR(100) NOT NULL, 
+    	resume_url VARCHAR(500) NULL, 
+    	cover_letter TEXT NULL, 
+    	created_at DATETIME NOT NULL, 
+    	PRIMARY KEY (id), 
+    	FOREIGN KEY(career_id) REFERENCES careers (id) ON DELETE CASCADE
+    )
+END;
+GO
+
+IF NOT EXISTS (SELECT 1 FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = 'milestone_templates')
+BEGIN
+    CREATE TABLE milestone_templates (
+    	id INTEGER NOT NULL IDENTITY, 
+    	program_id INTEGER NOT NULL, 
+    	milestone_name VARCHAR(255) NOT NULL, 
+    	category VARCHAR(50) NOT NULL, 
+    	created_at DATETIME NOT NULL, 
+    	PRIMARY KEY (id), 
+    	FOREIGN KEY(program_id) REFERENCES programs (id) ON DELETE CASCADE
+    )
+END;
+GO
+
+IF NOT EXISTS (SELECT 1 FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = 'students')
+BEGIN
+    CREATE TABLE students (
+    	id INTEGER NOT NULL IDENTITY, 
+    	name VARCHAR(255) NOT NULL, 
+    	parent_name VARCHAR(255) NOT NULL, 
+    	phone VARCHAR(100) NOT NULL, 
+    	program_id INTEGER NOT NULL, 
+    	allergies VARCHAR(255) NULL, 
+    	photo_url VARCHAR(255) NULL, 
+    	issued_items_json TEXT NULL, 
+    	blood_group VARCHAR(50) NULL, 
+    	emergency_phone VARCHAR(100) NULL, 
+    	date_of_birth VARCHAR(50) NULL, 
+    	is_active BIT NOT NULL, 
+    	created_at DATETIME NOT NULL, 
+    	PRIMARY KEY (id), 
+    	FOREIGN KEY(program_id) REFERENCES programs (id) ON DELETE CASCADE
+    )
+END;
+GO
+
+IF NOT EXISTS (SELECT 1 FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = 'admission_vaccinations')
+BEGIN
+    CREATE TABLE admission_vaccinations (
+    	id INTEGER NOT NULL IDENTITY, 
+    	admission_id INTEGER NOT NULL, 
+    	vaccination_id INTEGER NOT NULL, 
+    	administered_date VARCHAR(100) NOT NULL, 
+    	PRIMARY KEY (id), 
+    	FOREIGN KEY(admission_id) REFERENCES admissions (id) ON DELETE CASCADE, 
+    	FOREIGN KEY(vaccination_id) REFERENCES vaccinations (id) ON DELETE CASCADE
+    )
+END;
+GO
+
+IF NOT EXISTS (SELECT 1 FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = 'attendance')
+BEGIN
+    CREATE TABLE attendance (
+    	id INTEGER NOT NULL IDENTITY, 
+    	student_id INTEGER NOT NULL, 
+    	date VARCHAR(50) NOT NULL, 
+    	status VARCHAR(50) NOT NULL, 
+    	notes VARCHAR(255) NULL, 
+    	created_at DATETIME NOT NULL, 
+    	PRIMARY KEY (id), 
+    	FOREIGN KEY(student_id) REFERENCES students (id) ON DELETE CASCADE
+    )
+END;
+GO
+
+IF NOT EXISTS (SELECT 1 FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = 'leave_requests')
+BEGIN
+    CREATE TABLE leave_requests (
+    	id INTEGER NOT NULL IDENTITY, 
+    	student_id INTEGER NOT NULL, 
+    	start_date VARCHAR(50) NOT NULL, 
+    	end_date VARCHAR(50) NOT NULL, 
+    	reason VARCHAR(550) NULL, 
+    	status VARCHAR(50) NOT NULL, 
+    	admin_comment VARCHAR(550) NULL, 
+    	created_at DATETIME NOT NULL, 
+    	PRIMARY KEY (id), 
+    	FOREIGN KEY(student_id) REFERENCES students (id) ON DELETE CASCADE
+    )
+END;
+GO
+
+IF NOT EXISTS (SELECT 1 FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = 'library_borrows')
+BEGIN
+    CREATE TABLE library_borrows (
+    	id INTEGER NOT NULL IDENTITY, 
+    	book_id INTEGER NOT NULL, 
+    	student_id INTEGER NOT NULL, 
+    	borrow_date VARCHAR(50) NOT NULL, 
+    	due_date VARCHAR(50) NOT NULL, 
+    	return_date VARCHAR(50) NULL, 
+    	status VARCHAR(50) NOT NULL, 
+    	created_at DATETIME NOT NULL, 
+    	PRIMARY KEY (id), 
+    	FOREIGN KEY(book_id) REFERENCES library_books (id) ON DELETE CASCADE, 
+    	FOREIGN KEY(student_id) REFERENCES students (id) ON DELETE CASCADE
+    )
+END;
+GO
+
+IF NOT EXISTS (SELECT 1 FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = 'parent_bills')
+BEGIN
+    CREATE TABLE parent_bills (
+    	id INTEGER NOT NULL IDENTITY, 
+    	student_id INTEGER NOT NULL, 
+    	title VARCHAR(255) NOT NULL, 
+    	amount NUMERIC(10, 2) NOT NULL, 
+    	due_date VARCHAR(50) NOT NULL, 
+    	status VARCHAR(50) NOT NULL, 
+    	paid_date DATETIME NULL, 
+    	payment_method VARCHAR(50) NULL, 
+    	receipt_no VARCHAR(100) NULL, 
+    	waiver_amount NUMERIC(10, 2) NOT NULL, 
+    	notes VARCHAR(500) NULL, 
+    	created_at DATETIME NOT NULL, 
+    	PRIMARY KEY (id), 
+    	FOREIGN KEY(student_id) REFERENCES students (id) ON DELETE CASCADE
+    )
+END;
+GO
+
+IF NOT EXISTS (SELECT 1 FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = 'parent_milestones')
+BEGIN
+    CREATE TABLE parent_milestones (
+    	id INTEGER NOT NULL IDENTITY, 
+    	student_id INTEGER NOT NULL, 
+    	milestone_name VARCHAR(255) NOT NULL, 
+    	category VARCHAR(50) NOT NULL, 
+    	status VARCHAR(50) NOT NULL, 
+    	completed_date VARCHAR(50) NULL, 
+    	teacher_comments TEXT NULL, 
+    	created_at DATETIME NOT NULL, 
+    	PRIMARY KEY (id), 
+    	FOREIGN KEY(student_id) REFERENCES students (id) ON DELETE CASCADE
+    )
+END;
+GO
+
+IF NOT EXISTS (SELECT 1 FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = 'users')
+BEGIN
+    CREATE TABLE users (
+    	id INTEGER NOT NULL IDENTITY, 
+    	email VARCHAR(255) NOT NULL, 
+    	hashed_password VARCHAR(255) NOT NULL, 
+    	full_name VARCHAR(255) NULL, 
+    	role VARCHAR(50) NOT NULL, 
+    	is_active BIT NOT NULL, 
+    	created_at DATETIME NOT NULL, 
+    	two_factor_secret VARCHAR(100) NULL, 
+    	two_factor_enabled BIT NOT NULL, 
+    	student_id INTEGER NULL, 
+    	PRIMARY KEY (id), 
+    	FOREIGN KEY(student_id) REFERENCES students (id) ON DELETE SET NULL
+    )
+END;
+GO
+
+IF NOT EXISTS (SELECT 1 FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = 'refresh_tokens')
+BEGIN
+    CREATE TABLE refresh_tokens (
+    	id INTEGER NOT NULL IDENTITY, 
+    	token VARCHAR(500) NOT NULL, 
+    	user_id INTEGER NOT NULL, 
+    	expires_at DATETIME NOT NULL, 
+    	is_revoked BIT NOT NULL, 
+    	created_at DATETIME NOT NULL, 
+    	PRIMARY KEY (id), 
+    	FOREIGN KEY(user_id) REFERENCES users (id) ON DELETE CASCADE
+    )
+END;
+GO
+
+IF NOT EXISTS (SELECT 1 FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = 'stationary_orders')
+BEGIN
+    CREATE TABLE stationary_orders (
+    	id INTEGER NOT NULL IDENTITY, 
+    	student_name VARCHAR(255) NULL, 
+    	class_name VARCHAR(100) NULL, 
+    	order_date DATETIME NOT NULL, 
+    	status VARCHAR(50) NOT NULL, 
+    	total_price NUMERIC(10, 2) NOT NULL, 
+    	created_by_id INTEGER NOT NULL, 
+    	PRIMARY KEY (id), 
+    	FOREIGN KEY(created_by_id) REFERENCES users (id)
+    )
+END;
+GO
+
+IF NOT EXISTS (SELECT 1 FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = 'student_daily_moments')
+BEGIN
+    CREATE TABLE student_daily_moments (
+    	id INTEGER NOT NULL IDENTITY, 
+    	student_id INTEGER NOT NULL, 
+    	teacher_id INTEGER NOT NULL, 
+    	file_path VARCHAR(500) NOT NULL, 
+    	file_type VARCHAR(50) NOT NULL, 
+    	title VARCHAR(255) NULL, 
+    	created_at DATETIME NOT NULL, 
+    	expires_at DATETIME NOT NULL, 
+    	PRIMARY KEY (id), 
+    	FOREIGN KEY(student_id) REFERENCES students (id) ON DELETE CASCADE, 
+    	FOREIGN KEY(teacher_id) REFERENCES users (id) ON DELETE CASCADE
+    )
+END;
+GO
+
+IF NOT EXISTS (SELECT 1 FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = 'stationary_order_items')
+BEGIN
+    CREATE TABLE stationary_order_items (
+    	id INTEGER NOT NULL IDENTITY, 
+    	order_id INTEGER NOT NULL, 
+    	item_id INTEGER NOT NULL, 
+    	quantity INTEGER NOT NULL, 
+    	unit_price NUMERIC(10, 2) NOT NULL, 
+    	PRIMARY KEY (id), 
+    	FOREIGN KEY(order_id) REFERENCES stationary_orders (id) ON DELETE CASCADE, 
+    	FOREIGN KEY(item_id) REFERENCES stationary_items (id)
+    )
 END;
 GO
 
 EXEC sp_msforeachtable 'ALTER TABLE ? NOCHECK CONSTRAINT ALL';
-GO
 
 -- ----------------------------------------------------------
 -- Clear existing data in production database
@@ -114,8 +583,10 @@ DELETE FROM [blogs];
 
 
 -- ----------------------------------------------------------
--- Data for table: blogs
+-- STEP 3: Insert Data Seeds
 -- ----------------------------------------------------------
+
+-- Data for table: blogs
 SET IDENTITY_INSERT [blogs] ON;
 
 INSERT INTO [blogs] ([id], [title], [slug], [summary], [content], [author_name], [category], [image_url], [is_published], [published_at], [created_at]) VALUES (1, 'Unlocking Creativity in Early Childhood', 'unlocking-creativity-early-childhood', 'Discover why free play, arts, and sensory activities are critical for building neural connections in toddlers.', '<p>Early childhood is a period of rapid brain development. Research shows that child-led creative activities promote problem-solving skills, emotional regulation, and fine motor abilities.</p><h4>Why Play Matters</h4><p>When children engage in painting or modeling clay, they are not just having fun; they are experimenting with cause and effect, weight, texture, and spatial awareness.</p><p>We encourage parents to provide open-ended toys and limit screen time to foster authentic imagination.</p>', 'Ms. Clara Oswald (Child Psychologist)', 'Parenting Tips', '/assets/images/program_preschool.jpg', 1, '2026-07-01 07:57:41.017', '2026-07-06 07:57:41.020');
@@ -123,9 +594,7 @@ INSERT INTO [blogs] ([id], [title], [slug], [summary], [content], [author_name],
 
 SET IDENTITY_INSERT [blogs] OFF;
 
--- ----------------------------------------------------------
 -- Data for table: careers
--- ----------------------------------------------------------
 SET IDENTITY_INSERT [careers] ON;
 
 INSERT INTO [careers] ([id], [title], [department], [location], [description], [requirements_json], [is_active], [created_at]) VALUES (1, 'Early Childhood Teacher (Preschool)', 'Academics', 'Mumbai Center', 'We are looking for passionate, certified educators who love teaching toddlers and preschool kids. You will lead lesson activities, observe student milestones, and maintain regular communication with parents.', '["Montessori or ECCE certification required.", "Minimum 2 years of experience in preschool coaching.", "Excellent verbal and written communication skills in English.", "Loving, patient, and child-friendly attitude."]', 1, '2026-07-06 07:57:41.033');
@@ -133,9 +602,7 @@ INSERT INTO [careers] ([id], [title], [department], [location], [description], [
 
 SET IDENTITY_INSERT [careers] OFF;
 
--- ----------------------------------------------------------
 -- Data for table: contact_submissions
--- ----------------------------------------------------------
 SET IDENTITY_INSERT [contact_submissions] ON;
 
 INSERT INTO [contact_submissions] ([id], [name], [email], [phone], [subject], [message], [status], [created_at]) VALUES (1, 'Parent Today 0', 'parent_today0@email.com', '9876543200', 'Admissions Inquiries', 'I want to enroll my child. Please share fee info.', 'RESOLVED', '2026-07-07 06:51:25.977');
@@ -398,9 +865,7 @@ INSERT INTO [contact_submissions] ([id], [name], [email], [phone], [subject], [m
 
 SET IDENTITY_INSERT [contact_submissions] OFF;
 
--- ----------------------------------------------------------
 -- Data for table: events
--- ----------------------------------------------------------
 SET IDENTITY_INSERT [events] ON;
 
 INSERT INTO [events] ([id], [title], [description], [event_date], [location], [image_url], [is_active], [created_at]) VALUES (1, 'Annual Parents Orientation & High Tea', 'An interactive session for parents to meet class teachers, understand the curriculum structure, and discuss milestones.', '2026-07-21 13:27:41.010', 'School Main Auditorium', '/assets/images/hero_kids_learning.jpg', 1, '2026-07-06 07:57:41.010');
@@ -408,9 +873,7 @@ INSERT INTO [events] ([id], [title], [description], [event_date], [location], [i
 
 SET IDENTITY_INSERT [events] OFF;
 
--- ----------------------------------------------------------
 -- Data for table: faqs
--- ----------------------------------------------------------
 SET IDENTITY_INSERT [faqs] ON;
 
 INSERT INTO [faqs] ([id], [question], [answer], [category], [is_active], [sort_order]) VALUES (1, 'What is the student-to-teacher ratio?', 'We maintain an optimal ratio of 10:1 for Toddlers and 12:1 for Kindergarten, each assisted by a qualified helper.', 'Admissions', 1, 1);
@@ -420,9 +883,7 @@ INSERT INTO [faqs] ([id], [question], [answer], [category], [is_active], [sort_o
 
 SET IDENTITY_INSERT [faqs] OFF;
 
--- ----------------------------------------------------------
 -- Data for table: gallery_items
--- ----------------------------------------------------------
 SET IDENTITY_INSERT [gallery_items] ON;
 
 INSERT INTO [gallery_items] ([id], [title], [media_url], [media_type], [category], [is_active], [sort_order]) VALUES (1, 'Robot Learning Lab', 'http://localhost:8000/assets/images/hero_robot_learning.png', 'IMAGE', 'Classrooms', 1, 1);
@@ -434,9 +895,7 @@ INSERT INTO [gallery_items] ([id], [title], [media_url], [media_type], [category
 
 SET IDENTITY_INSERT [gallery_items] OFF;
 
--- ----------------------------------------------------------
 -- Data for table: holidays
--- ----------------------------------------------------------
 SET IDENTITY_INSERT [holidays] ON;
 
 INSERT INTO [holidays] ([id], [title], [description], [holiday_date], [year], [category], [image_url], [is_active], [created_at]) VALUES (1, 'New Year''s Day', 'Beginning of the year celebration', '2026-01-01', 2026, 'Public Event', NULL, 1, '2026-07-10 01:27:57.820');
@@ -458,9 +917,7 @@ INSERT INTO [holidays] ([id], [title], [description], [holiday_date], [year], [c
 
 SET IDENTITY_INSERT [holidays] OFF;
 
--- ----------------------------------------------------------
 -- Data for table: library_books
--- ----------------------------------------------------------
 SET IDENTITY_INSERT [library_books] ON;
 
 INSERT INTO [library_books] ([id], [title], [author], [isbn], [category], [total_copies], [available_copies], [created_at]) VALUES (1, 'The Very Hungry Caterpillar', 'Eric Carle', '9780241003008', 'Picture Book', 5, 4, '2026-07-14 18:05:43.680');
@@ -470,9 +927,7 @@ INSERT INTO [library_books] ([id], [title], [author], [isbn], [category], [total
 
 SET IDENTITY_INSERT [library_books] OFF;
 
--- ----------------------------------------------------------
 -- Data for table: page_sections
--- ----------------------------------------------------------
 SET IDENTITY_INSERT [page_sections] ON;
 
 INSERT INTO [page_sections] ([id], [page_code], [section_code], [title], [subtitle], [description], [content_json], [media_url], [is_active], [sort_order]) VALUES (1, 'home', 'hero', 'Igniting the Joy of Learning', 'Best Preschool Experience for your Little Ones', 'We offer a child-centered approach that develops key cognitive, motor, social, and emotional skills.', '[{"title": "Where Learning Meets Robotics & Play", "subtitle": "Meet your robot helper friends and start an adventure in early learning!", "image": "/assets/images/hero_robot_learning.png", "cta_text": "Apply Now", "cta_link": "/admissions"}, {"title": "Innovate, Build, and Grow!", "subtitle": "Building future-ready minds with creative coding, tiny robots, and endless imagination!", "image": "/assets/images/robot_creative_play.png", "cta_text": "Explore Curriculum", "cta_link": "/curriculum"}, {"title": "Innovate, Build, and Grow!", "subtitle": "Building future-ready minds with creative coding, tiny robots, and endless imagination!", "image": "/assets/images/robot_creative_play.png", "cta_text": "Place your Finger", "cta_link": "/"}]', '/assets/images/hero_kids_learning.jpg', 1, 1);
@@ -498,9 +953,7 @@ INSERT INTO [page_sections] ([id], [page_code], [section_code], [title], [subtit
 
 SET IDENTITY_INSERT [page_sections] OFF;
 
--- ----------------------------------------------------------
 -- Data for table: programs
--- ----------------------------------------------------------
 SET IDENTITY_INSERT [programs] ON;
 
 INSERT INTO [programs] ([id], [title], [age_group], [duration], [description], [highlights_json], [weekly_plan_json], [uniform_items_json], [image_url], [is_active], [sort_order]) VALUES (1, 'Toddler Explorers (Robo-Tots)', '1.5 - 2.5 Years', '2 Hours / Day', 'Start the journey of exploration! Toddlers develop sensory skills, fine motor coordination, and simple vocabulary by playing with soft tactile toys, colorful buttons, and friendly light-up robot helpers.', '["Sensory play activities","Basic social behavior","Language development","Parent-child bonding"]', '[{"day":"Monday","study":"Colorful Shapes Exploration","physical":"Robo-Crawl Obstacle Course","games":"Tactile Block Stacking","breakfast":"Apple Puree & Warm Milk--ddddddddddddd"},{"day":"Tuesday","study":"First Animal Sounds & Imitation","physical":"Tiny Jump & Dance Party","games":"Soft Ball Roller Chase","breakfast":"Oats Porridge & Banana Slices"},{"day":"Wednesday","study":"Robo-Alphabet Sounds (A-G)","physical":"Happy Toddler Yoga Stretch","games":"Glow Button Activity Puzzles","breakfast":"Sweet Potato Mash & Milk"},{"day":"Thursday","study":"Discovering Primary Colors","physical":"Bubble Catching Race","games":"Friendly Toy Sorting Match","breakfast":"Mashed Avocado & Berry Puree"},{"day":"Friday","study":"Interactive Storytelling Beats","physical":"Free Play Balloon Bounce","games":"Robo-Pet Hide & Seek","breakfast":"Rice Kheer (Nut-Free) & Milk"}]', '["Books","School Shorts","Vidyankuram Shoes","Bags"]', '/assets/images/program_toddler.jpg', 1, 1);
@@ -510,9 +963,7 @@ INSERT INTO [programs] ([id], [title], [age_group], [duration], [description], [
 
 SET IDENTITY_INSERT [programs] OFF;
 
--- ----------------------------------------------------------
 -- Data for table: site_settings
--- ----------------------------------------------------------
 SET IDENTITY_INSERT [site_settings] ON;
 
 INSERT INTO [site_settings] ([id], [config_key], [config_value], [category]) VALUES (1, 'site_name', 'Vidyankuram Club International School', 'general');
@@ -535,9 +986,20 @@ INSERT INTO [site_settings] ([id], [config_key], [config_value], [category]) VAL
 
 SET IDENTITY_INSERT [site_settings] OFF;
 
--- ----------------------------------------------------------
+-- Data for table: stationary_items
+SET IDENTITY_INSERT [stationary_items] ON;
+
+INSERT INTO [stationary_items] ([id], [name], [description], [category], [price], [stock], [stationery_type], [order_date], [total_amount], [is_active], [created_at]) VALUES (1, 'A4 Ruled Notebooks (Pack of 10)', '200 pages, single-line ruling, hard cover', 'Books', 180.0, 50, 'school', '2025-06-01', 9000.0, 1, '2025-06-01 10:00:00');
+INSERT INTO [stationary_items] ([id], [name], [description], [category], [price], [stock], [stationery_type], [order_date], [total_amount], [is_active], [created_at]) VALUES (2, 'Whiteboard Markers (Box of 12)', 'Assorted colours, dry-erase, thick nib', 'Office', 95.0, 30, 'school', '2025-06-01', 2850.0, 1, '2025-06-01 10:00:00');
+INSERT INTO [stationary_items] ([id], [name], [description], [category], [price], [stock], [stationery_type], [order_date], [total_amount], [is_active], [created_at]) VALUES (3, 'Craft Paper Roll (10 m)', 'Brown kraft paper, suitable for art projects', 'Art', 55.0, 20, 'school', '2025-06-15', 1100.0, 1, '2025-06-15 10:00:00');
+INSERT INTO [stationary_items] ([id], [name], [description], [category], [price], [stock], [stationery_type], [order_date], [total_amount], [is_active], [created_at]) VALUES (4, 'Red Pen (Pack of 10)', 'Ballpoint, for correction marking', 'Writing', 40.0, 20, 'teacher', '2025-06-10', 800.0, 1, '2025-06-10 10:00:00');
+INSERT INTO [stationary_items] ([id], [name], [description], [category], [price], [stock], [stationery_type], [order_date], [total_amount], [is_active], [created_at]) VALUES (5, 'Teacher Attendance Register', 'A4 size, 300 pages, laminated cover', 'Books', 60.0, 15, 'teacher', '2025-06-10', 900.0, 1, '2025-06-10 10:00:00');
+INSERT INTO [stationary_items] ([id], [name], [description], [category], [price], [stock], [stationery_type], [order_date], [total_amount], [is_active], [created_at]) VALUES (6, 'School Bag (Medium)', 'Waterproof, 20L capacity, padded straps', 'Uniforms', 450.0, 25, 'student', '2025-05-20', 11250.0, 1, '2025-05-20 10:00:00');
+INSERT INTO [stationary_items] ([id], [name], [description], [category], [price], [stock], [stationery_type], [order_date], [total_amount], [is_active], [created_at]) VALUES (7, 'Pencil Box with Accessories', 'Includes 4 pencils, eraser, sharpener, scale', 'Writing', 75.0, 40, 'student', '2025-05-20', 3000.0, 1, '2025-05-20 10:00:00');
+
+SET IDENTITY_INSERT [stationary_items] OFF;
+
 -- Data for table: testimonials
--- ----------------------------------------------------------
 SET IDENTITY_INSERT [testimonials] ON;
 
 INSERT INTO [testimonials] ([id], [author_name], [author_role], [quote], [rating], [image_url], [is_active], [sort_order]) VALUES (1, 'Mrs. Shalini Mehta', 'Mother of Vivaan (Preschool)', 'Sending Vivaan to Vidyankuram Club was the best decision we made. Within months, we saw massive improvement in his speech and how he interacts with other children. The teachers are incredibly warm and patient.', 5, '/assets/images/parent_avatar1.jpg', 1, 1);
@@ -549,9 +1011,7 @@ INSERT INTO [testimonials] ([id], [author_name], [author_role], [quote], [rating
 
 SET IDENTITY_INSERT [testimonials] OFF;
 
--- ----------------------------------------------------------
 -- Data for table: vaccinations
--- ----------------------------------------------------------
 SET IDENTITY_INSERT [vaccinations] ON;
 
 INSERT INTO [vaccinations] ([id], [name], [age_group]) VALUES (1, 'Hepatitis B (HepB)', 'Toddler Explorers (Robo-Tots)');
@@ -569,9 +1029,7 @@ INSERT INTO [vaccinations] ([id], [name], [age_group]) VALUES (12, 'HPV Vaccine'
 
 SET IDENTITY_INSERT [vaccinations] OFF;
 
--- ----------------------------------------------------------
 -- Data for table: admissions
--- ----------------------------------------------------------
 SET IDENTITY_INSERT [admissions] ON;
 
 INSERT INTO [admissions] ([id], [child_name], [parent_name], [email], [phone], [date_of_birth], [program_id], [allergies], [photo_url], [issued_items_json], [blood_group], [emergency_phone], [status], [created_at]) VALUES (1, 'Kabir Patel', 'Amit Patel', 'amit.patel@gmail.com', '9876543211', '2024-05-15', 1, 'Strawberries', NULL, NULL, NULL, NULL, 'APPROVED', '2026-07-09 14:55:17.520');
@@ -579,9 +1037,7 @@ INSERT INTO [admissions] ([id], [child_name], [parent_name], [email], [phone], [
 
 SET IDENTITY_INSERT [admissions] OFF;
 
--- ----------------------------------------------------------
 -- Data for table: circulars
--- ----------------------------------------------------------
 SET IDENTITY_INSERT [circulars] ON;
 
 INSERT INTO [circulars] ([id], [title], [content], [program_id], [attachment_url], [is_active], [created_at]) VALUES (1, 'Vidyankuram Uniform & Welcome Kits Distribution', 'Dear Parents, we are pleased to announce that school uniforms and academic welcome kits are ready for pickup. Please collect them from the administrative office on weekdays between 9:00 AM and 2:00 PM.', NULL, NULL, 1, '2026-07-14 17:46:57.923');
@@ -590,9 +1046,7 @@ INSERT INTO [circulars] ([id], [title], [content], [program_id], [attachment_url
 
 SET IDENTITY_INSERT [circulars] OFF;
 
--- ----------------------------------------------------------
 -- Data for table: fee_structures
--- ----------------------------------------------------------
 SET IDENTITY_INSERT [fee_structures] ON;
 
 INSERT INTO [fee_structures] ([id], [name], [category], [amount], [frequency], [program_id], [is_active], [created_at]) VALUES (1, 'Tuition Fee (Toddler)', 'Tuition', '12000.00', 'Termly', 1, 1, '2026-07-10 23:54:51.833');
@@ -603,9 +1057,7 @@ INSERT INTO [fee_structures] ([id], [name], [category], [amount], [frequency], [
 
 SET IDENTITY_INSERT [fee_structures] OFF;
 
--- ----------------------------------------------------------
 -- Data for table: milestone_templates
--- ----------------------------------------------------------
 SET IDENTITY_INSERT [milestone_templates] ON;
 
 INSERT INTO [milestone_templates] ([id], [program_id], [milestone_name], [category], [created_at]) VALUES (1, 1, 'Sorts shapes and objects by primary colors', 'Cognitive', '2026-07-10 23:04:25.663');
@@ -650,9 +1102,7 @@ INSERT INTO [milestone_templates] ([id], [program_id], [milestone_name], [catego
 
 SET IDENTITY_INSERT [milestone_templates] OFF;
 
--- ----------------------------------------------------------
 -- Data for table: students
--- ----------------------------------------------------------
 SET IDENTITY_INSERT [students] ON;
 
 INSERT INTO [students] ([id], [name], [parent_name], [phone], [program_id], [allergies], [photo_url], [issued_items_json], [blood_group], [emergency_phone], [date_of_birth], [is_active], [created_at]) VALUES (1, 'Aarav Sharma', 'Raj Sharma', '9876543210', 1, 'Peanuts & Strawberries', NULL, NULL, NULL, NULL, NULL, 1, '2026-07-09 14:28:04.973');
@@ -675,9 +1125,7 @@ INSERT INTO [students] ([id], [name], [parent_name], [phone], [program_id], [all
 
 SET IDENTITY_INSERT [students] OFF;
 
--- ----------------------------------------------------------
 -- Data for table: admission_vaccinations
--- ----------------------------------------------------------
 SET IDENTITY_INSERT [admission_vaccinations] ON;
 
 INSERT INTO [admission_vaccinations] ([id], [admission_id], [vaccination_id], [administered_date]) VALUES (1, 1, 1, '2025-06-20');
@@ -687,9 +1135,7 @@ INSERT INTO [admission_vaccinations] ([id], [admission_id], [vaccination_id], [a
 
 SET IDENTITY_INSERT [admission_vaccinations] OFF;
 
--- ----------------------------------------------------------
 -- Data for table: attendance
--- ----------------------------------------------------------
 SET IDENTITY_INSERT [attendance] ON;
 
 INSERT INTO [attendance] ([id], [student_id], [date], [status], [notes], [created_at]) VALUES (1, 20, '2026-07-13', 'LEAVE', 'Approved Leave: 4 days leave due to travelling hometown', '2026-07-11 14:32:18.390');
@@ -708,9 +1154,7 @@ INSERT INTO [attendance] ([id], [student_id], [date], [status], [notes], [create
 
 SET IDENTITY_INSERT [attendance] OFF;
 
--- ----------------------------------------------------------
 -- Data for table: leave_requests
--- ----------------------------------------------------------
 SET IDENTITY_INSERT [leave_requests] ON;
 
 INSERT INTO [leave_requests] ([id], [student_id], [start_date], [end_date], [reason], [status], [admin_comment], [created_at]) VALUES (1, 20, '2026-07-13', '2026-07-16', '4 days leave due to travelling hometown', 'Approved', NULL, '2026-07-11 14:30:40.597');
@@ -718,18 +1162,14 @@ INSERT INTO [leave_requests] ([id], [student_id], [start_date], [end_date], [rea
 
 SET IDENTITY_INSERT [leave_requests] OFF;
 
--- ----------------------------------------------------------
 -- Data for table: library_borrows
--- ----------------------------------------------------------
 SET IDENTITY_INSERT [library_borrows] ON;
 
 INSERT INTO [library_borrows] ([id], [book_id], [student_id], [borrow_date], [due_date], [return_date], [status], [created_at]) VALUES (1, 1, 1, '2026-07-11', '2026-07-18', NULL, 'Borrowed', '2026-07-14 18:05:43.687');
 
 SET IDENTITY_INSERT [library_borrows] OFF;
 
--- ----------------------------------------------------------
 -- Data for table: parent_bills
--- ----------------------------------------------------------
 SET IDENTITY_INSERT [parent_bills] ON;
 
 INSERT INTO [parent_bills] ([id], [student_id], [title], [amount], [due_date], [status], [paid_date], [payment_method], [receipt_no], [waiver_amount], [notes], [created_at]) VALUES (1, 1, 'Term 1 Tuition & Admin Fees', '12500.00', '2026-03-31', 'Paid', '2026-03-15 10:30:00.000', 'Online', 'REC-2026-0091', '0.00', NULL, '2026-07-10 22:38:02.070');
@@ -803,9 +1243,7 @@ INSERT INTO [parent_bills] ([id], [student_id], [title], [amount], [due_date], [
 
 SET IDENTITY_INSERT [parent_bills] OFF;
 
--- ----------------------------------------------------------
 -- Data for table: parent_milestones
--- ----------------------------------------------------------
 SET IDENTITY_INSERT [parent_milestones] ON;
 
 INSERT INTO [parent_milestones] ([id], [student_id], [milestone_name], [category], [status], [completed_date], [teacher_comments], [created_at]) VALUES (1, 1, 'Identifies standard uppercase & lowercase letters', 'Cognitive', 'Completed', '2026-05-12', 'Excellent progress! Quickly recognizes vowels and primary consonants.', '2026-07-10 22:38:02.073');
@@ -978,9 +1416,7 @@ INSERT INTO [parent_milestones] ([id], [student_id], [milestone_name], [category
 
 SET IDENTITY_INSERT [parent_milestones] OFF;
 
--- ----------------------------------------------------------
 -- Data for table: users
--- ----------------------------------------------------------
 SET IDENTITY_INSERT [users] ON;
 
 INSERT INTO [users] ([id], [email], [hashed_password], [full_name], [role], [is_active], [created_at], [two_factor_secret], [two_factor_enabled], [student_id]) VALUES (1, 'admin@school.com', '$2b$12$HbJobprGIg81/aovwPWGIeZcBdmGkDsNmP4IUPniPQXwQFQ40RB6S', 'School Administrator', 'ADMIN', 1, '2026-07-06 07:57:40.960', NULL, 0, NULL);
@@ -989,9 +1425,7 @@ INSERT INTO [users] ([id], [email], [hashed_password], [full_name], [role], [is_
 
 SET IDENTITY_INSERT [users] OFF;
 
--- ----------------------------------------------------------
 -- Data for table: refresh_tokens
--- ----------------------------------------------------------
 SET IDENTITY_INSERT [refresh_tokens] ON;
 
 INSERT INTO [refresh_tokens] ([id], [token], [user_id], [expires_at], [is_revoked], [created_at]) VALUES (1, 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3ODM5NDM3NjQsInN1YiI6ImFkbWluQHNjaG9vbC5jb20iLCJ0eXBlIjoicmVmcmVzaCJ9.mRpbCpDfc4vmX0GRj6Xvjdr0YonEtnzG0EjhLE4Vcc4', 1, '2026-07-13 11:56:04.473', 1, '2026-07-06 11:56:04.477');
