@@ -478,8 +478,14 @@ import { ContentService } from '../../core/services/content.service';
         </div>
 
         <!-- 5. CALENDAR & EVENTS TAB -->
-        <div *ngIf="activeTab === 'calendar'" class="tab-content animate-fade-in">
-          <div class="calendar-layout">
+        <div *ngIf="activeTab === 'calendar'" class="tab-content animate-fade-in calendar-tab-wrapper">
+          <!-- Playful Decorative Floating Elements -->
+          <div class="calendar-deco cloud-1">☁️</div>
+          <div class="calendar-deco cloud-2">☁️</div>
+          <div class="calendar-deco balloon">🎈</div>
+          <div class="calendar-deco kite">🪁</div>
+          
+          <div class="calendar-layout" style="position: relative; z-index: 2;">
             
             <!-- Left Panel: Calendar Grid -->
             <div class="card calendar-card">
@@ -1735,6 +1741,65 @@ import { ContentService } from '../../core/services/content.service';
     @keyframes fadeIn {
       from { opacity: 0; transform: translateY(8px); }
       to { opacity: 1; transform: translateY(0); }
+    }
+
+    .calendar-tab-wrapper {
+      position: relative;
+      background: linear-gradient(135deg, #FFFDF5 0%, #F0F9FF 100%);
+      padding: 30px;
+      border-radius: 24px;
+      border: 3px dashed #BAE6FD;
+      overflow: hidden;
+      box-shadow: inset 0 0 40px rgba(224, 242, 254, 0.5);
+    }
+    
+    .calendar-deco {
+      position: absolute;
+      font-size: 3rem;
+      opacity: 0.08;
+      pointer-events: none;
+      user-select: none;
+      z-index: 1;
+      filter: blur(0.5px);
+    }
+    
+    .cloud-1 {
+      top: 15px;
+      left: 20px;
+      font-size: 4rem;
+      animation: floatSlow 8s ease-in-out infinite alternate;
+    }
+    
+    .cloud-2 {
+      bottom: 25px;
+      right: 15%;
+      font-size: 4.5rem;
+      animation: floatSlow 11s ease-in-out infinite alternate-reverse;
+    }
+    
+    .balloon {
+      top: 40%;
+      left: 5%;
+      font-size: 3.5rem;
+      animation: floatVertical 12s ease-in-out infinite;
+    }
+    
+    .kite {
+      top: 15%;
+      right: 5%;
+      font-size: 3.5rem;
+      animation: floatSlow 10s ease-in-out infinite alternate;
+    }
+    
+    @keyframes floatSlow {
+      0% { transform: translate(0, 0) rotate(0deg); }
+      100% { transform: translate(15px, -10px) rotate(3deg); }
+    }
+    
+    @keyframes floatVertical {
+      0% { transform: translateY(0) rotate(0deg); }
+      50% { transform: translateY(-20px) rotate(-5deg); }
+      100% { transform: translateY(0) rotate(0deg); }
     }
 
     /* Calendar Tab Layout */
