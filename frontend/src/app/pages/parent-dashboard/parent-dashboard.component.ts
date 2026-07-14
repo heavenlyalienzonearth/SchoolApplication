@@ -484,9 +484,13 @@ import { ContentService } from '../../core/services/content.service';
             <!-- Left Panel: Calendar Grid -->
             <div class="card calendar-card">
               <div class="calendar-header">
-                <button class="calendar-nav-btn" (click)="prevMonth()">◀</button>
-                <h3 class="calendar-title">{{ monthNames[currentMonth] }} {{ currentYear }}</h3>
-                <button class="calendar-nav-btn" (click)="nextMonth()">▶</button>
+                <button class="calendar-nav-btn" (click)="prevMonth()" title="Previous Month" style="display: flex; align-items: center; justify-content: center; width: 36px; height: 36px; padding: 0;">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+                </button>
+                <h3 class="calendar-title" style="letter-spacing: -0.3px;">{{ monthNames[currentMonth] }} {{ currentYear }}</h3>
+                <button class="calendar-nav-btn" (click)="nextMonth()" title="Next Month" style="display: flex; align-items: center; justify-content: center; width: 36px; height: 36px; padding: 0;">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
+                </button>
               </div>
               
               <div class="calendar-grid">
@@ -502,7 +506,7 @@ import { ContentService } from '../../core/services/content.service';
                 <!-- Calendar Day Cells -->
                 <div *ngFor="let day of calendarDays" 
                      class="calendar-day" 
-                     [class.empty]="!day.date"
+                     [class.adjacent-month]="!day.isCurrentMonth"
                      [class.today]="day.isToday"
                      [class.selected]="selectedDateStr === day.dateStr"
                      (click)="selectDate(day.date, day.dateStr)">
@@ -1812,26 +1816,35 @@ import { ContentService } from '../../core/services/content.service';
       flex-direction: column;
       justify-content: space-between;
       cursor: pointer;
-      transition: all 0.2s ease;
+      transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
       position: relative;
     }
     
-    .calendar-day:not(.empty):hover {
+    .calendar-day:hover {
       border-color: var(--primary);
-      box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+      box-shadow: 0 10px 20px -5px rgba(0,0,0,0.05);
       transform: translateY(-2px);
+      z-index: 2;
     }
     
-    .calendar-day.empty {
+    .calendar-day.adjacent-month {
       background: #F8FAFC;
-      border-color: transparent;
-      cursor: default;
-      pointer-events: none;
+      opacity: 0.55;
+    }
+    
+    .calendar-day.adjacent-month:hover {
+      opacity: 0.9;
+    }
+    
+    .calendar-day.adjacent-month .day-number {
+      color: #94A3B8;
+      font-weight: 500;
     }
     
     .calendar-day.today {
       background: #EFF6FF;
       border-color: #3B82F6;
+      box-shadow: inset 0 0 0 1px #3B82F6;
     }
     
     .calendar-day.today .day-number {
@@ -2493,12 +2506,26 @@ export class ParentDashboardComponent implements OnInit {
     
     const days = [];
     
-    // Add empty placeholders
-    for (let i = 0; i < firstDayIndex; i++) {
-      days.push({ date: null, dateStr: '', events: [] });
+    // 1. Add preceding days from the previous month
+    const prevMonthDays = new Date(this.currentYear, this.currentMonth, 0).getDate();
+    for (let i = firstDayIndex - 1; i >= 0; i--) {
+      const dayNum = prevMonthDays - i;
+      const date = new Date(this.currentYear, this.currentMonth - 1, dayNum);
+      const offset = date.getTimezoneOffset();
+      const localDate = new Date(date.getTime() - (offset * 60 * 1000));
+      const dateStr = localDate.toISOString().split('T')[0];
+      
+      days.push({
+        date: date,
+        dayNum: dayNum,
+        dateStr: dateStr,
+        events: this.allCalendarEvents.filter(e => e.dateStr === dateStr),
+        isToday: this.isToday(date),
+        isCurrentMonth: false
+      });
     }
     
-    // Add days
+    // 2. Add current month days
     for (let d = 1; d <= totalDays; d++) {
       const date = new Date(this.currentYear, this.currentMonth, d);
       const offset = date.getTimezoneOffset();
@@ -2512,7 +2539,26 @@ export class ParentDashboardComponent implements OnInit {
         dayNum: d,
         dateStr: dateStr,
         events: dayEvents,
-        isToday: this.isToday(date)
+        isToday: this.isToday(date),
+        isCurrentMonth: true
+      });
+    }
+    
+    // 3. Add succeeding days from the next month to complete the 42-day (6-week) grid
+    const remainingCells = 42 - days.length;
+    for (let i = 1; i <= remainingCells; i++) {
+      const date = new Date(this.currentYear, this.currentMonth + 1, i);
+      const offset = date.getTimezoneOffset();
+      const localDate = new Date(date.getTime() - (offset * 60 * 1000));
+      const dateStr = localDate.toISOString().split('T')[0];
+      
+      days.push({
+        date: date,
+        dayNum: i,
+        dateStr: dateStr,
+        events: this.allCalendarEvents.filter(e => e.dateStr === dateStr),
+        isToday: this.isToday(date),
+        isCurrentMonth: false
       });
     }
     
