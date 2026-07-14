@@ -267,6 +267,19 @@ class Holiday(Base):
     is_active = Column(Boolean, default=True, nullable=False)
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
 
+class Circular(Base):
+    __tablename__ = "circulars"
+
+    id = Column(Integer, primary_key=True, index=True)
+    title = Column(String(255), nullable=False)
+    content = Column(Text, nullable=False)
+    program_id = Column(Integer, ForeignKey("programs.id", ondelete="SET NULL"), nullable=True)
+    attachment_url = Column(String(500), nullable=True)
+    is_active = Column(Boolean, default=True, nullable=False)
+    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+
+    program = relationship("Program")
+
 class StationaryItem(Base):
     __tablename__ = "stationary_items"
 

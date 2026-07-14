@@ -465,6 +465,24 @@ class CustomHolidayEmailRequest(BaseModel):
     end_date: str
     reopen_date: str
 
+# --- CIRCULAR SCHEMAS ---
+class CircularBase(BaseModel):
+    title: str
+    content: str
+    program_id: Optional[int] = None
+    attachment_url: Optional[str] = None
+    is_active: bool = True
+
+class CircularCreate(CircularBase):
+    pass
+
+class CircularResponse(CircularBase):
+    id: int
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
+
 # --- STATIONERY SCHEMAS ---
 
 from decimal import Decimal

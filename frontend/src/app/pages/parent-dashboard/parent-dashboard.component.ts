@@ -50,6 +50,9 @@ import { ContentService } from '../../core/services/content.service';
           <button class="tab-btn" [class.active]="activeTab === 'calendar'" (click)="setTab('calendar')">
             🗓️ School Calendar
           </button>
+          <button class="tab-btn" [class.active]="activeTab === 'circulars'" (click)="setTab('circulars')">
+            📢 School Circulars
+          </button>
         </div>
       </div>
 
@@ -601,6 +604,89 @@ import { ContentService } from '../../core/services/content.service';
               </div>
             </div>
             
+          </div>
+        </div>
+
+        <!-- 6. SCHOOL CIRCULARS TAB -->
+        <div *ngIf="activeTab === 'circulars'" class="tab-content animate-fade-in circulars-tab-wrapper">
+          <!-- Playful Decorative Floating Elements (inherits parent background theme) -->
+          <div class="calendar-deco cloud-1">☁️</div>
+          <div class="calendar-deco cloud-2">☁️</div>
+          <div class="calendar-deco balloon">🎈</div>
+          
+          <div class="circulars-layout" style="position: relative; z-index: 2;">
+            <div class="card circulars-card">
+              <div class="circulars-header" style="margin-bottom: 20px; border-bottom: 1px solid #F1F5F9; padding-bottom: 15px;">
+                <h3 class="circulars-title" style="font-size: 1.3rem; font-weight: 800; color: #1E293B; margin: 0;">📢 School Circulars & Notices</h3>
+                <p style="color: #64748B; font-size: 0.85rem; margin-top: 5px;">Stay updated with the latest official announcements from Vidyankuram School administration.</p>
+              </div>
+
+              <!-- Circulars List -->
+              <div class="circulars-list" *ngIf="circularsList.length > 0">
+                <div class="circular-item-box" *ngFor="let c of circularsList" (click)="selectCircular(c)" [class.selected]="selectedCircular?.id === c.id">
+                  <div class="circular-item-header">
+                    <span class="circular-date">{{ c.created_at | date:'longDate' }}</span>
+                    <span class="badge" [ngStyle]="{
+                      'background-color': c.program_id ? '#E0F2FE' : '#F3E8FF',
+                      'color': c.program_id ? '#0369A1' : '#6B21A8'
+                    }">
+                      {{ c.program_id ? 'Class Notice' : 'School-Wide' }}
+                    </span>
+                  </div>
+                  <h4 class="circular-item-title">{{ c.title }}</h4>
+                  <p class="circular-item-snippet">{{ c.content | slice:0:150 }}{{ c.content.length > 150 ? '...' : '' }}</p>
+                  <div class="circular-item-footer" style="display: flex; justify-content: space-between; align-items: center; margin-top: 12px; padding-top: 10px; border-top: 1px dashed #F1F5F9;">
+                    <span style="color: var(--primary); font-weight: 700; font-size: 0.82rem;">Read Announcement →</span>
+                    <span *ngIf="c.attachment_url" style="color: #64748B; font-size: 0.8rem; display: flex; align-items: center; gap: 4px;">
+                      📎 Has Attachment
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              <div *ngIf="circularsList.length === 0" class="no-records" style="padding: 60px 20px; text-align: center;">
+                <div style="font-size: 3rem; margin-bottom: 10px;">📯</div>
+                <p style="font-weight: 600; color: #64748B;">No circulars or notices published for your child's class yet.</p>
+              </div>
+            </div>
+
+            <!-- Details Panel -->
+            <div class="calendar-details-panel">
+              <div class="card selected-day-card" style="height: 100%; display: flex; flex-direction: column; justify-content: space-between; min-height: 400px;">
+                <div *ngIf="selectedCircular">
+                  <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 12px;">
+                    <span class="event-badge" [ngStyle]="{
+                      'background-color': selectedCircular.program_id ? '#DBEAFE' : '#F3E8FF',
+                      'color': selectedCircular.program_id ? '#1E40AF' : '#6B21A8'
+                    }">
+                      {{ selectedCircular.program_id ? 'Class-Specific Notice' : 'School-Wide Circular' }}
+                    </span>
+                    <span style="font-size: 0.8rem; color: #64748B; font-weight: 600;">📅 {{ selectedCircular.created_at | date:'mediumDate' }}</span>
+                  </div>
+
+                  <h3 style="font-size: 1.25rem; font-weight: 800; color: #1E293B; margin-bottom: 15px; line-height: 1.4;">{{ selectedCircular.title }}</h3>
+                  
+                  <div style="background-color: #F8FAFC; border-radius: 12px; padding: 20px; border: 1px solid #F1F5F9; margin-bottom: 20px;">
+                    <p style="color: #334155; font-size: 0.92rem; line-height: 1.6; white-space: pre-line; margin: 0;">{{ selectedCircular.content }}</p>
+                  </div>
+
+                  <div *ngIf="selectedCircular.attachment_url" style="background-color: #EFF6FF; border: 1px solid #BFDBFE; border-radius: 8px; padding: 12px 15px; display: flex; align-items: center; justify-content: space-between;">
+                    <span style="font-size: 0.85rem; font-weight: 600; color: #1E40AF; display: flex; align-items: center; gap: 8px;">
+                      📄 Attachment Document Included
+                    </span>
+                    <a [href]="selectedCircular.attachment_url" target="_blank" class="btn-table save" style="padding: 6px 12px; font-size: 0.8rem; border-radius: 4px; text-decoration: none; text-align: center; display: inline-block;">
+                      Download File
+                    </a>
+                  </div>
+                </div>
+
+                <div class="no-events-selected" *ngIf="!selectedCircular" style="margin: auto; text-align: center; padding: 40px 10px;">
+                  <div style="font-size: 3rem; margin-bottom: 15px; opacity: 0.4;">📢</div>
+                  <h4 style="font-weight: 700; color: #475569; margin-bottom: 5px;">No Circular Selected</h4>
+                  <p style="font-size: 0.85rem; color: #64748B; max-width: 250px; margin: auto;">Select any circular from the list on the left to read its full official details.</p>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -1752,6 +1838,92 @@ import { ContentService } from '../../core/services/content.service';
       overflow: hidden;
       box-shadow: inset 0 0 40px rgba(224, 242, 254, 0.5);
     }
+
+    .circulars-tab-wrapper {
+      position: relative;
+      background: linear-gradient(135deg, #FFFDF5 0%, #F0F9FF 100%);
+      padding: 30px;
+      border-radius: 24px;
+      border: 3px dashed #BAE6FD;
+      overflow: hidden;
+      box-shadow: inset 0 0 40px rgba(224, 242, 254, 0.5);
+    }
+    
+    .circulars-layout {
+      display: grid;
+      grid-template-columns: 7fr 5fr;
+      gap: 25px;
+      margin-top: 5px;
+    }
+
+    .circulars-card {
+      background: white;
+      border-radius: 16px;
+      border: 1px solid #E2E8F0;
+      padding: 25px;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.02);
+      display: flex;
+      flex-direction: column;
+    }
+
+    .circulars-list {
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+      max-height: 550px;
+      overflow-y: auto;
+      padding-right: 5px;
+    }
+
+    .circular-item-box {
+      background: #F8FAFC;
+      border: 1px solid #E2E8F0;
+      border-radius: 12px;
+      padding: 18px;
+      cursor: pointer;
+      transition: all 0.2s ease-in-out;
+    }
+
+    .circular-item-box:hover {
+      border-color: var(--primary);
+      background: #FFFFFF;
+      box-shadow: 0 10px 15px -3px rgba(0,0,0,0.05);
+      transform: translateY(-2px);
+    }
+
+    .circular-item-box.selected {
+      border-color: var(--primary);
+      background: #FFFDF9;
+      box-shadow: 0 10px 15px -3px rgba(251, 146, 60, 0.1);
+    }
+
+    .circular-item-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+    }
+
+    .circular-date {
+      font-size: 0.78rem;
+      font-weight: 600;
+      color: #94A3B8;
+    }
+
+    .circular-item-title {
+      font-size: 1.05rem;
+      font-weight: 800;
+      color: #1E293B;
+      margin: 0 0 8px 0;
+      line-height: 1.3;
+    }
+
+    .circular-item-snippet {
+      font-size: 0.85rem;
+      color: #475569;
+      margin: 0;
+      line-height: 1.5;
+    }
     
     .calendar-deco {
       position: absolute;
@@ -2150,6 +2322,11 @@ export class ParentDashboardComponent implements OnInit {
   dashboardData: any = null;
   activeTab = 'overview';
 
+  // Circulars State
+  circularsList: any[] = [];
+  selectedCircular: any = null;
+  circularsLoading = false;
+ 
   // Billing State
   billsList: Bill[] = [];
   totalOutstanding = 0;
@@ -2267,9 +2444,33 @@ export class ParentDashboardComponent implements OnInit {
       this.loadCalendarData();
     } else if (tab === 'overview') {
       this.loadDashboardData();
+    } else if (tab === 'circulars') {
+      this.loadCircularsData();
     }
   }
 
+  loadCircularsData(): void {
+    this.circularsLoading = true;
+    const progId = this.dashboardData?.student?.program_id;
+    this.contentService.getCirculars(progId).subscribe({
+      next: (data) => {
+        this.circularsList = data;
+        this.circularsLoading = false;
+        if (data.length > 0 && !this.selectedCircular) {
+          this.selectedCircular = data[0];
+        }
+      },
+      error: (err) => {
+        this.circularsLoading = false;
+        console.error('Failed to load circulars:', err);
+      }
+    });
+  }
+
+  selectCircular(c: any): void {
+    this.selectedCircular = c;
+  }
+ 
   // --- BILLING LEDGER ---
   loadBilling(): void {
     this.parentService.getBilling().subscribe({

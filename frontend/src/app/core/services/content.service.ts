@@ -124,6 +124,28 @@ export class ContentService {
     return this.apiService.delete<any>(`/events/${id}`);
   }
 
+  // --- CIRCULARS ---
+  getCirculars(programId?: number): Observable<any[]> {
+    const url = programId ? `/circulars?program_id=${programId}` : '/circulars';
+    return this.apiService.get<any[]>(url);
+  }
+
+  getCircularsAdmin(): Observable<any[]> {
+    return this.apiService.get<any[]>('/circulars/admin');
+  }
+
+  createCircular(circular: any): Observable<any> {
+    return this.apiService.post<any>('/circulars/', circular);
+  }
+
+  updateCircular(id: number, circular: any): Observable<any> {
+    return this.apiService.put<any>(`/circulars/${id}`, circular);
+  }
+
+  deleteCircular(id: number): Observable<any> {
+    return this.apiService.delete<any>(`/circulars/${id}`);
+  }
+
   // --- BLOGS ---
   getBlogs(): Observable<any[]> {
     return this.apiService.get<any[]>('/blogs');

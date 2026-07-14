@@ -87,6 +87,9 @@
         <li [class.active]="activeTab === 'leaves'" (click)="setTab('leaves')" *ngIf="currentUser?.role?.toUpperCase() === 'ADMIN' || currentUser?.role?.toUpperCase() === 'PRINCIPAL' || currentUser?.role?.toUpperCase() === 'TEACHER'">
           <span class="icon">📅</span> Leave Approvals
         </li>
+        <li [class.active]="activeTab === 'circulars'" (click)="setTab('circulars')" *ngIf="currentUser?.role?.toUpperCase() === 'ADMIN' || currentUser?.role?.toUpperCase() === 'PRINCIPAL' || currentUser?.role?.toUpperCase() === 'TEACHER'">
+          <span class="icon">📢</span> School Circulars
+        </li>
       </ul>
     </aside>
 
@@ -2008,6 +2011,118 @@
           <div *ngIf="adminLeaves.length === 0" style="text-align: center; color: #94a3b8; font-style: italic; padding: 60px 40px; border: 2px dashed #e2e8f0; border-radius: 12px; background: #f8fafc; margin-top: 20px;">
             <span style="font-size: 2rem; display: block; margin-bottom: 8px;">📅</span>
             No student leave requests found.
+          </div>
+        </div>
+      </section>
+
+      <!-- --- SCHOOL CIRCULARS SECTION --- -->
+      <section *ngIf="activeTab === 'circulars'" class="tab-section animate-fade-in">
+        <div class="section-header">
+          <h2>📢 School Circulars Management</h2>
+          <p>Create and publish official announcements and school circulars. Parents will receive immediate email notifications based on the targeted class level.</p>
+        </div>
+
+        <div class="row-flex" style="display: grid; grid-template-columns: 1fr 2fr; gap: 30px; margin-top: 20px;">
+          <!-- Left Panel: Create/Edit Circular Form -->
+          <div class="dash-card">
+            <h3>{{ editingCircularId ? '✏️ Edit Circular' : '📝 Publish New Circular' }}</h3>
+            
+            <form (ngSubmit)="saveCircular()" style="margin-top: 15px;">
+              <div class="form-group" style="margin-bottom: 15px;">
+                <label class="form-label" style="display: block; font-weight: 600; font-size: 0.85rem; color: #475569; margin-bottom: 6px;">Circular Title *</label>
+                <input type="text" [(ngModel)]="newCircular.title" name="c_title" required class="form-control" placeholder="e.g. Science Exhibition Guidelines" style="width: 100%; border: 1px solid #CBD5E1; border-radius: 6px; padding: 8px 12px;" />
+              </div>
+
+              <div class="form-group" style="margin-bottom: 15px;">
+                <label class="form-label" style="display: block; font-weight: 600; font-size: 0.85rem; color: #475569; margin-bottom: 6px;">Target Class (Program) *</label>
+                <select [(ngModel)]="newCircular.program_id" name="c_program" class="form-control" style="width: 100%; border: 1px solid #CBD5E1; border-radius: 6px; padding: 8px 12px; background-color: white; cursor: pointer;">
+                  <option [ngValue]="null">📢 All Classes (School-Wide)</option>
+                  <option *ngFor="let prog of programs" [value]="prog.id">🏫 {{ prog.title }}</option>
+                </select>
+              </div>
+
+              <div class="form-group" style="margin-bottom: 15px;">
+                <label class="form-label" style="display: block; font-weight: 600; font-size: 0.85rem; color: #475569; margin-bottom: 6px;">Circular Content / Body *</label>
+                <textarea [(ngModel)]="newCircular.content" name="c_content" required class="form-control" style="width: 100%; border: 1px solid #CBD5E1; border-radius: 6px; padding: 8px 12px; min-height: 120px;" placeholder="Write the circular announcement message details here..."></textarea>
+              </div>
+
+              <div class="form-group" style="margin-bottom: 15px;">
+                <label class="form-label" style="display: block; font-weight: 600; font-size: 0.85rem; color: #475569; margin-bottom: 6px;">Attachment URL (Optional)</label>
+                <input type="text" [(ngModel)]="newCircular.attachment_url" name="c_attachment" class="form-control" placeholder="Link to document / pdf / image" style="width: 100%; border: 1px solid #CBD5E1; border-radius: 6px; padding: 8px 12px;" />
+              </div>
+
+              <div class="form-group" style="margin-bottom: 20px; display: flex; align-items: center; gap: 8px;">
+                <input type="checkbox" [(ngModel)]="newCircular.is_active" name="c_active" id="c_active" style="width: 16px; height: 16px; cursor: pointer;" />
+                <label for="c_active" style="font-weight: 600; font-size: 0.85rem; color: #475569; cursor: pointer; user-select: none;">Published & Active</label>
+              </div>
+
+              <div class="btn-group" style="display: flex; gap: 10px;">
+                <button type="submit" class="btn-table save" style="padding: 10px 20px; font-weight: 700; flex: 1; border-radius: 6px;">
+                  {{ editingCircularId ? 'Update Circular' : 'Publish Circular' }}
+                </button>
+                <button type="button" (click)="resetCircularForm()" class="btn-table reset" style="padding: 10px 20px; font-weight: 700; background: #94A3B8; color: white; border-radius: 6px;">
+                  Cancel
+                </button>
+              </div>
+            </form>
+          </div>
+
+          <!-- Right Panel: Circulars Roster Table -->
+          <div class="dash-card">
+            <h3>📋 Published Circulars</h3>
+            
+            <div style="overflow-x: auto; margin-top: 15px;">
+              <table style="width: 100%; border-collapse: collapse; text-align: left;">
+                <thead>
+                  <tr style="background: #F8FAFC; border-bottom: 2px solid #E2E8F0;">
+                    <th style="padding: 12px 10px; font-weight: 700; color: #475569;">Date</th>
+                    <th style="padding: 12px 10px; font-weight: 700; color: #475569;">Target Class</th>
+                    <th style="padding: 12px 10px; font-weight: 700; color: #475569;">Title</th>
+                    <th style="padding: 12px 10px; font-weight: 700; color: #475569;">Attachment</th>
+                    <th style="padding: 12px 10px; font-weight: 700; color: #475569; width: 120px;">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr *ngFor="let c of circularsList" style="border-bottom: 1px solid #E2E8F0;">
+                    <td style="padding: 12px 10px; font-size: 0.85rem; color: #64748B;">
+                      {{ c.created_at | date:'shortDate' }}
+                    </td>
+                    <td style="padding: 12px 10px;">
+                      <span class="badge" [ngStyle]="{
+                        'background-color': c.program_id ? '#E0F2FE' : '#F3E8FF',
+                        'color': c.program_id ? '#0369A1' : '#6B21A8',
+                        'font-size': '0.75rem',
+                        'font-weight': '700',
+                        'border-radius': '6px',
+                        'padding': '4px 8px',
+                        'display': 'inline-block'
+                      }">
+                        {{ getProgramTitle(c.program_id) }}
+                      </span>
+                    </td>
+                    <td style="padding: 12px 10px;">
+                      <div style="font-weight: 700; color: var(--primary);">{{ c.title }}</div>
+                      <span *ngIf="!c.is_active" class="badge" style="background-color: #F3F4F6; color: #9CA3AF; font-size: 0.7rem; border-radius: 4px; padding: 2px 4px; margin-top: 4px; display: inline-block;">Draft</span>
+                    </td>
+                    <td style="padding: 12px 10px; font-size: 0.85rem;">
+                      <a *ngIf="c.attachment_url" [href]="c.attachment_url" target="_blank" style="color: #2563EB; font-weight: 600;">📎 View File</a>
+                      <span *ngIf="!c.attachment_url" style="color: #94A3B8;">--</span>
+                    </td>
+                    <td style="padding: 12px 10px;">
+                      <div style="display: flex; gap: 8px;">
+                        <button (click)="editCircular(c)" class="btn-table edit" title="Edit" type="button">✏️</button>
+                        <button (click)="deleteCircularFromRoster(c.id)" class="btn-table delete" title="Delete" type="button">🗑️</button>
+                      </div>
+                    </td>
+                  </tr>
+                  <tr *ngIf="circularsList.length === 0">
+                    <td colspan="5" style="text-align: center; color: #94a3b8; font-style: italic; padding: 30px 10px;">
+                      No school circulars created yet.
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
           </div>
         </div>
       </section>

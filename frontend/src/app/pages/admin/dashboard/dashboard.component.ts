@@ -104,6 +104,17 @@ export class DashboardComponent implements OnInit {
   editingHolidayId: number | null = null;
   uploadingHolidayImage = false;
 
+  // Circulars State
+  circularsList: any[] = [];
+  newCircular: { title: string; content: string; program_id: number | null; attachment_url: string; is_active: boolean } = {
+    title: '',
+    content: '',
+    program_id: null,
+    attachment_url: '',
+    is_active: true
+  };
+  editingCircularId: number | null = null;
+
   // Custom Bulk Holiday Email Form State
   customHolidayEmail = { reason: '', start_date: '', end_date: '', reopen_date: '' };
   sendingBulkEmail = false;
@@ -274,6 +285,8 @@ export class DashboardComponent implements OnInit {
       this.loadInvoices();
     } else if (tab === 'moments') {
       this.onMomentsTabSelect();
+    } else if (tab === 'circulars') {
+      this.loadCirculars();
     }
   }
 
@@ -1669,6 +1682,88 @@ export class DashboardComponent implements OnInit {
 
   removeHolidayImage(): void {
     this.newHoliday.image_url = '';
+  }
+
+  // --- CIRCULARS TAB ---
+  loadCirculars(): void {
+    this.contentService.getCircularsAdmin().subscribe({
+      next: (data) => {
+        this.circularsList = data;
+      },
+      error: (err) => {
+        this.showToast('❌ Failed to load circulars: ' + (err.error?.detail || err.message), 'error');
+      }
+    });
+  }
+
+  saveCircular(): void {
+    const circularData = { ...this.newCircular };
+    
+    if (this.editingCircularId) {
+      this.contentService.updateCircular(this.editingCircularId, circularData).subscribe({
+        next: () => {
+          this.showToast('🎉 Circular updated successfully!');
+          this.loadCirculars();
+          this.resetCircularForm();
+        },
+        error: (err) => {
+          this.showToast('❌ Failed to update circular: ' + (err.error?.detail || err.message), 'error');
+        }
+      });
+    } else {
+      this.contentService.createCircular(circularData).subscribe({
+        next: () => {
+          this.showToast('🎉 Circular published and parents notified!');
+          this.loadCirculars();
+          this.resetCircularForm();
+        },
+        error: (err) => {
+          this.showToast('❌ Failed to create circular: ' + (err.error?.detail || err.message), 'error');
+        }
+      });
+    }
+  }
+
+  editCircular(circular: any): void {
+    this.editingCircularId = circular.id;
+    this.newCircular = {
+      title: circular.title,
+      content: circular.content,
+      program_id: circular.program_id,
+      attachment_url: circular.attachment_url || '',
+      is_active: circular.is_active
+    };
+  }
+
+  deleteCircularFromRoster(id: number): void {
+    if (confirm('Are you sure you want to delete this circular?')) {
+      this.contentService.deleteCircular(id).subscribe({
+        next: () => {
+          this.showToast('🎉 Circular deleted successfully!');
+          this.loadCirculars();
+        },
+        error: (err) => {
+          this.showToast('❌ Failed to delete circular: ' + (err.error?.detail || err.message), 'error');
+        }
+      });
+    }
+  }
+
+  resetCircularForm(): void {
+    this.editingCircularId = null;
+    this.newCircular = {
+      title: '',
+      content: '',
+      program_id: null,
+      attachment_url: '',
+      is_active: true
+    };
+  }
+
+  getProgramTitle(id: number | null): string {
+    if (!id) return 'School-Wide';
+    const prog = this.programs.find(p => p.id === id);
+    return prog ? prog.title : 'School-Wide';
   }
 
   sendBulkHolidayEmail(): void {
