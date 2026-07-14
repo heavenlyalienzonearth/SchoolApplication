@@ -18,17 +18,17 @@
         <li [class.active]="activeTab === 'analytics'" (click)="setTab('analytics')">
           <span class="icon">📊</span> Analytics Overview
         </li>
-        <!-- Public Settings Group -->
+        <!-- Settings Group -->
         <li class="sidebar-header" (click)="togglePublicSettings()" *ngIf="currentUser?.role?.toUpperCase() === 'ADMIN' || currentUser?.role?.toUpperCase() === 'PRINCIPAL'" style="cursor: pointer; display: flex; justify-content: space-between; align-items: center; width: 100%; box-sizing: border-box;">
-          <span>🌐 Public Settings</span>
+          <span>🌐 Settings</span>
           <span style="font-size: 0.7rem; color: #94a3b8; font-weight: 800; margin-left: auto;">{{ publicSettingsExpanded ? '▼' : '▶' }}</span>
         </li>
         <ng-container *ngIf="publicSettingsExpanded && (currentUser?.role?.toUpperCase() === 'ADMIN' || currentUser?.role?.toUpperCase() === 'PRINCIPAL')">
           <li [class.active]="activeTab === 'settings'" (click)="setTab('settings')" class="submenu-item">
-            <span class="icon">⚙️</span> Site Settings
+            <span class="icon">⚙️</span> Public Settings
           </li>
           <li [class.active]="activeTab === 'hero'" (click)="setTab('hero')" class="submenu-item">
-            <span class="icon">🖼️</span> Hero Banner
+            <span class="icon">🖼️</span> Modify Banner
           </li>
         </ng-container>
         <!-- School Management Group -->
@@ -136,8 +136,8 @@
         <label class="form-label" for="mobileTabSelect">Dashboard Navigation:</label>
         <select id="mobileTabSelect" [ngModel]="activeTab" (ngModelChange)="setTab($event)" class="form-control select-tab">
           <option value="analytics">📊 Analytics Overview</option>
-          <option value="settings" *ngIf="currentUser?.role?.toUpperCase() === 'ADMIN' || currentUser?.role?.toUpperCase() === 'PRINCIPAL'">⚙️ Site Settings</option>
-          <option value="hero" *ngIf="currentUser?.role?.toUpperCase() === 'ADMIN' || currentUser?.role?.toUpperCase() === 'PRINCIPAL'">🖼️ Hero Banner</option>
+          <option value="settings" *ngIf="currentUser?.role?.toUpperCase() === 'ADMIN' || currentUser?.role?.toUpperCase() === 'PRINCIPAL'">⚙️ Public Settings</option>
+          <option value="hero" *ngIf="currentUser?.role?.toUpperCase() === 'ADMIN' || currentUser?.role?.toUpperCase() === 'PRINCIPAL'">🖼️ Modify Banner</option>
           <option value="programs" *ngIf="currentUser?.role?.toUpperCase() === 'ADMIN' || currentUser?.role?.toUpperCase() === 'PRINCIPAL'">🎓 Programs</option>
           <option value="testimonials" *ngIf="currentUser?.role?.toUpperCase() === 'ADMIN' || currentUser?.role?.toUpperCase() === 'PRINCIPAL'">💬 Parent Reviews</option>
           <option value="gallery" *ngIf="currentUser?.role?.toUpperCase() === 'ADMIN' || currentUser?.role?.toUpperCase() === 'PRINCIPAL'">📷 Gallery</option>
