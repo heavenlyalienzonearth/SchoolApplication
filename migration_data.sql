@@ -36,6 +36,43 @@ BEGIN
 END;
 GO
 
+-- ----------------------------------------------------------
+-- Ensure library tables exist
+-- ----------------------------------------------------------
+IF NOT EXISTS (SELECT * FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = 'library_books')
+BEGIN
+    EXEC('
+        CREATE TABLE library_books (
+            id INT IDENTITY(1,1) PRIMARY KEY,
+            title VARCHAR(255) NOT NULL,
+            author VARCHAR(255) NOT NULL,
+            isbn VARCHAR(100) NULL,
+            category VARCHAR(100) NOT NULL,
+            total_copies INT NOT NULL DEFAULT 1,
+            available_copies INT NOT NULL DEFAULT 1,
+            created_at DATETIME NOT NULL DEFAULT GETDATE()
+        );
+    ');
+END;
+GO
+
+IF NOT EXISTS (SELECT * FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = 'library_borrows')
+BEGIN
+    EXEC('
+        CREATE TABLE library_borrows (
+            id INT IDENTITY(1,1) PRIMARY KEY,
+            book_id INT NOT NULL FOREIGN KEY REFERENCES library_books(id) ON DELETE CASCADE,
+            student_id INT NOT NULL FOREIGN KEY REFERENCES students(id) ON DELETE CASCADE,
+            borrow_date VARCHAR(50) NOT NULL,
+            due_date VARCHAR(50) NOT NULL,
+            return_date VARCHAR(50) NULL,
+            status VARCHAR(50) NOT NULL DEFAULT ''Borrowed'',
+            created_at DATETIME NOT NULL DEFAULT GETDATE()
+        );
+    ');
+END;
+GO
+
 EXEC sp_msforeachtable 'ALTER TABLE ? NOCHECK CONSTRAINT ALL';
 GO
 
@@ -49,6 +86,7 @@ DELETE FROM [refresh_tokens];
 DELETE FROM [users];
 DELETE FROM [parent_milestones];
 DELETE FROM [parent_bills];
+DELETE FROM [library_borrows];
 DELETE FROM [leave_requests];
 DELETE FROM [attendance];
 DELETE FROM [admission_vaccinations];
@@ -64,6 +102,7 @@ DELETE FROM [stationary_items];
 DELETE FROM [site_settings];
 DELETE FROM [programs];
 DELETE FROM [page_sections];
+DELETE FROM [library_books];
 DELETE FROM [holidays];
 DELETE FROM [gallery_items];
 DELETE FROM [franchise_inquiries];
@@ -420,6 +459,18 @@ INSERT INTO [holidays] ([id], [title], [description], [holiday_date], [year], [c
 SET IDENTITY_INSERT [holidays] OFF;
 
 -- ----------------------------------------------------------
+-- Data for table: library_books
+-- ----------------------------------------------------------
+SET IDENTITY_INSERT [library_books] ON;
+
+INSERT INTO [library_books] ([id], [title], [author], [isbn], [category], [total_copies], [available_copies], [created_at]) VALUES (1, 'The Very Hungry Caterpillar', 'Eric Carle', '9780241003008', 'Picture Book', 5, 4, '2026-07-14 18:05:43.680');
+INSERT INTO [library_books] ([id], [title], [author], [isbn], [category], [total_copies], [available_copies], [created_at]) VALUES (2, 'Green Eggs and Ham', 'Dr. Seuss', '9780394800165', 'Beginner Reader', 3, 3, '2026-07-14 18:05:43.680');
+INSERT INTO [library_books] ([id], [title], [author], [isbn], [category], [total_copies], [available_copies], [created_at]) VALUES (3, 'Where the Wild Things Are', 'Maurice Sendak', '9780060254926', 'Fiction', 4, 4, '2026-07-14 18:05:43.680');
+INSERT INTO [library_books] ([id], [title], [author], [isbn], [category], [total_copies], [available_copies], [created_at]) VALUES (4, 'Charlotte''s Web', 'E.B. White', '9780064400558', 'Chapter Book', 2, 2, '2026-07-14 18:05:43.680');
+
+SET IDENTITY_INSERT [library_books] OFF;
+
+-- ----------------------------------------------------------
 -- Data for table: page_sections
 -- ----------------------------------------------------------
 SET IDENTITY_INSERT [page_sections] ON;
@@ -666,6 +717,15 @@ INSERT INTO [leave_requests] ([id], [student_id], [start_date], [end_date], [rea
 INSERT INTO [leave_requests] ([id], [student_id], [start_date], [end_date], [reason], [status], [admin_comment], [created_at]) VALUES (2, 20, '2026-07-21', '2026-07-29', 'Travelling international.', 'Approved', 'Make sure you take care of studies.', '2026-07-11 14:47:40.000');
 
 SET IDENTITY_INSERT [leave_requests] OFF;
+
+-- ----------------------------------------------------------
+-- Data for table: library_borrows
+-- ----------------------------------------------------------
+SET IDENTITY_INSERT [library_borrows] ON;
+
+INSERT INTO [library_borrows] ([id], [book_id], [student_id], [borrow_date], [due_date], [return_date], [status], [created_at]) VALUES (1, 1, 1, '2026-07-11', '2026-07-18', NULL, 'Borrowed', '2026-07-14 18:05:43.687');
+
+SET IDENTITY_INSERT [library_borrows] OFF;
 
 -- ----------------------------------------------------------
 -- Data for table: parent_bills
@@ -986,7 +1046,8 @@ INSERT INTO [refresh_tokens] ([id], [token], [user_id], [expires_at], [is_revoke
 INSERT INTO [refresh_tokens] ([id], [token], [user_id], [expires_at], [is_revoked], [created_at]) VALUES (51, 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3ODQ2MzI2ODAsInN1YiI6ImVlZWVAZ21haWwuY29tIiwidHlwZSI6InJlZnJlc2gifQ.hOyzj3pPQxHL_y1lEsOIMYexr-MUCGnGTHOOhUriR8U', 2, '2026-07-21 11:18:00.280', 0, '2026-07-14 11:18:00.283');
 INSERT INTO [refresh_tokens] ([id], [token], [user_id], [expires_at], [is_revoked], [created_at]) VALUES (52, 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3ODQ2MzM5NjMsInN1YiI6ImVlZWVAZ21haWwuY29tIiwidHlwZSI6InJlZnJlc2gifQ.6rjagSBmioITvM5TkfHZKBDWiUawHQ4CrKJjPZ1u_18', 2, '2026-07-21 11:39:23.260', 1, '2026-07-14 11:39:23.260');
 INSERT INTO [refresh_tokens] ([id], [token], [user_id], [expires_at], [is_revoked], [created_at]) VALUES (53, 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3ODQ2MzQwMDEsInN1YiI6ImFkbWluQHNjaG9vbC5jb20iLCJ0eXBlIjoicmVmcmVzaCJ9.DZ1TLm79OC-JmLhWty7QBfnyx96Jjs0JnE-CAHnLQqk', 1, '2026-07-21 11:40:01.077', 1, '2026-07-14 11:40:01.077');
-INSERT INTO [refresh_tokens] ([id], [token], [user_id], [expires_at], [is_revoked], [created_at]) VALUES (54, 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3ODQ2MzQ5NTgsInN1YiI6ImFkbWluQHNjaG9vbC5jb20iLCJ0eXBlIjoicmVmcmVzaCJ9.yIl4zYDOXZR9q4mA5qrCsTzP6M4zf4Dh7VO5Wp9GCgU', 1, '2026-07-21 11:55:58.093', 0, '2026-07-14 11:55:58.097');
+INSERT INTO [refresh_tokens] ([id], [token], [user_id], [expires_at], [is_revoked], [created_at]) VALUES (54, 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3ODQ2MzQ5NTgsInN1YiI6ImFkbWluQHNjaG9vbC5jb20iLCJ0eXBlIjoicmVmcmVzaCJ9.yIl4zYDOXZR9q4mA5qrCsTzP6M4zf4Dh7VO5Wp9GCgU', 1, '2026-07-21 11:55:58.093', 1, '2026-07-14 11:55:58.097');
+INSERT INTO [refresh_tokens] ([id], [token], [user_id], [expires_at], [is_revoked], [created_at]) VALUES (55, 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3ODQ2MzY4NjYsInN1YiI6ImFkbWluQHNjaG9vbC5jb20iLCJ0eXBlIjoicmVmcmVzaCJ9.bRi9f7TCfuJkFTGSnSynm39YCsJ2SoxeeXEICd-OiOo', 1, '2026-07-21 12:27:46.033', 0, '2026-07-14 12:27:46.040');
 
 SET IDENTITY_INSERT [refresh_tokens] OFF;
 
