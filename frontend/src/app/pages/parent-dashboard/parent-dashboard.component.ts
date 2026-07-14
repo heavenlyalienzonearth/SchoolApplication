@@ -448,7 +448,7 @@ import { ContentService } from '../../core/services/content.service';
             
             <!-- Professional SVG Plotting -->
             <div style="display: flex; justify-content: center; align-items: center; background: #FAFAFA; border-radius: 16px; padding: 25px 15px; border: 1px dashed #E2E8F0;">
-              <svg viewBox="0 0 480 360" style="width: 100%; max-width: 440px; height: auto;">
+              <svg viewBox="0 0 600 380" style="width: 100%; max-width: 520px; height: auto;">
                 <defs>
                   <!-- Premium Radial / Linear Gradients for Pentagon Fill -->
                   <linearGradient id="radarGrad" x1="0%" y1="0%" x2="100%" y2="100%">
@@ -474,7 +474,7 @@ import { ContentService } from '../../core/services/content.service';
                       style="transition: all 0.2s;" />
 
                 <!-- Solid center hub node -->
-                <circle cx="240" cy="180" r="4.5" fill="#475569" />
+                <circle cx="300" cy="190" r="4.5" fill="#475569" />
 
                 <!-- Main Dynamic Radar Growth Polygon Shape -->
                 <polygon [attr.points]="getRadarPolygonPoints(dashboardData?.development_radar)" fill="url(#radarGrad)" stroke="var(--primary)" stroke-width="2.5" />
@@ -2549,9 +2549,9 @@ export class ParentDashboardComponent implements OnInit {
     const radarData = this.dashboardData?.development_radar || [];
     if (radarData.length === 0) return [];
     
-    const cx = 240;
-    const cy = 180;
-    const maxRadius = 105;
+    const cx = 300;
+    const cy = 190;
+    const maxRadius = 90;
     const N = radarData.length;
     const axes: any[] = [];
     
@@ -2563,7 +2563,7 @@ export class ParentDashboardComponent implements OnInit {
       const x2 = cx + maxRadius * Math.cos(angleRad);
       const y2 = cy + maxRadius * Math.sin(angleRad);
       
-      const textRadius = maxRadius + 22;
+      const textRadius = maxRadius + 25;
       const textX = cx + textRadius * Math.cos(angleRad);
       const textY = cy + textRadius * Math.sin(angleRad);
       
@@ -2602,9 +2602,9 @@ export class ParentDashboardComponent implements OnInit {
 
   getRadarGridPoints(scale: number): string {
     const radarData = this.dashboardData?.development_radar || [];
-    const cx = 240;
-    const cy = 180;
-    const maxRadius = 105;
+    const cx = 300;
+    const cy = 190;
+    const maxRadius = 90;
     const N = radarData.length;
     if (N === 0) return '';
     
@@ -2619,9 +2619,9 @@ export class ParentDashboardComponent implements OnInit {
   }
 
   getRadarPolygonPoints(radarData: any[]): string {
-    const cx = 240;
-    const cy = 180;
-    const maxRadius = 105;
+    const cx = 300;
+    const cy = 190;
+    const maxRadius = 90;
     if (!radarData || radarData.length === 0) return `${cx},${cy} ${cx},${cy} ${cx},${cy}`;
     const N = radarData.length;
     const points: string[] = [];
@@ -2638,9 +2638,9 @@ export class ParentDashboardComponent implements OnInit {
   }
 
   getRadarCircles(radarData: any[]): any[] {
-    const cx = 240;
-    const cy = 180;
-    const maxRadius = 105;
+    const cx = 300;
+    const cy = 190;
+    const maxRadius = 90;
     if (!radarData || radarData.length === 0) return [];
     const N = radarData.length;
     const circles: any[] = [];
@@ -2659,6 +2659,7 @@ export class ParentDashboardComponent implements OnInit {
     }
     return circles;
   }
+
 
 
   // Weekly Menu Planner State & Methods
