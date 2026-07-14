@@ -38,31 +38,31 @@
         </li>
         <ng-container *ngIf="schoolManagementExpanded">
           <li [class.active]="activeTab === 'programs'" (click)="setTab('programs')" class="submenu-item" *ngIf="currentUser?.role?.toUpperCase() === 'ADMIN' || currentUser?.role?.toUpperCase() === 'PRINCIPAL'">
-            <span class="icon">🎓</span> School Programs
+            <span class="icon">🎓</span> Programs
           </li>
           <li [class.active]="activeTab === 'holidays'" (click)="setTab('holidays')" class="submenu-item">
-            <span class="icon">📅</span> School Holidays
+            <span class="icon">📅</span> Holidays
           </li>
           <li [class.active]="activeTab === 'gallery'" (click)="setTab('gallery')" class="submenu-item" *ngIf="currentUser?.role?.toUpperCase() === 'ADMIN' || currentUser?.role?.toUpperCase() === 'PRINCIPAL'">
-            <span class="icon">📷</span> School Gallery
+            <span class="icon">📷</span> Gallery
           </li>
           <li [class.active]="activeTab === 'inquiries'" (click)="setTab('inquiries')" class="submenu-item" *ngIf="currentUser?.role?.toUpperCase() === 'ADMIN' || currentUser?.role?.toUpperCase() === 'PRINCIPAL'">
             <span class="icon">📩</span> Admission Enquiries
           </li>
           <li [class.active]="activeTab === 'users'" (click)="setTab('users')" class="submenu-item" *ngIf="currentUser?.role?.toUpperCase() === 'ADMIN'">
-            <span class="icon">👥</span> School Teacher(s)
+            <span class="icon">👥</span> Teacher Updates
           </li>
           <li [class.active]="activeTab === 'circulars'" (click)="setTab('circulars')" class="submenu-item">
-            <span class="icon">📢</span> School Circulars
+            <span class="icon">📢</span> Circulars
           </li>
           <li [class.active]="activeTab === 'library'" (click)="setTab('library')" class="submenu-item">
-            <span class="icon">📚</span> School Library
+            <span class="icon">📚</span> Library
           </li>
           <li [class.active]="activeTab === 'admissions'" (click)="setTab('admissions')" class="submenu-item" *ngIf="currentUser?.role?.toUpperCase() === 'ADMIN' || currentUser?.role?.toUpperCase() === 'PRINCIPAL'">
-            <span class="icon">🏫</span> Student Admissions
+            <span class="icon">🏫</span> Admissions
           </li>
           <li [class.active]="activeTab === 'milestones'" (click)="setTab('milestones')" class="submenu-item" *ngIf="currentUser?.role?.toUpperCase() !== 'PARENT'">
-            <span class="icon">🎯</span> Milestone Config
+            <span class="icon">🎯</span> SetUp Milestones
           </li>
         </ng-container>
 
@@ -138,17 +138,19 @@
           <option value="analytics">📊 Analytics Overview</option>
           <option value="settings" *ngIf="currentUser?.role?.toUpperCase() === 'ADMIN' || currentUser?.role?.toUpperCase() === 'PRINCIPAL'">⚙️ Site Settings</option>
           <option value="hero" *ngIf="currentUser?.role?.toUpperCase() === 'ADMIN' || currentUser?.role?.toUpperCase() === 'PRINCIPAL'">🖼️ Hero Banner</option>
-          <option value="programs" *ngIf="currentUser?.role?.toUpperCase() === 'ADMIN' || currentUser?.role?.toUpperCase() === 'PRINCIPAL'">🎓 School Programs</option>
+          <option value="programs" *ngIf="currentUser?.role?.toUpperCase() === 'ADMIN' || currentUser?.role?.toUpperCase() === 'PRINCIPAL'">🎓 Programs</option>
           <option value="testimonials" *ngIf="currentUser?.role?.toUpperCase() === 'ADMIN' || currentUser?.role?.toUpperCase() === 'PRINCIPAL'">💬 Parent Reviews</option>
-          <option value="gallery" *ngIf="currentUser?.role?.toUpperCase() === 'ADMIN' || currentUser?.role?.toUpperCase() === 'PRINCIPAL'">📷 School Gallery</option>
+          <option value="gallery" *ngIf="currentUser?.role?.toUpperCase() === 'ADMIN' || currentUser?.role?.toUpperCase() === 'PRINCIPAL'">📷 Gallery</option>
           <option value="inquiries" *ngIf="currentUser?.role?.toUpperCase() === 'ADMIN' || currentUser?.role?.toUpperCase() === 'PRINCIPAL'">📩 Admission Enquiries</option>
           <option value="attendance">📅 Student Attendance</option>
-          <option value="admissions" *ngIf="currentUser?.role?.toUpperCase() === 'ADMIN' || currentUser?.role?.toUpperCase() === 'PRINCIPAL'">🏫 Student Admissions</option>
-          <option value="holidays">📅 School Holidays</option>
-          <option value="users" *ngIf="currentUser?.role?.toUpperCase() === 'ADMIN'">👥 School Teacher(s)</option>
+          <option value="admissions" *ngIf="currentUser?.role?.toUpperCase() === 'ADMIN' || currentUser?.role?.toUpperCase() === 'PRINCIPAL'">🏫 Admissions</option>
+          <option value="holidays">📅 Holidays</option>
+          <option value="users" *ngIf="currentUser?.role?.toUpperCase() === 'ADMIN'">👥 Teacher Updates</option>
+          <option value="circulars">📢 Circulars</option>
+          <option value="library">📚 Library</option>
           <option value="stationary" *ngIf="currentUser?.role?.toUpperCase() === 'ADMIN' || currentUser?.role?.toUpperCase() === 'PRINCIPAL'">✏️ Stationery Center</option>
           <option value="moments" *ngIf="currentUser?.role?.toUpperCase() === 'ADMIN' || currentUser?.role?.toUpperCase() === 'PRINCIPAL' || currentUser?.role?.toUpperCase() === 'TEACHER'">📸 Daily Moments</option>
-          <option value="milestones" *ngIf="currentUser?.role?.toUpperCase() !== 'PARENT'">🎯 Milestone Config</option>
+          <option value="milestones" *ngIf="currentUser?.role?.toUpperCase() !== 'PARENT'">🎯 SetUp Milestones</option>
           <option value="leaves" *ngIf="currentUser?.role?.toUpperCase() === 'ADMIN' || currentUser?.role?.toUpperCase() === 'PRINCIPAL' || currentUser?.role?.toUpperCase() === 'TEACHER'">📅 Leave Approvals</option>
           <option value="finance-structures" *ngIf="currentUser?.role?.toUpperCase() === 'ADMIN' || currentUser?.role?.toUpperCase() === 'PRINCIPAL'">⚙️ Fee Structures</option>
           <option value="finance-ledger" *ngIf="currentUser?.role?.toUpperCase() === 'ADMIN' || currentUser?.role?.toUpperCase() === 'PRINCIPAL'">📊 Invoices & Ledger</option>
