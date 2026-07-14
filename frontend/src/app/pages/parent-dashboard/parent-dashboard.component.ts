@@ -32,6 +32,33 @@ import { ContentService } from '../../core/services/content.service';
         </div>
       </header>
 
+      <!-- Premium Horizontal Capsule Tab Bar -->
+      <div class="tabs-bar-container" *ngIf="!loading && dashboardData" style="background: white; border-bottom: 1px solid #E2E8F0; padding: 15px 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.01);">
+        <div class="tabs-bar" style="display: flex; flex-wrap: wrap; justify-content: center; gap: 12px; max-width: 1200px; margin: 0 auto;">
+          <button class="tab-btn-pill" [class.active]="activeTab === 'overview'" (click)="setTab('overview')">
+            <span>📋</span> Portal Overview
+          </button>
+          <button class="tab-btn-pill" [class.active]="activeTab === 'billing'" (click)="setTab('billing')">
+            <span>💳</span> Fees & Ledger
+          </button>
+          <button class="tab-btn-pill" [class.active]="activeTab === 'milestones'" (click)="setTab('milestones')">
+            <span>🎯</span> Milestones Tracker
+          </button>
+          <button class="tab-btn-pill" [class.active]="activeTab === 'meals'" (click)="setTab('meals')">
+            <span>🍽️</span> Weekly Menu
+          </button>
+          <button class="tab-btn-pill" [class.active]="activeTab === 'leaves'" (click)="setTab('leaves')">
+            <span>📅</span> Absence Requests
+          </button>
+          <button class="tab-btn-pill" [class.active]="activeTab === 'calendar'" (click)="setTab('calendar')">
+            <span>🗓️</span> School Calendar
+          </button>
+          <button class="tab-btn-pill" [class.active]="activeTab === 'circulars'" (click)="setTab('circulars')">
+            <span>📢</span> School Circulars
+          </button>
+        </div>
+      </div>
+
       <!-- Alert banners -->
       <div class="alert alert-danger" *ngIf="errorMessage" style="margin: 20px auto; max-width: 1200px;">
         ⚠️ {{ errorMessage }}
@@ -46,36 +73,8 @@ import { ContentService } from '../../core/services/content.service';
         <p>Retrieving kid's portal data...</p>
       </div>
 
-      <!-- Main Portal Layout with Vertical Sidebar Tabs -->
-      <div class="dashboard-body-container" *ngIf="!loading && dashboardData" style="display: flex; gap: 30px; max-width: 1280px; margin: 30px auto; padding: 0 20px; align-items: start;">
-        
-        <!-- Left Sidebar Navigation -->
-        <aside class="sidebar-tabs">
-          <button class="tab-btn-vertical" [class.active]="activeTab === 'overview'" (click)="setTab('overview')">
-            <span>📋</span> Portal Overview
-          </button>
-          <button class="tab-btn-vertical" [class.active]="activeTab === 'billing'" (click)="setTab('billing')">
-            <span>💳</span> Fees & Ledger
-          </button>
-          <button class="tab-btn-vertical" [class.active]="activeTab === 'milestones'" (click)="setTab('milestones')">
-            <span>🎯</span> Milestones Tracker
-          </button>
-          <button class="tab-btn-vertical" [class.active]="activeTab === 'meals'" (click)="setTab('meals')">
-            <span>🍽️</span> Weekly Menu
-          </button>
-          <button class="tab-btn-vertical" [class.active]="activeTab === 'leaves'" (click)="setTab('leaves')">
-            <span>📅</span> Absence Requests
-          </button>
-          <button class="tab-btn-vertical" [class.active]="activeTab === 'calendar'" (click)="setTab('calendar')">
-            <span>🗓️</span> School Calendar
-          </button>
-          <button class="tab-btn-vertical" [class.active]="activeTab === 'circulars'" (click)="setTab('circulars')">
-            <span>📢</span> School Circulars
-          </button>
-        </aside>
-
-        <!-- Right Side Main Content Panel -->
-        <main class="dashboard-main" style="flex: 1; min-width: 0;">
+      <!-- Main Portal Layout (Horizontal View) -->
+      <main class="dashboard-main" *ngIf="!loading && dashboardData" style="max-width: 1200px; margin: 30px auto; padding: 0 20px;">
 
         <!-- 1. OVERVIEW TAB -->
         <div *ngIf="activeTab === 'overview'" class="tab-content animate-fade-in">
@@ -891,7 +890,6 @@ import { ContentService } from '../../core/services/content.service';
         </div>
 
       </main>
-    </div>
 
       <!-- SIMULATED RAZORPAY CHECKOUT MODAL -->
       <div class="modal-backdrop" *ngIf="showRazorpayMockModal">
@@ -1017,44 +1015,35 @@ import { ContentService } from '../../core/services/content.service';
     }
 
     /* Tabs Bar styling */
-    /* Vertical Sidebar Tabs Styling */
-    .sidebar-tabs {
-      background: white;
-      border-radius: 12px;
+    /* Premium Horizontal Capsule Tab Bar Styling */
+    .tab-btn-pill {
+      background: #F1F5F9;
       border: 1px solid #E2E8F0;
-      padding: 16px;
-      box-shadow: 0 4px 6px rgba(0,0,0,0.02);
-      align-self: flex-start;
-      position: sticky;
-      top: 20px;
-    }
-
-    .tab-btn-vertical {
-      background: none;
-      border: none;
-      width: 100%;
-      text-align: left;
-      padding: 12px 16px;
-      font-size: 0.92rem;
+      color: #475569;
       font-weight: 700;
-      color: #64748B;
+      padding: 10px 20px;
+      border-radius: 30px;
       cursor: pointer;
-      border-radius: 8px;
-      transition: all 0.2s;
+      font-size: 0.88rem;
+      transition: all 0.2s ease;
       display: flex;
       align-items: center;
-      gap: 10px;
+      gap: 8px;
     }
 
-    .tab-btn-vertical:hover {
-      background: #F8FAFC;
+    .tab-btn-pill:hover {
+      background: #E2E8F0;
       color: #1E293B;
+      transform: translateY(-1px);
     }
 
-    .tab-btn-vertical.active {
-      background: #FFF0EB;
-      color: #EE5A24;
+    .tab-btn-pill.active {
+      background: #EE5A24;
+      border-color: #EE5A24;
+      color: white;
+      box-shadow: 0 4px 12px rgba(238, 90, 36, 0.25);
     }
+
 
 
     .loading-container {
