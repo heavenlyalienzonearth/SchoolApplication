@@ -448,7 +448,7 @@ import { ContentService } from '../../core/services/content.service';
             
             <!-- Professional SVG Plotting -->
             <div style="display: flex; justify-content: center; align-items: center; background: #FAFAFA; border-radius: 16px; padding: 25px 15px; border: 1px dashed #E2E8F0;">
-              <svg viewBox="0 0 400 360" style="width: 100%; max-width: 380px; height: auto;">
+              <svg viewBox="0 0 480 360" style="width: 100%; max-width: 440px; height: auto;">
                 <defs>
                   <!-- Premium Radial / Linear Gradients for Pentagon Fill -->
                   <linearGradient id="radarGrad" x1="0%" y1="0%" x2="100%" y2="100%">
@@ -465,33 +465,33 @@ import { ContentService } from '../../core/services/content.service';
                 <polygon [attr.points]="getRadarGridPoints(1.0)" fill="none" stroke="#64748B" stroke-width="1.8" />
 
                 <!-- Axes -->
-                <line x1="200" y1="180" x2="200" y2="70" 
+                <line x1="240" y1="180" x2="240" y2="70" 
                       [attr.stroke]="hoveredCategory === 'Cognitive' ? 'var(--secondary)' : '#94A3B8'" 
                       [attr.stroke-width]="hoveredCategory === 'Cognitive' ? 2.5 : 1" 
                       [attr.stroke-dasharray]="hoveredCategory === 'Cognitive' ? 'none' : '2'" style="transition: all 0.2s;" />
                       
-                <line x1="200" y1="180" [attr.x2]="getAxisX(72)" [attr.y2]="getAxisY(72)" 
+                <line x1="240" y1="180" [attr.x2]="getAxisX(72)" [attr.y2]="getAxisY(72)" 
                       [attr.stroke]="hoveredCategory === 'Physical' ? 'var(--secondary)' : '#94A3B8'" 
                       [attr.stroke-width]="hoveredCategory === 'Physical' ? 2.5 : 1" 
                       [attr.stroke-dasharray]="hoveredCategory === 'Physical' ? 'none' : '2'" style="transition: all 0.2s;" />
                       
-                <line x1="200" y1="180" [attr.x2]="getAxisX(144)" [attr.y2]="getAxisY(144)" 
+                <line x1="240" y1="180" [attr.x2]="getAxisX(144)" [attr.y2]="getAxisY(144)" 
                       [attr.stroke]="hoveredCategory === 'Emotional' || hoveredCategory === 'Social-Emotional' ? 'var(--secondary)' : '#94A3B8'" 
                       [attr.stroke-width]="hoveredCategory === 'Emotional' || hoveredCategory === 'Social-Emotional' ? 2.5 : 1" 
                       [attr.stroke-dasharray]="hoveredCategory === 'Emotional' || hoveredCategory === 'Social-Emotional' ? 'none' : '2'" style="transition: all 0.2s;" />
                       
-                <line x1="200" y1="180" [attr.x2]="getAxisX(216)" [attr.y2]="getAxisY(216)" 
+                <line x1="240" y1="180" [attr.x2]="getAxisX(216)" [attr.y2]="getAxisY(216)" 
                       [attr.stroke]="hoveredCategory === 'Creative' ? 'var(--secondary)' : '#94A3B8'" 
                       [attr.stroke-width]="hoveredCategory === 'Creative' ? 2.5 : 1" 
                       [attr.stroke-dasharray]="hoveredCategory === 'Creative' ? 'none' : '2'" style="transition: all 0.2s;" />
                       
-                <line x1="200" y1="180" [attr.x2]="getAxisX(288)" [attr.y2]="getAxisY(288)" 
+                <line x1="240" y1="180" [attr.x2]="getAxisX(288)" [attr.y2]="getAxisY(288)" 
                       [attr.stroke]="hoveredCategory === 'Language' ? 'var(--secondary)' : '#94A3B8'" 
                       [attr.stroke-width]="hoveredCategory === 'Language' ? 2.5 : 1" 
                       [attr.stroke-dasharray]="hoveredCategory === 'Language' ? 'none' : '2'" style="transition: all 0.2s;" />
 
                 <!-- Solid center node -->
-                <circle cx="200" cy="180" r="4" fill="#475569" />
+                <circle cx="240" cy="180" r="4.5" fill="#475569" />
 
                 <!-- Main Radar Growth Shape -->
                 <polygon [attr.points]="getRadarPolygonPoints(dashboardData?.development_radar)" fill="url(#radarGrad)" stroke="var(--primary)" stroke-width="2.5" />
@@ -499,40 +499,40 @@ import { ContentService } from '../../core/services/content.service';
                 <!-- Markers (Interactive Hover Dots) -->
                 <circle *ngFor="let pt of getRadarCircles(dashboardData?.development_radar)" 
                         [attr.cx]="pt.x" [attr.cy]="pt.y" 
-                        [attr.r]="hoveredCategory === pt.category ? 8 : 5.5" 
+                        [attr.r]="hoveredCategory === pt.category ? 9 : 6" 
                         [attr.fill]="hoveredCategory === pt.category ? 'var(--primary)' : 'var(--secondary)'" 
                         stroke="white" [attr.stroke-width]="hoveredCategory === pt.category ? 2.5 : 1.8" 
                         style="cursor: pointer; transition: all 0.2s;"
                         (mouseenter)="hoveredCategory = pt.category" (mouseleave)="hoveredCategory = null" />
 
                 <!-- Labels with Percentage Highlight Toggles -->
-                <text x="200" y="48" text-anchor="middle" font-size="11" font-weight="800" 
+                <text x="240" y="48" text-anchor="middle" font-size="11.5" font-weight="800" 
                       [attr.fill]="hoveredCategory === 'Cognitive' ? 'var(--primary)' : '#475569'" 
-                      [style.font-size]="hoveredCategory === 'Cognitive' ? '13px' : '11px'" 
+                      [style.font-size]="hoveredCategory === 'Cognitive' ? '14px' : '11.5px'" 
                       style="cursor: pointer; transition: all 0.2s;"
                       (mouseenter)="hoveredCategory = 'Cognitive'" (mouseleave)="hoveredCategory = null">🧠 Cognitive</text>
                       
-                <text x="315" y="146" text-anchor="start" font-size="11" font-weight="800" 
+                <text x="355" y="146" text-anchor="start" font-size="11.5" font-weight="800" 
                       [attr.fill]="hoveredCategory === 'Physical' ? 'var(--primary)' : '#475569'" 
-                      [style.font-size]="hoveredCategory === 'Physical' ? '13px' : '11px'" 
+                      [style.font-size]="hoveredCategory === 'Physical' ? '14px' : '11.5px'" 
                       style="cursor: pointer; transition: all 0.2s;"
                       (mouseenter)="hoveredCategory = 'Physical'" (mouseleave)="hoveredCategory = null">🏃 Physical</text>
                       
-                <text x="275" y="292" text-anchor="start" font-size="11" font-weight="800" 
+                <text x="315" y="292" text-anchor="start" font-size="11.5" font-weight="800" 
                       [attr.fill]="hoveredCategory === 'Emotional' || hoveredCategory === 'Social-Emotional' ? 'var(--primary)' : '#475569'" 
-                      [style.font-size]="hoveredCategory === 'Emotional' || hoveredCategory === 'Social-Emotional' ? '13px' : '11px'" 
+                      [style.font-size]="hoveredCategory === 'Emotional' || hoveredCategory === 'Social-Emotional' ? '14px' : '11.5px'" 
                       style="cursor: pointer; transition: all 0.2s;"
                       (mouseenter)="hoveredCategory = 'Emotional'" (mouseleave)="hoveredCategory = null">🤝 Emotional</text>
                       
-                <text x="125" y="292" text-anchor="end" font-size="11" font-weight="800" 
+                <text x="165" y="292" text-anchor="end" font-size="11.5" font-weight="800" 
                       [attr.fill]="hoveredCategory === 'Creative' ? 'var(--primary)' : '#475569'" 
-                      [style.font-size]="hoveredCategory === 'Creative' ? '13px' : '11px'" 
+                      [style.font-size]="hoveredCategory === 'Creative' ? '14px' : '11.5px'" 
                       style="cursor: pointer; transition: all 0.2s;"
                       (mouseenter)="hoveredCategory = 'Creative'" (mouseleave)="hoveredCategory = null">🎨 Creative</text>
                       
-                <text x="85" y="146" text-anchor="end" font-size="11" font-weight="800" 
+                <text x="125" y="146" text-anchor="end" font-size="11.5" font-weight="800" 
                       [attr.fill]="hoveredCategory === 'Language' ? 'var(--primary)' : '#475569'" 
-                      [style.font-size]="hoveredCategory === 'Language' ? '13px' : '11px'" 
+                      [style.font-size]="hoveredCategory === 'Language' ? '14px' : '11.5px'" 
                       style="cursor: pointer; transition: all 0.2s;"
                       (mouseenter)="hoveredCategory = 'Language'" (mouseleave)="hoveredCategory = null">🗣️ Language</text>
               </svg>
@@ -2582,7 +2582,7 @@ export class ParentDashboardComponent implements OnInit {
   hoveredCategory: string | null = null;
 
   getRadarGridPoints(scale: number): string {
-    const cx = 200;
+    const cx = 240;
     const cy = 180;
     const maxRadius = 110;
     const r = maxRadius * scale;
@@ -2596,7 +2596,7 @@ export class ParentDashboardComponent implements OnInit {
   }
 
   getAxisX(angle: number): number {
-    return 200 + 110 * Math.cos(((angle - 90) * Math.PI) / 180);
+    return 240 + 110 * Math.cos(((angle - 90) * Math.PI) / 180);
   }
 
   getAxisY(angle: number): number {
@@ -2604,7 +2604,7 @@ export class ParentDashboardComponent implements OnInit {
   }
 
   getRadarPolygonPoints(radarData: any[]): string {
-    const cx = 200;
+    const cx = 240;
     const cy = 180;
     const maxRadius = 110;
     if (!radarData || radarData.length === 0) return `${cx},${cy} ${cx},${cy} ${cx},${cy} ${cx},${cy} ${cx},${cy}`;
@@ -2624,7 +2624,7 @@ export class ParentDashboardComponent implements OnInit {
   }
 
   getRadarCircles(radarData: any[]): any[] {
-    const cx = 200;
+    const cx = 240;
     const cy = 180;
     const maxRadius = 110;
     if (!radarData || radarData.length === 0) return [];
