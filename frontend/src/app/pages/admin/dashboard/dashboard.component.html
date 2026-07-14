@@ -1154,6 +1154,7 @@
                   <option value="Vacation">Vacation</option>
                   <option value="Public Event">Public Event</option>
                   <option value="Religious Event">Religious Event</option>
+                  <option value="School Event">School Event</option>
                 </select>
               </div>
 
@@ -1266,10 +1267,12 @@
                       <span class="badge" [ngStyle]="{
                         'background-color': h.category === 'National Holiday' ? '#FEE2E2' : 
                                             h.category === 'Vacation' ? '#FFEDD5' : 
-                                            h.category === 'Public Event' ? '#D1FAE5' : '#F3E8FF',
+                                            h.category === 'Public Event' ? '#D1FAE5' : 
+                                            h.category === 'School Event' ? '#DBEAFE' : '#F3E8FF',
                         'color': h.category === 'National Holiday' ? '#EF4444' : 
                                  h.category === 'Vacation' ? '#F97316' : 
-                                 h.category === 'Public Event' ? '#10B981' : '#A855F7',
+                                 h.category === 'Public Event' ? '#10B981' : 
+                                 h.category === 'School Event' ? '#2563EB' : '#A855F7',
                         'font-size': '0.75rem',
                         'font-weight': '700',
                         'border-radius': '6px',
