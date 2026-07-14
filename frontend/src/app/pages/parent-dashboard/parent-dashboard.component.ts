@@ -48,7 +48,7 @@ import { ContentService } from '../../core/services/content.service';
             <span>🍽️</span> Weekly Menu
           </button>
           <button class="tab-btn-pill" [class.active]="activeTab === 'leaves'" (click)="setTab('leaves')">
-            <span>📅</span> Absence Requests
+            <span>📅</span> Parent Requests
           </button>
           <button class="tab-btn-pill" [class.active]="activeTab === 'calendar'" (click)="setTab('calendar')">
             <span>🗓️</span> School Calendar
@@ -537,9 +537,26 @@ import { ContentService } from '../../core/services/content.service';
         </div>
 
 
-        <!-- 4. LEAVE REQUESTS TAB -->
+        <!-- 4. PARENT REQUESTS TAB (LEAVES & MEAL SUSPENSIONS) -->
         <div *ngIf="activeTab === 'leaves'" class="tab-content animate-fade-in">
-          <div class="leaves-layout">
+          <!-- Parent Requests Inner Sub-Tabs Navigation -->
+          <div class="parent-requests-subtabs" style="display: flex; gap: 15px; margin-bottom: 20px; border-bottom: 2px solid #E2E8F0; padding-bottom: 10px;">
+            <button (click)="activeParentRequestSubTab = 'leaves'" 
+                    [style.color]="activeParentRequestSubTab === 'leaves' ? '#EE5A24' : '#64748B'" 
+                    [style.border-bottom]="activeParentRequestSubTab === 'leaves' ? '3px solid #EE5A24' : 'none'"
+                    style="background: none; border: none; padding: 10px 15px; font-weight: 700; font-size: 0.95rem; cursor: pointer; transition: all 0.2s;">
+              📋 Absence Leave Requests
+            </button>
+            <button (click)="activeParentRequestSubTab = 'meals'" 
+                    [style.color]="activeParentRequestSubTab === 'meals' ? '#EE5A24' : '#64748B'" 
+                    [style.border-bottom]="activeParentRequestSubTab === 'meals' ? '3px solid #EE5A24' : 'none'"
+                    style="background: none; border: none; padding: 10px 15px; font-weight: 700; font-size: 0.95rem; cursor: pointer; transition: all 0.2s;">
+              🍽️ Skip Meal Requests
+            </button>
+          </div>
+
+          <!-- SUB-TAB 1: ABSENCE LEAVE REQUESTS -->
+          <div *ngIf="activeParentRequestSubTab === 'leaves'" class="leaves-layout animate-fade-in">
             <!-- Left Panel: Submission Form -->
             <div class="card leave-form-card">
               <h3 class="card-title">📝 Apply for Absence Leave</h3>
@@ -590,6 +607,65 @@ import { ContentService } from '../../core/services/content.service';
                 </div>
                 <div *ngIf="leavesList.length === 0" class="no-records" style="padding: 40px 0;">
                   No leave requests submitted yet.
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- SUB-TAB 2: SKIP MEAL REQUESTS -->
+          <div *ngIf="activeParentRequestSubTab === 'meals'" class="leaves-layout animate-fade-in">
+            <!-- Left Panel: Skip Meal Form -->
+            <div class="card leave-form-card">
+              <h3 class="card-title">🍽️ Skip Meal Request</h3>
+              <p style="font-size: 0.8rem; color: #64748B; margin-bottom: 15px; line-height: 1.4;">
+                Intimate the classroom teacher not to provide meals (Breakfast, Lunch, or Snack) to your child on a specific day.
+              </p>
+              
+              <form (submit)="onSuspensionSubmit($event)" class="leave-form">
+                <div class="form-group">
+                  <label for="requestDate">Suspension Date</label>
+                  <input type="date" id="requestDate" name="requestDate" [(ngModel)]="suspensionForm.requestDate" required class="form-control" />
+                </div>
+
+                <div class="form-group">
+                  <label for="suspensionReason">Reason / Special Instruction</label>
+                  <textarea id="suspensionReason" name="suspensionReason" [(ngModel)]="suspensionForm.reason" rows="4" required placeholder="E.g., Child is fasting / bringing home-cooked food today / has a doctor appointment..." class="form-control"></textarea>
+                </div>
+
+                <button type="submit" class="btn-submit-leave" [disabled]="submittingSuspension" style="background: #e28743;">
+                  {{ submittingSuspension ? 'Sending instructions...' : '🚀 Intimate Classroom Teacher' }}
+                </button>
+              </form>
+            </div>
+
+            <!-- Right Panel: Suspension Logs & Teacher Acknowledgment status -->
+            <div class="card leave-history-card">
+              <h3 class="card-title">📜 Meal Instruction Logs</h3>
+              
+              <div class="leaves-timeline">
+                <div class="leave-log-box" *ngFor="let req of suspensionsList" style="border: 1px solid #e2e8f0; border-radius: 8px; padding: 12px; margin-bottom: 12px; background: white;">
+                  <div class="log-hdr" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                    <span class="dates-range" style="font-weight: 700; font-size: 0.82rem; color: #1e293b;">📅 Skip meals on: {{ req.request_date | date:'mediumDate' }}</span>
+                    <span class="badge" [ngClass]="{
+                      'badge-present': req.status === 'Acknowledged',
+                      'badge-late': req.status === 'Pending'
+                    }" style="font-weight: 700; font-size: 0.72rem; padding: 3px 8px; border-radius: 4px;">{{ req.status }}</span>
+                  </div>
+                  <p class="reason-txt" style="margin: 4px 0; font-size: 0.78rem; color: #475569;"><strong>Instructions:</strong> {{ req.reason }}</p>
+                  
+                  <!-- Teacher Acknowledgment Status -->
+                  <div *ngIf="req.status === 'Acknowledged'" style="margin-top: 8px; padding: 8px; background: #f0fdf4; border-left: 3px solid #22c55e; border-radius: 4px; font-size: 0.75rem; color: #15803d; font-weight: 700;">
+                    ✓ Acknowledged by Teacher ({{ req.acknowledged_by }})
+                    <span style="font-size: 0.65rem; color: #16a34a; font-weight: normal; display: block; margin-top: 2px;">At: {{ req.acknowledged_at | date:'short' }}</span>
+                  </div>
+                  <div *ngIf="req.status === 'Pending'" style="margin-top: 8px; padding: 8px; background: #fffbeb; border-left: 3px solid #d97706; border-radius: 4px; font-size: 0.75rem; color: #b45309;">
+                    ⏳ Awaiting Teacher Acknowledgment
+                  </div>
+
+                  <span class="submitted-time" style="font-size: 0.65rem; color: #94a3b8; display: block; margin-top: 8px;">Submitted: {{ req.created_at | date:'short' }}</span>
+                </div>
+                <div *ngIf="suspensionsList.length === 0" class="no-records" style="padding: 40px 0;">
+                  No meal instructions submitted yet.
                 </div>
               </div>
             </div>
@@ -2704,6 +2780,16 @@ export class ParentDashboardComponent implements OnInit {
     reason: ''
   };
 
+  // Meal Suspension State
+  suspensionsList: any[] = [];
+  submittingSuspension = false;
+  suspensionForm = {
+    requestDate: '',
+    reason: ''
+  };
+  activeParentRequestSubTab: 'leaves' | 'meals' = 'leaves';
+
+
   // Parent Moments State
   parentMoments: StudentMoment[] = [];
   parentMomentsLoading = false;
@@ -2794,6 +2880,7 @@ export class ParentDashboardComponent implements OnInit {
       this.loadMealsData();
     } else if (tab === 'leaves') {
       this.loadLeaves();
+      this.loadMealSuspensions();
     } else if (tab === 'calendar') {
       this.loadCalendarData();
     } else if (tab === 'overview') {
@@ -2984,6 +3071,47 @@ export class ParentDashboardComponent implements OnInit {
       }
     });
   }
+
+  loadMealSuspensions(): void {
+    this.apiService.get<any[]>('/meals/suspensions').subscribe({
+      next: (res) => {
+        this.suspensionsList = res;
+      },
+      error: (err) => {
+        this.errorMessage = err.error?.detail || 'Failed to load meal suspension log.';
+      }
+    });
+  }
+
+  onSuspensionSubmit(event: Event): void {
+    event.preventDefault();
+    if (!this.suspensionForm.requestDate || !this.suspensionForm.reason) {
+      this.errorMessage = 'Please select a date and reason.';
+      return;
+    }
+
+    this.submittingSuspension = true;
+    this.errorMessage = '';
+    this.successMessage = '';
+
+    this.apiService.post<any>('/meals/suspensions', {
+      request_date: this.suspensionForm.requestDate,
+      reason: this.suspensionForm.reason
+    }).subscribe({
+      next: (res) => {
+        this.submittingSuspension = false;
+        this.successMessage = res.message || 'Meal suspension request submitted successfully!';
+        this.suspensionForm = { requestDate: '', reason: '' };
+        this.loadMealSuspensions();
+        setTimeout(() => this.successMessage = '', 4000);
+      },
+      error: (err) => {
+        this.submittingSuspension = false;
+        this.errorMessage = err.error?.detail || 'Failed to submit meal suspension request.';
+      }
+    });
+  }
+
 
   getDaysKeys(): string[] {
     if (!this.dashboardData?.weekly_plan) return [];

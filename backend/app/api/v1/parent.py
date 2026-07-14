@@ -180,6 +180,11 @@ class LeaveCreateSchema(BaseModel):
     end_date: str
     reason: str
 
+class MealSuspensionCreateSchema(BaseModel):
+    request_date: str  # YYYY-MM-DD
+    reason: Optional[str] = None
+
+
 class PaymentSchema(BaseModel):
     payment_method: str
 
@@ -425,6 +430,62 @@ def submit_parent_leave(
             "end_date": leave.end_date,
             "reason": leave.reason,
             "status": leave.status
+        }
+    }
+
+@router.get("/meals/suspensions")
+def get_parent_meal_suspensions(
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user)
+):
+    if not current_user.student_id:
+        raise HTTPException(status_code=404, detail="No student linked to this account.")
+        
+    suspensions = db.query(models.MealSuspensionRequest).filter(
+        models.MealSuspensionRequest.student_id == current_user.student_id
+    ).order_by(models.MealSuspensionRequest.created_at.desc()).all()
+    
+    suspensions_list = []
+    for s in suspensions:
+        suspensions_list.append({
+            "id": s.id,
+            "request_date": s.request_date,
+            "reason": s.reason,
+            "status": s.status,
+            "acknowledged_by": s.acknowledged_by,
+            "acknowledged_at": s.acknowledged_at.isoformat() if s.acknowledged_at else None,
+            "created_at": s.created_at.isoformat()
+        })
+        
+    return suspensions_list
+
+@router.post("/meals/suspensions")
+def submit_parent_meal_suspension(
+    req: MealSuspensionCreateSchema,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user)
+):
+    if not current_user.student_id:
+        raise HTTPException(status_code=404, detail="No student linked to this account.")
+        
+    # Create meal suspension request
+    suspension = models.MealSuspensionRequest(
+        student_id=current_user.student_id,
+        request_date=req.request_date,
+        reason=req.reason,
+        status="Pending"
+    )
+    db.add(suspension)
+    db.commit()
+    db.refresh(suspension)
+    
+    return {
+        "message": "Meal suspension request submitted successfully. Intimated to the classroom teacher.",
+        "suspension": {
+            "id": suspension.id,
+            "request_date": suspension.request_date,
+            "reason": suspension.reason,
+            "status": suspension.status
         }
     }
 

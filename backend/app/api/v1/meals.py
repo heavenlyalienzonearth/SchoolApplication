@@ -70,3 +70,64 @@ def delete_meal_plan(
     db.delete(db_meal)
     db.commit()
     return None
+
+@router.get("/suspensions")
+def list_meal_suspensions(
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user)
+):
+    if current_user.role.upper() not in ["ADMIN", "PRINCIPAL", "TEACHER"]:
+        raise HTTPException(status_code=403, detail="Unauthorized access.")
+        
+    suspensions = db.query(models.MealSuspensionRequest).join(
+        models.Student, models.MealSuspensionRequest.student_id == models.Student.id
+    ).order_by(models.MealSuspensionRequest.created_at.desc()).all()
+    
+    res = []
+    for s in suspensions:
+        res.append({
+            "id": s.id,
+            "student_id": s.student_id,
+            "student_name": s.student.name,
+            "request_date": s.request_date,
+            "reason": s.reason,
+            "status": s.status,
+            "acknowledged_by": s.acknowledged_by,
+            "acknowledged_at": s.acknowledged_at.isoformat() if s.acknowledged_at else None,
+            "created_at": s.created_at.isoformat()
+        })
+    return res
+
+@router.post("/suspensions/{suspension_id}/acknowledge")
+def acknowledge_meal_suspension(
+    suspension_id: int,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user)
+):
+    if current_user.role.upper() not in ["ADMIN", "PRINCIPAL", "TEACHER"]:
+        raise HTTPException(status_code=403, detail="Unauthorized access.")
+        
+    suspension = db.query(models.MealSuspensionRequest).filter(
+        models.MealSuspensionRequest.id == suspension_id
+    ).first()
+    
+    if not suspension:
+        raise HTTPException(status_code=404, detail="Meal suspension request not found.")
+        
+    import datetime
+    suspension.status = "Acknowledged"
+    suspension.acknowledged_by = current_user.full_name or current_user.email
+    suspension.acknowledged_at = datetime.datetime.utcnow()
+    
+    db.commit()
+    db.refresh(suspension)
+    return {
+        "message": "Meal suspension request acknowledged successfully.",
+        "suspension": {
+            "id": suspension.id,
+            "status": suspension.status,
+            "acknowledged_by": suspension.acknowledged_by,
+            "acknowledged_at": suspension.acknowledged_at.isoformat()
+        }
+    }
+

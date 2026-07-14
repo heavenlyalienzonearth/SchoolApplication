@@ -409,6 +409,21 @@ class LeaveRequest(Base):
 
     student = relationship("Student")
 
+class MealSuspensionRequest(Base):
+    __tablename__ = "meal_suspension_requests"
+
+    id = Column(Integer, primary_key=True, index=True)
+    student_id = Column(Integer, ForeignKey("students.id", ondelete="CASCADE"), nullable=False)
+    request_date = Column(String(50), nullable=False)  # YYYY-MM-DD
+    reason = Column(String(550), nullable=True)
+    status = Column(String(50), default="Pending", nullable=False)  # Pending, Acknowledged
+    acknowledged_by = Column(String(100), nullable=True)
+    acknowledged_at = Column(DateTime, nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+
+    student = relationship("Student")
+
+
 class MilestoneTemplate(Base):
     __tablename__ = "milestone_templates"
 

@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
 import { AuthService } from '../../../core/services/auth.service';
+import { ApiService } from '../../../core/services/api.service';
 import { ContentService } from '../../../core/services/content.service';
 import { StationaryService, StationaryItem, StationaryOrder } from '../../../core/services/stationary.service';
 import { MomentsService, StudentMoment } from '../../../core/services/moments.service';
@@ -191,6 +192,12 @@ export class DashboardComponent implements OnInit {
   adminLeaves: any[] = [];
   adminLeavesLoading = false;
   leaveComments: { [key: number]: string } = {};
+
+  // Admin parent requests / meal suspensions state
+  adminMealSuspensions: any[] = [];
+  adminMealSuspensionsLoading = false;
+  adminRequestSubTab: 'leaves' | 'meals' = 'leaves';
+
   milestoneActiveSubTab = 'templates'; // 'templates' | 'progress'
   milestoneTemplates: any[] = [];
   newMilestoneTemplate = { program_id: 0, milestone_name: '', category: 'Cognitive' };
@@ -250,6 +257,7 @@ export class DashboardComponent implements OnInit {
 
   constructor(
     private authService: AuthService,
+    private apiService: ApiService,
     private contentService: ContentService,
     private router: Router,
     private stationaryService: StationaryService,
@@ -322,6 +330,7 @@ export class DashboardComponent implements OnInit {
       }
     } else if (tab === 'leaves') {
       this.loadLeavesAdmin();
+      this.loadMealSuspensionsAdmin();
     } else if (tab === 'finance-structures') {
       this.loadFeeStructures();
     } else if (tab === 'finance-ledger') {
@@ -593,6 +602,33 @@ export class DashboardComponent implements OnInit {
       }
     });
   }
+
+  loadMealSuspensionsAdmin(): void {
+    this.adminMealSuspensionsLoading = true;
+    this.apiService.get<any[]>('/meals/suspensions').subscribe({
+      next: (data) => {
+        this.adminMealSuspensions = data;
+        this.adminMealSuspensionsLoading = false;
+      },
+      error: (err) => {
+        this.adminMealSuspensionsLoading = false;
+        this.showToast(err.error?.detail || 'Failed to load meal instruction list.', 'error');
+      }
+    });
+  }
+
+  acknowledgeSuspension(suspensionId: number): void {
+    this.apiService.post<any>(`/meals/suspensions/${suspensionId}/acknowledge`, {}).subscribe({
+      next: (res) => {
+        this.showToast(res.message || 'Meal instruction acknowledged successfully.', 'success');
+        this.loadMealSuspensionsAdmin();
+      },
+      error: (err) => {
+        this.showToast(err.error?.detail || 'Failed to acknowledge meal instruction.', 'error');
+      }
+    });
+  }
+
 
   // --- MILESTONES TEMPLATES & STUDENT PROGRESS ---
   setMilestoneSubTab(subTab: string): void {
