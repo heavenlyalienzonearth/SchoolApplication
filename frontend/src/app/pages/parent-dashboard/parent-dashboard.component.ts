@@ -492,9 +492,9 @@ import { ContentService } from '../../core/services/content.service';
                 <text *ngFor="let axis of getRadarAxes()" 
                       [attr.x]="axis.textX" [attr.y]="axis.textY" 
                       [attr.text-anchor]="axis.textAnchor" 
-                      font-size="11" font-weight="800" 
-                      [attr.fill]="hoveredCategory === axis.category ? 'var(--primary)' : '#475569'" 
-                      [style.font-size]="hoveredCategory === axis.category ? '13px' : '11px'" 
+                      font-size="12.5" font-weight="800" 
+                      [attr.fill]="hoveredCategory === axis.category ? 'var(--primary)' : '#334155'" 
+                      [style.font-size]="hoveredCategory === axis.category ? '14px' : '12.5px'" 
                       style="cursor: pointer; transition: all 0.2s; user-select: none;"
                       (mouseenter)="hoveredCategory = axis.category" (mouseleave)="hoveredCategory = null">
                   {{ axis.emoji }} {{ axis.label }} ({{ axis.percentage }}%)
@@ -2538,7 +2538,7 @@ export class ParentDashboardComponent implements OnInit {
     
     const cx = 300;
     const cy = 190;
-    const maxRadius = 90;
+    const maxRadius = 75;
     const N = radarData.length;
     const axes: any[] = [];
     
@@ -2550,7 +2550,7 @@ export class ParentDashboardComponent implements OnInit {
       const x2 = cx + maxRadius * Math.cos(angleRad);
       const y2 = cy + maxRadius * Math.sin(angleRad);
       
-      const textRadius = maxRadius + 25;
+      const textRadius = maxRadius + 22;
       const textX = cx + textRadius * Math.cos(angleRad);
       const textY = cy + textRadius * Math.sin(angleRad);
       
@@ -2591,7 +2591,7 @@ export class ParentDashboardComponent implements OnInit {
     const radarData = this.dashboardData?.development_radar || [];
     const cx = 300;
     const cy = 190;
-    const maxRadius = 90;
+    const maxRadius = 75;
     const N = radarData.length;
     if (N === 0) return '';
     
@@ -2608,7 +2608,7 @@ export class ParentDashboardComponent implements OnInit {
   getRadarPolygonPoints(radarData: any[]): string {
     const cx = 300;
     const cy = 190;
-    const maxRadius = 90;
+    const maxRadius = 75;
     if (!radarData || radarData.length === 0) return `${cx},${cy} ${cx},${cy} ${cx},${cy}`;
     const N = radarData.length;
     const points: string[] = [];
@@ -2627,7 +2627,7 @@ export class ParentDashboardComponent implements OnInit {
   getRadarCircles(radarData: any[]): any[] {
     const cx = 300;
     const cy = 190;
-    const maxRadius = 90;
+    const maxRadius = 75;
     if (!radarData || radarData.length === 0) return [];
     const N = radarData.length;
     const circles: any[] = [];
@@ -2646,6 +2646,7 @@ export class ParentDashboardComponent implements OnInit {
     }
     return circles;
   }
+
 
 
 
