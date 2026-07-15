@@ -20,6 +20,7 @@ export class DashboardComponent implements OnInit {
 
   // Traffic Analytics
   trafficDays: number = 7;
+  trafficExcludeLocal: boolean = true;
   trafficLoading: boolean = false;
   trafficSummary: any = null;
   trafficLogs: any[] = [];
@@ -2590,20 +2591,34 @@ export class DashboardComponent implements OnInit {
   // --- TRAFFIC ANALYTICS ---
   loadTrafficSummary(): void {
     this.trafficLoading = true;
-    this.apiService.get<any>(`/traffic/summary`, { days: this.trafficDays }).subscribe({
+    this.apiService.get<any>(`/traffic/summary`, { 
+      days: this.trafficDays,
+      exclude_local: this.trafficExcludeLocal 
+    }).subscribe({
       next: (data) => { this.trafficSummary = data; this.trafficLoading = false; },
       error: () => { this.trafficLoading = false; }
     });
   }
 
   loadTrafficLogs(): void {
-    const params: any = { page: this.trafficPage, page_size: this.trafficPageSize, days: this.trafficDays };
+    const params: any = { 
+      page: this.trafficPage, 
+      page_size: this.trafficPageSize, 
+      days: this.trafficDays,
+      exclude_local: this.trafficExcludeLocal
+    };
     if (this.trafficFilter.ip) params.ip = this.trafficFilter.ip;
     if (this.trafficFilter.country) params.country = this.trafficFilter.country;
     this.apiService.get<any>('/traffic/logs', params).subscribe({
       next: (data) => { this.trafficLogs = data.logs; this.trafficTotal = data.total; },
       error: () => {}
     });
+  }
+
+  onExcludeLocalChange(): void {
+    this.trafficPage = 1; // reset page
+    this.loadTrafficSummary();
+    this.loadTrafficLogs();
   }
 
   purgeTrafficLogs(): void {

@@ -2967,16 +2967,29 @@
         </div>
 
         <!-- Period selector & Refresh -->
-        <div style="display:flex; gap:12px; align-items:center; margin-bottom:24px; flex-wrap:wrap;">
-          <select [(ngModel)]="trafficDays" (ngModelChange)="loadTrafficSummary()" class="form-control" style="width:180px; height: 38px; border-radius: 6px;">
-            <option value="1">Last 24 Hours</option>
-            <option value="7">Last 7 Days</option>
-            <option value="14">Last 14 Days</option>
-            <option value="30">Last 30 Days</option>
-            <option value="90">Last 90 Days</option>
-          </select>
-          <button class="btn btn-secondary" (click)="loadTrafficSummary()" style="padding:8px 18px; border-radius: 6px;">🔄 Refresh</button>
-          <button class="btn btn-danger" (click)="purgeTrafficLogs()" style="padding:8px 18px; background:#EF4444; color:white; border:none; border-radius:6px; cursor:pointer; font-weight:700;">🗑️ Purge Old Logs</button>
+        <div style="display:flex; justify-content: space-between; align-items:center; margin-bottom:28px; padding: 18px 24px; background: #fafafa; border-radius: 12px; border: 1px solid #f1f5f9; flex-wrap:wrap; gap: 15px;">
+          <div style="display:flex; align-items:center; gap:16px; flex-wrap:wrap;">
+            <div style="position: relative;">
+              <select [(ngModel)]="trafficDays" (ngModelChange)="loadTrafficSummary()" class="form-control" style="width:200px; height: 42px; border-radius: 8px; padding-left: 14px; padding-right: 40px; font-weight: 700; color: #1e293b; background: white; border: 1.5px solid #e2e8f0; cursor: pointer; transition: all 0.2s ease; appearance: none; -webkit-appearance: none;">
+                <option value="1">⏱️ Last 24 Hours</option>
+                <option value="7">📅 Last 7 Days</option>
+                <option value="14">📅 Last 14 Days</option>
+                <option value="30">📅 Last 30 Days</option>
+                <option value="90">📅 Last 90 Days</option>
+              </select>
+              <div style="position: absolute; right: 14px; top: 50%; transform: translateY(-50%); pointer-events: none; color: #94a3b8; font-size: 0.75rem;">▼</div>
+            </div>
+            
+            <label style="display:flex; align-items:center; gap:10px; font-size:0.88rem; font-weight:700; color:#475569; cursor:pointer; background: white; padding: 10px 16px; border-radius: 8px; border: 1.5px solid #e2e8f0; user-select: none; transition: all 0.2s;" onmouseover="this.style.borderColor='var(--primary)'" onmouseout="this.style.borderColor='#e2e8f0'">
+              <input type="checkbox" [(ngModel)]="trafficExcludeLocal" (ngModelChange)="onExcludeLocalChange()" style="width:16px; height:16px; accent-color:var(--primary); cursor: pointer; margin: 0;" />
+              🛡️ Exclude Local / Dev Traffic
+            </label>
+          </div>
+
+          <div style="display:flex; gap:12px; align-items:center;">
+            <button class="btn btn-secondary" (click)="loadTrafficSummary()" style="padding:10px 20px; border-radius: 8px; font-weight: 700; height: 42px; display: inline-flex; align-items: center; gap: 6px; border: 1.5px solid #e2e8f0; background: white; color: #475569; cursor: pointer; transition: all 0.2s;" onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background='white'">🔄 Refresh</button>
+            <button class="btn btn-danger" (click)="purgeTrafficLogs()" style="padding:10px 20px; background:#EF4444; color:white; border:none; border-radius:8px; cursor:pointer; font-weight:700; height: 42px; display: inline-flex; align-items: center; gap: 6px; transition: opacity 0.2s;" onmouseover="this.style.opacity='0.9'" onmouseout="this.style.opacity='1'">🗑️ Purge Old Logs</button>
+          </div>
         </div>
 
         <div *ngIf="trafficLoading" style="text-align:center; padding:60px; color:#64748b; font-weight: 600;">Loading analytics...</div>

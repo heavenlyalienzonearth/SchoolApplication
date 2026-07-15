@@ -28,15 +28,22 @@ def require_admin(current_user: models.User = Depends(get_current_user)):
 @router.get("/summary", response_model=Dict[str, Any])
 def get_traffic_summary(
     days: int = Query(7, ge=1, le=90, description="Number of past days to analyse"),
+    exclude_local: bool = Query(True, description="Exclude local development and test IP addresses"),
     db: Session = Depends(get_db),
     _: models.User = Depends(require_admin)
 ):
     """High-level traffic summary for admin dashboard cards."""
     since = datetime.utcnow() - timedelta(days=days)
 
-    logs = db.query(models.VisitorLog).filter(
-        models.VisitorLog.visited_at >= since
-    ).all()
+    query = db.query(models.VisitorLog).filter(models.VisitorLog.visited_at >= since)
+    if exclude_local:
+        query = query.filter(
+            ~models.VisitorLog.ip_address.in_(["127.0.0.1", "::1", "localhost", "unknown"]),
+            ~models.VisitorLog.ip_address.like("192.168.%"),
+            ~models.VisitorLog.ip_address.like("10.%"),
+            ~models.VisitorLog.ip_address.like("172.%")
+        )
+    logs = query.all()
 
     total_hits = len(logs)
     unique_ips = len({l.ip_address for l in logs if l.ip_address})
@@ -117,12 +124,21 @@ def get_traffic_logs(
     country: Optional[str] = Query(None),
     device: Optional[str] = Query(None),
     days: int = Query(7, ge=1, le=90),
+    exclude_local: bool = Query(True, description="Exclude local development and test IP addresses"),
     db: Session = Depends(get_db),
     _: models.User = Depends(require_admin)
 ):
     """Paginated raw visitor log for the admin table view."""
     since = datetime.utcnow() - timedelta(days=days)
     query = db.query(models.VisitorLog).filter(models.VisitorLog.visited_at >= since)
+
+    if exclude_local:
+        query = query.filter(
+            ~models.VisitorLog.ip_address.in_(["127.0.0.1", "::1", "localhost", "unknown"]),
+            ~models.VisitorLog.ip_address.like("192.168.%"),
+            ~models.VisitorLog.ip_address.like("10.%"),
+            ~models.VisitorLog.ip_address.like("172.%")
+        )
 
     if ip:
         query = query.filter(models.VisitorLog.ip_address.contains(ip))
