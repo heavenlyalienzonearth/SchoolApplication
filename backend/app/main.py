@@ -1,7 +1,8 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.core.config import settings
-from app.api.v1 import auth, settings as api_settings, content, submissions, chatbot, attendance, admissions, holidays, stationary, parent, finance, moments, circulars, library, meals
+from app.api.v1 import auth, settings as api_settings, content, submissions, chatbot, attendance, admissions, holidays, stationary, parent, finance, moments, circulars, library, meals, traffic
+from app.middleware.traffic import TrafficLoggingMiddleware
 
 from fastapi.staticfiles import StaticFiles
 import os
@@ -21,6 +22,9 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# Traffic Logging Middleware (must be added AFTER CORS)
+app.add_middleware(TrafficLoggingMiddleware)
+
 # Include Routers
 app.include_router(auth.router, prefix="/api/v1")
 app.include_router(api_settings.router, prefix="/api/v1")
@@ -37,6 +41,7 @@ app.include_router(parent.router, prefix="/api/v1")
 app.include_router(finance.router, prefix="/api/v1")
 app.include_router(moments.router, prefix="/api/v1")
 app.include_router(meals.router, prefix="/api/v1")
+app.include_router(traffic.router, prefix="/api/v1")
 
 
 # Create and mount static directory

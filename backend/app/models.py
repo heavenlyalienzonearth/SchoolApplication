@@ -468,3 +468,32 @@ class MealPlan(Base):
     calories = Column(Integer, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
 
+
+class VisitorLog(Base):
+    __tablename__ = "visitor_logs"
+
+    id = Column(Integer, primary_key=True, index=True)
+    ip_address = Column(String(100), nullable=True, index=True)
+    method = Column(String(10), nullable=True)
+    endpoint = Column(String(500), nullable=True)
+    status_code = Column(Integer, nullable=True)
+    user_agent = Column(String(500), nullable=True)
+    browser = Column(String(100), nullable=True)
+    browser_version = Column(String(50), nullable=True)
+    os = Column(String(100), nullable=True)
+    device_type = Column(String(50), nullable=True)   # desktop, mobile, tablet, bot
+    referer = Column(String(500), nullable=True)
+    # Geo fields populated async from ip-api.com
+    country = Column(String(100), nullable=True)
+    country_code = Column(String(10), nullable=True)
+    region = Column(String(100), nullable=True)
+    city = Column(String(100), nullable=True)
+    latitude = Column(String(30), nullable=True)
+    longitude = Column(String(30), nullable=True)
+    timezone = Column(String(100), nullable=True)
+    isp = Column(String(255), nullable=True)
+    is_proxy = Column(Boolean, default=False, nullable=True)
+    geo_fetched = Column(Boolean, default=False, nullable=False)
+    visited_at = Column(DateTime, default=datetime.utcnow, nullable=False, index=True)
+
+

@@ -17,6 +17,16 @@ import { MomentsService, StudentMoment } from '../../../core/services/moments.se
 })
 export class DashboardComponent implements OnInit {
   activeTab = 'analytics';
+
+  // Traffic Analytics
+  trafficDays: number = 7;
+  trafficLoading: boolean = false;
+  trafficSummary: any = null;
+  trafficLogs: any[] = [];
+  trafficTotal: number = 0;
+  trafficPage: number = 1;
+  trafficPageSize: number = 50;
+  trafficFilter: { ip: string; country: string } = { ip: '', country: '' };
   
   // Analytics Tab
   analytics: any = {
@@ -344,6 +354,9 @@ export class DashboardComponent implements OnInit {
       this.loadCirculars();
     } else if (tab === 'library') {
       this.loadLibraryData();
+    } else if (tab === 'traffic') {
+      this.loadTrafficSummary();
+      this.loadTrafficLogs();
     }
   }
 
@@ -2572,5 +2585,46 @@ export class DashboardComponent implements OnInit {
         this.showToast(err.error?.detail || 'Failed to delete moment.', 'error');
       }
     });
+  }
+
+  // --- TRAFFIC ANALYTICS ---
+  loadTrafficSummary(): void {
+    this.trafficLoading = true;
+    this.apiService.get<any>(`/traffic/summary`, { days: this.trafficDays }).subscribe({
+      next: (data) => { this.trafficSummary = data; this.trafficLoading = false; },
+      error: () => { this.trafficLoading = false; }
+    });
+  }
+
+  loadTrafficLogs(): void {
+    const params: any = { page: this.trafficPage, page_size: this.trafficPageSize, days: this.trafficDays };
+    if (this.trafficFilter.ip) params.ip = this.trafficFilter.ip;
+    if (this.trafficFilter.country) params.country = this.trafficFilter.country;
+    this.apiService.get<any>('/traffic/logs', params).subscribe({
+      next: (data) => { this.trafficLogs = data.logs; this.trafficTotal = data.total; },
+      error: () => {}
+    });
+  }
+
+  purgeTrafficLogs(): void {
+    if (!confirm('Delete all traffic logs older than 30 days?')) return;
+    this.apiService.delete<any>('/traffic/logs/purge?older_than_days=30').subscribe({
+      next: (res) => { alert(res.message); this.loadTrafficSummary(); this.loadTrafficLogs(); },
+      error: () => alert('Failed to purge logs.')
+    });
+  }
+
+  getBarHeight(value: number, data: any[]): number {
+    const max = Math.max(...data.map((d: any) => d.visits), 1);
+    return Math.round((value / max) * 100);
+  }
+
+  getHeatColor(value: number, data: any[]): string {
+    const max = Math.max(...data.map((d: any) => d.visits), 1);
+    const pct = value / max;
+    const r = Math.round(59 + pct * (239 - 59));
+    const g = Math.round(130 + pct * (68 - 130));
+    const b = Math.round(246 + pct * (68 - 246));
+    return `rgb(${r},${g},${b})`;
   }
 }
