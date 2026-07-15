@@ -18,6 +18,9 @@
         <li [class.active]="activeTab === 'analytics'" (click)="setTab('analytics')" *ngIf="currentUser?.role?.toUpperCase() === 'ADMIN' || currentUser?.role?.toUpperCase() === 'PRINCIPAL'">
           <span class="icon">📊</span> Analytics Overview
         </li>
+        <li [class.active]="activeTab === 'traffic'" (click)="setTab('traffic')" *ngIf="currentUser?.role?.toUpperCase() === 'ADMIN' || currentUser?.role?.toUpperCase() === 'PRINCIPAL'">
+          <span class="icon">📡</span> Traffic Analytics
+        </li>
         <!-- Settings Group -->
         <li class="sidebar-header" (click)="togglePublicSettings()" *ngIf="currentUser?.role?.toUpperCase() === 'ADMIN' || currentUser?.role?.toUpperCase() === 'PRINCIPAL'" style="cursor: pointer; display: flex; justify-content: space-between; align-items: center; width: 100%; box-sizing: border-box;">
           <span>🌐 Settings</span>
@@ -124,9 +127,6 @@
           </li>
           <li [class.active]="activeTab === 'leaves'" (click)="setTab('leaves')" class="submenu-item">
             <span class="icon">📅</span> Parent Requests
-          </li>
-          <li [class.active]="activeTab === 'traffic'" (click)="setTab('traffic')" class="submenu-item" *ngIf="currentUser?.role?.toUpperCase() === 'ADMIN' || currentUser?.role?.toUpperCase() === 'PRINCIPAL'">
-            <span class="menu-icon">📡</span> Traffic Analytics
           </li>
         </ng-container>
       </ul>
