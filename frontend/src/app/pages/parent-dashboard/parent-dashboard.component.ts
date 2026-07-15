@@ -2610,6 +2610,69 @@ import { ContentService } from '../../core/services/content.service';
       text-transform: uppercase;
       letter-spacing: 0.3px;
     }
+
+    /* PREMIUM MOBILE & DEVICE RESPONSIVENESS */
+    @media (max-width: 991px) {
+      .dashboard-grid {
+        grid-template-columns: 1fr !important;
+        gap: 20px;
+      }
+      .dashboard-header {
+        padding: 15px 24px !important;
+      }
+    }
+
+    @media (max-width: 768px) {
+      .dashboard-header {
+        flex-direction: column;
+        align-items: center;
+        gap: 12px;
+        padding: 15px 20px !important;
+        text-align: center;
+      }
+      .user-profile-menu {
+        width: 100%;
+        justify-content: space-between;
+      }
+      .tabs-bar-container {
+        padding: 10px 10px !important;
+      }
+      .tabs-bar {
+        flex-wrap: nowrap !important;
+        justify-content: flex-start !important;
+        overflow-x: auto;
+        padding-bottom: 8px;
+        -webkit-overflow-scrolling: touch;
+      }
+      .tabs-bar::-webkit-scrollbar {
+        display: none;
+      }
+      .tab-btn-pill {
+        flex-shrink: 0;
+        padding: 8px 16px !important;
+        font-size: 0.8rem !important;
+      }
+      .dashboard-main {
+        margin: 15px auto !important;
+      }
+      .kid-card, .card {
+        padding: 16px !important;
+      }
+      .welcome-banner {
+        padding: 16px 20px !important;
+      }
+      .welcome-banner h2 {
+        font-size: 1.3rem !important;
+      }
+      .welcome-banner p {
+        font-size: 0.85rem !important;
+      }
+      /* Make tables inside tabs side-scrollable on tiny screens */
+      .table-responsive-wrapper {
+        width: 100%;
+        overflow-x: auto;
+      }
+    }
   `]
 })
 export class ParentDashboardComponent implements OnInit {

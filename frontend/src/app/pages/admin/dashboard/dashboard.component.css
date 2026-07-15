@@ -710,3 +710,49 @@
     grid-template-columns: 1fr;
   }
 }
+
+/* Responsive Grid Utilities for Traffic & Analytics */
+.responsive-grid-4 {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 20px;
+}
+.responsive-grid-2 {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 24px;
+}
+.responsive-grid-3 {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 24px;
+}
+.responsive-grid-1-2 {
+  display: grid;
+  grid-template-columns: 1fr 2fr;
+  gap: 24px;
+}
+.responsive-grid-2-1 {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 24px;
+}
+
+@media (max-width: 1024px) {
+  .responsive-grid-4 {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .responsive-grid-3 {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .responsive-grid-1-2, .responsive-grid-2-1 {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 768px) {
+  .responsive-grid-4, .responsive-grid-3, .responsive-grid-2 {
+    grid-template-columns: 1fr;
+  }
+}
+
