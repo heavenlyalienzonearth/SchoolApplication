@@ -2629,8 +2629,16 @@ export class DashboardComponent implements OnInit {
     });
   }
 
+  clearTrafficLogs(): void {
+    if (!confirm('⚠️ WARNING: This will permanently delete ALL traffic logs from the database, resetting the grid and charts completely. This cannot be undone.\n\nAre you sure you want to proceed?')) return;
+    this.apiService.delete<any>('/traffic/logs/clear').subscribe({
+      next: (res) => { alert(res.message); this.loadTrafficSummary(); this.loadTrafficLogs(); },
+      error: () => alert('Failed to clear traffic logs.')
+    });
+  }
+
   getBarHeight(value: number, data: any[]): number {
-    const max = Math.max(...data.map((d: any) => d.visits), 1);
+    const max = Math.max(...data.map((d: any) => d.visits || d.attempts || 1), 1);
     return Math.round((value / max) * 100);
   }
 

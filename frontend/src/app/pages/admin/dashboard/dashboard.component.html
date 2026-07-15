@@ -2989,6 +2989,7 @@
           <div style="display:flex; gap:12px; align-items:center;">
             <button class="btn btn-secondary" (click)="loadTrafficSummary()" style="padding:10px 20px; border-radius: 8px; font-weight: 700; height: 42px; display: inline-flex; align-items: center; gap: 6px; border: 1.5px solid #e2e8f0; background: white; color: #475569; cursor: pointer; transition: all 0.2s;" onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background='white'">🔄 Refresh</button>
             <button class="btn btn-danger" (click)="purgeTrafficLogs()" style="padding:10px 20px; background:#EF4444; color:white; border:none; border-radius:8px; cursor:pointer; font-weight:700; height: 42px; display: inline-flex; align-items: center; gap: 6px; transition: opacity 0.2s;" onmouseover="this.style.opacity='0.9'" onmouseout="this.style.opacity='1'">🗑️ Purge Old Logs</button>
+            <button class="btn btn-danger" (click)="clearTrafficLogs()" style="padding:10px 20px; background:#DC2626; color:white; border:none; border-radius:8px; cursor:pointer; font-weight:700; height: 42px; display: inline-flex; align-items: center; gap: 6px; transition: background 0.2s;" onmouseover="this.style.background='#B91C1C'" onmouseout="this.style.background='#DC2626'">🧹 Clear Grid Data</button>
           </div>
         </div>
 
@@ -3012,6 +3013,94 @@
             <div class="card" style="text-align:center; padding:20px; border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);">
               <div style="font-size:2.2rem; font-weight:900; color:#EF4444;">{{ trafficSummary.proxy_count }}</div>
               <div style="font-size:0.82rem; font-weight:700; color:#64748b; margin-top:4px;">Proxy / VPN</div>
+            </div>
+          </div>
+
+          <!-- Hacker Security Monitoring Panel -->
+          <div style="display:grid; grid-template-columns: 1fr 2fr; gap:24px; margin-bottom:28px;">
+            <!-- Security Health Dial & Attack Vector Stats -->
+            <div class="card" style="padding:24px; border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); display: flex; flex-direction: column; justify-content: space-between; border-top: 4px solid #EF4444;">
+              <div>
+                <h4 style="margin: 0 0 16px 0; font-size:1rem; font-weight:800; color:#1e293b; display: flex; align-items: center; gap: 8px;">🛡️ Security Guard</h4>
+                <div style="text-align: center; margin: 20px 0;">
+                  <div [style.color]="trafficSummary.security_analysis.health_score > 80 ? '#10B981' : trafficSummary.security_analysis.health_score > 50 ? '#F59E0B' : '#EF4444'"
+                       style="font-size: 3.2rem; font-weight: 900; line-height: 1;">
+                    {{ trafficSummary.security_analysis.health_score }}%
+                  </div>
+                  <div style="font-size: 0.8rem; font-weight: 700; color: #64748b; margin-top: 6px;">Application Health Score</div>
+                </div>
+              </div>
+              
+              <!-- Attack Vector Breakdown -->
+              <div>
+                <h5 style="margin: 0 0 10px 0; font-size: 0.82rem; font-weight: 800; color: #475569; text-transform: uppercase; letter-spacing: 0.5px;">Attack Vectors Detected</h5>
+                <div *ngFor="let vec of trafficSummary.security_analysis.vectors" style="margin-bottom: 8px;">
+                  <div style="display:flex; justify-content:space-between; font-size:0.75rem; color:#475569; margin-bottom:3px; font-weight: 600;">
+                    <span>{{ vec.name }}</span>
+                    <span [style.color]="vec.count > 0 ? '#EF4444' : '#64748b'">{{ vec.count }}</span>
+                  </div>
+                  <div style="background:#e2e8f0; height:6px; border-radius:3px; overflow:hidden;">
+                    <div [style.width]="(vec.count > 100 ? 100 : vec.count) + '%'"
+                         [style.background]="vec.count > 0 ? '#EF4444' : '#94a3b8'"
+                         style="height:100%; border-radius:3px;"></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Attack Timeline & Threat Sources -->
+            <div class="card" style="padding:24px; border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); border-top: 4px solid #EF4444;">
+              <h4 style="margin: 0 0 16px 0; font-size:1rem; font-weight:800; color:#1e293b; display: flex; align-items: center; gap: 8px;">🚨 Hacker Attack / Probe Timeline</h4>
+              
+              <div *ngIf="trafficSummary.security_analysis.threat_timeline.length === 0" style="padding:40px; text-align:center; color:#94a3b8; font-style:italic;">
+                No exploit scans or hacker attempts detected. Application is secure!
+              </div>
+
+              <!-- Threat Timeline Chart -->
+              <div *ngIf="trafficSummary.security_analysis.threat_timeline.length > 0" style="display:flex; align-items:flex-end; gap:6px; height:120px; border-bottom: 2px solid #e2e8f0; padding-bottom: 8px; margin-bottom: 20px; overflow-x: auto;">
+                <div *ngFor="let t of trafficSummary.security_analysis.threat_timeline"
+                     style="display:flex; flex-direction:column; align-items:center; flex:1; min-width:32px;">
+                  <span style="font-size:0.6rem; color:#ef4444; font-weight:700; margin-bottom: 3px;">{{ t.attempts }}</span>
+                  <div [style.height]="getBarHeight(t.attempts, trafficSummary.security_analysis.threat_timeline) + 'px'"
+                       style="background:#EF4444; border-radius:3px 3px 0 0; width:100%; min-height:4px;"
+                       [title]="t.date + ': ' + t.attempts + ' hacker probes'"></div>
+                  <span style="font-size:0.58rem; color:#94a3b8; margin-top:5px; white-space:nowrap; font-weight: 600;">{{ t.date | slice:5 }}</span>
+                </div>
+              </div>
+
+              <!-- Flagged Threat Sources Table -->
+              <h5 style="margin: 0 0 10px 0; font-size: 0.82rem; font-weight: 800; color: #475569; text-transform: uppercase;">Top Threat Sources (Suspicious IPs)</h5>
+              <div style="overflow-x: auto;">
+                <table style="width: 100%; border-collapse: collapse; font-size: 0.78rem;">
+                  <thead>
+                    <tr style="background:#f8fafc; border-bottom: 1.5px solid #e2e8f0; color:#475569;">
+                      <th style="padding: 6px; text-align: left;">IP Address</th>
+                      <th style="padding: 6px; text-align: left;">Location / ISP</th>
+                      <th style="padding: 6px; text-align: left;">Threat Reason</th>
+                      <th style="padding: 6px; text-align: center;">Hits</th>
+                      <th style="padding: 6px; text-align: center;">Risk</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr *ngFor="let t of trafficSummary.security_analysis.flagged_threats" style="border-bottom: 1px solid #f1f5f9;">
+                      <td style="padding: 6px; font-family: monospace; font-weight: 700; color: #dc2626;">{{ t.ip }}</td>
+                      <td style="padding: 6px; color:#475569; font-weight: 500;">{{ t.country }} ({{ t.isp | slice:0:15 }}...)</td>
+                      <td style="padding: 6px; color:#64748b;">{{ t.reasons }}</td>
+                      <td style="padding: 6px; text-align: center; font-weight: 700; color: #1e293b;">{{ t.total_requests }}</td>
+                      <td style="padding: 6px; text-align: center;">
+                        <span [style.background]="t.severity === 'High' ? '#FEE2E2' : '#FEF3C7'"
+                              [style.color]="t.severity === 'High' ? '#991B1B' : '#92400E'"
+                              style="padding: 2px 6px; border-radius: 4px; font-size: 0.65rem; font-weight: 800;">
+                          {{ t.severity }}
+                        </span>
+                      </td>
+                    </tr>
+                    <tr *ngIf="trafficSummary.security_analysis.flagged_threats.length === 0">
+                      <td colspan="5" style="text-align: center; padding: 12px; color: #94a3b8; font-style: italic;">No suspicious IP addresses flagged. Safe environment.</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
             </div>
           </div>
 
@@ -3096,7 +3185,7 @@
           </div>
 
           <!-- Raw Log Table -->
-          <div class="card" style="padding:20px; border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);">
+          <div class="card" style="padding:28px 32px; border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); margin-top: 24px; border: 1px solid #e2e8f0; width: 100%; box-sizing: border-box;">
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; flex-wrap:wrap; gap:10px;">
               <h4 style="font-size:0.95rem; font-weight:800; margin:0; color: #1e293b;">📋 Raw Visitor Log</h4>
               <div style="display:flex; gap:8px; flex-wrap:wrap;">
@@ -3106,40 +3195,40 @@
               </div>
             </div>
             <div style="overflow-x:auto;">
-              <table style="width:100%; border-collapse:collapse; font-size:0.8rem;">
+              <table style="width:100%; border-collapse:collapse; font-size:0.85rem;">
                 <thead>
                   <tr style="background:#f8fafc; border-bottom:2px solid #e2e8f0; color: #475569;">
-                    <th style="padding:12px 8px; text-align:left; font-weight:700;">Time</th>
-                    <th style="padding:12px 8px; text-align:left; font-weight:700;">IP Address</th>
-                    <th style="padding:12px 8px; text-align:left; font-weight:700;">Location</th>
-                    <th style="padding:12px 8px; text-align:left; font-weight:700;">ISP</th>
-                    <th style="padding:12px 8px; text-align:left; font-weight:700;">Method</th>
-                    <th style="padding:12px 8px; text-align:left; font-weight:700;">Endpoint</th>
-                    <th style="padding:12px 8px; text-align:left; font-weight:700;">Status</th>
-                    <th style="padding:12px 8px; text-align:left; font-weight:700;">Browser</th>
-                    <th style="padding:12px 8px; text-align:left; font-weight:700;">OS</th>
-                    <th style="padding:12px 8px; text-align:left; font-weight:700;">Device</th>
+                    <th style="padding:14px 10px; text-align:left; font-weight:700;">Time</th>
+                    <th style="padding:14px 10px; text-align:left; font-weight:700;">IP Address</th>
+                    <th style="padding:14px 10px; text-align:left; font-weight:700;">Location</th>
+                    <th style="padding:14px 10px; text-align:left; font-weight:700;">ISP</th>
+                    <th style="padding:14px 10px; text-align:left; font-weight:700;">Method</th>
+                    <th style="padding:14px 10px; text-align:left; font-weight:700;">Endpoint</th>
+                    <th style="padding:14px 10px; text-align:left; font-weight:700;">Status</th>
+                    <th style="padding:14px 10px; text-align:left; font-weight:700;">Browser</th>
+                    <th style="padding:14px 10px; text-align:left; font-weight:700;">OS</th>
+                    <th style="padding:14px 10px; text-align:left; font-weight:700;">Device</th>
                   </tr>
                 </thead>
                 <tbody>
                   <tr *ngFor="let log of trafficLogs" style="border-bottom:1px solid #f1f5f9; transition: background 0.15s;" onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background='white'">
-                    <td style="padding:10px 8px; color:#64748b; white-space:nowrap; font-weight: 500;">{{ log.visited_at | date:'short' }}</td>
-                    <td style="padding:10px 8px; font-family:monospace; color:var(--primary); font-weight:700;">{{ log.ip_address }}</td>
-                    <td style="padding:10px 8px; color:#334155; font-weight: 600;">
+                    <td style="padding:14px 10px; color:#64748b; white-space:nowrap; font-weight: 500;">{{ log.visited_at | date:'short' }}</td>
+                    <td style="padding:14px 10px; font-family:monospace; color:var(--primary); font-weight:700;">{{ log.ip_address }}</td>
+                    <td style="padding:14px 10px; color:#334155; font-weight: 600;">
                       <span *ngIf="log.city">{{ log.city }}, {{ log.country_code }}</span>
                       <span *ngIf="!log.city" style="color:#94a3b8; font-style:italic;">Resolving...</span>
                     </td>
-                    <td style="padding:10px 8px; color:#64748b; max-width:160px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-weight: 500;">{{ log.isp || '—' }}</td>
-                    <td style="padding:10px 8px;">
+                    <td style="padding:14px 10px; color:#64748b; max-width:180px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-weight: 500;">{{ log.isp || '—' }}</td>
+                    <td style="padding:14px 10px;">
                       <span [style.color]="log.method === 'GET' ? '#10B981' : '#F59E0B'" style="font-weight:800;">{{ log.method }}</span>
                     </td>
-                    <td style="padding:10px 8px; font-family:monospace; color:#475569; max-width:200px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">{{ log.endpoint }}</td>
-                    <td style="padding:10px 8px;">
+                    <td style="padding:14px 10px; font-family:monospace; color:#475569; max-width:250px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">{{ log.endpoint }}</td>
+                    <td style="padding:14px 10px;">
                       <span [style.color]="log.status_code < 300 ? '#10B981' : log.status_code < 400 ? '#F59E0B' : '#EF4444'" style="font-weight:800; font-family: monospace;">{{ log.status_code }}</span>
                     </td>
-                    <td style="padding:10px 8px; color:#334155; font-weight: 500;">{{ log.browser }}</td>
-                    <td style="padding:10px 8px; color:#334155; font-weight: 500;">{{ log.os }}</td>
-                    <td style="padding:10px 8px; text-transform:capitalize; color:#7C3AED; font-weight:700;">
+                    <td style="padding:14px 10px; color:#334155; font-weight: 500;">{{ log.browser }}</td>
+                    <td style="padding:14px 10px; color:#334155; font-weight: 500;">{{ log.os }}</td>
+                    <td style="padding:14px 10px; text-transform:capitalize; color:#7C3AED; font-weight:700;">
                       {{ log.device_type }}
                       <span *ngIf="log.is_proxy" style="margin-left:4px; font-size:0.65rem; background:#FED7AA; color:#C2410C; padding:1px 5px; border-radius:3px;">VPN</span>
                     </td>
