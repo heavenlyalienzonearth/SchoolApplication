@@ -220,11 +220,13 @@ def login(request: schemas.LoginRequest, db: Session = Depends(get_db)):
 
 @router.get("/2fa/setup", response_model=schemas.TwoFactorSetupResponse)
 def get_2fa_setup(current_user: models.User = Depends(get_current_user)):
+    if current_user.role.upper() != "SUPERADMIN":
+        raise HTTPException(status_code=403, detail="Only SuperAdmin can manage 2FA settings.")
     secret = pyotp.random_base32()
     # Create provisioning URI for Google Authenticator
     provisioning_uri = pyotp.totp.TOTP(secret).provisioning_uri(
         name=current_user.email,
-        issuer_name="Kangaroo Kids Portal"
+        issuer_name="Vidyankuram School"
     )
     # Generate Google Charts / QR Server URL
     qr_code_url = f"https://api.qrserver.com/v1/create-qr-code/?size=200x200&data={urllib.parse.quote(provisioning_uri)}"
@@ -236,8 +238,10 @@ def verify_2fa_setup(
     current_user: models.User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
+    if current_user.role.upper() != "SUPERADMIN":
+        raise HTTPException(status_code=403, detail="Only SuperAdmin can manage 2FA settings.")
     totp = pyotp.TOTP(request.secret)
-    if not totp.verify(request.code.strip()):
+    if not totp.verify(request.code.strip(), valid_window=1):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Invalid verification code. Please try again."
@@ -254,13 +258,15 @@ def disable_2fa(
     current_user: models.User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
+    if current_user.role.upper() != "SUPERADMIN":
+        raise HTTPException(status_code=403, detail="Only SuperAdmin can manage 2FA settings.")
     if not current_user.two_factor_enabled:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Two-factor authentication is not enabled."
         )
     totp = pyotp.TOTP(current_user.two_factor_secret)
-    if not totp.verify(request.code.strip()):
+    if not totp.verify(request.code.strip(), valid_window=1):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Invalid verification code. Please try again."
@@ -270,6 +276,71 @@ def disable_2fa(
     db.commit()
     db.refresh(current_user)
     return current_user
+
+# --- SUPER ADMIN MASTER USER 2FA MANAGER ENDPOINTS ---
+
+@router.get("/users/{user_id}/2fa/setup", response_model=schemas.TwoFactorSetupResponse)
+def get_user_2fa_setup(
+    user_id: int,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user)
+):
+    if current_user.role.upper() != "SUPERADMIN":
+        raise HTTPException(status_code=403, detail="Only SuperAdmin can manage user 2FA settings.")
+    user = db.query(models.User).filter(models.User.id == user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found.")
+        
+    secret = pyotp.random_base32()
+    provisioning_uri = pyotp.totp.TOTP(secret).provisioning_uri(
+        name=user.email,
+        issuer_name="Vidyankuram School"
+    )
+    qr_code_url = f"https://api.qrserver.com/v1/create-qr-code/?size=200x200&data={urllib.parse.quote(provisioning_uri)}"
+    return {"secret": secret, "qr_code_url": qr_code_url}
+
+@router.post("/users/{user_id}/2fa/verify", response_model=schemas.UserResponse)
+def verify_user_2fa_setup(
+    user_id: int,
+    request: schemas.TwoFactorVerifySetupRequest,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user)
+):
+    if current_user.role.upper() != "SUPERADMIN":
+        raise HTTPException(status_code=403, detail="Only SuperAdmin can manage user 2FA settings.")
+    user = db.query(models.User).filter(models.User.id == user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found.")
+        
+    totp = pyotp.TOTP(request.secret)
+    if not totp.verify(request.code.strip(), valid_window=1):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid verification code. Please try again."
+        )
+    user.two_factor_secret = request.secret
+    user.two_factor_enabled = True
+    db.commit()
+    db.refresh(user)
+    return user
+
+@router.post("/users/{user_id}/2fa/disable", response_model=schemas.UserResponse)
+def disable_user_2fa(
+    user_id: int,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user)
+):
+    if current_user.role.upper() != "SUPERADMIN":
+        raise HTTPException(status_code=403, detail="Only SuperAdmin can manage user 2FA settings.")
+    user = db.query(models.User).filter(models.User.id == user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found.")
+        
+    user.two_factor_enabled = False
+    user.two_factor_secret = None
+    db.commit()
+    db.refresh(user)
+    return user
 
 @router.post("/2fa/login", response_model=schemas.Token)
 def two_factor_login(request: schemas.TwoFactorLoginRequest, db: Session = Depends(get_db)):
@@ -300,7 +371,7 @@ def two_factor_login(request: schemas.TwoFactorLoginRequest, db: Session = Depen
         )
         
     totp = pyotp.TOTP(user.two_factor_secret)
-    if not totp.verify(request.code.strip()):
+    if not totp.verify(request.code.strip(), valid_window=1):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Incorrect 2FA verification code. Please try again."
@@ -444,12 +515,15 @@ def create_user(
         )
         
     hashed_pwd = security.get_password_hash(request.password)
+    import pyotp
     new_user = models.User(
         email=request.email,
         full_name=request.full_name,
         hashed_password=hashed_pwd,
         role=matched_role,
-        is_active=True
+        is_active=True,
+        two_factor_enabled=True,
+        two_factor_secret=pyotp.random_base32()
     )
     db.add(new_user)
     db.commit()

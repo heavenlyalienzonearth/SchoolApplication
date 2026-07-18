@@ -1,2 +1,21 @@
 <router-outlet></router-outlet>
 <app-chatbot></app-chatbot>
+
+<!-- Premium Global Loading Spinner Overlay -->
+<div class="global-loader-overlay" *ngIf="isLoading$ | async">
+  <div class="loader-container">
+    <div class="premium-spinner-wrapper">
+      <div class="robotic-scanner-box">
+        <span class="robotic-robot">🤖</span>
+        <div class="scanning-laser"></div>
+        <div class="cyber-grid"></div>
+      </div>
+    </div>
+    <div class="loading-bar-track">
+      <div class="loading-bar-fill"></div>
+    </div>
+    <div class="loading-label">
+      <span class="secure-icon">🔒</span> {{ loadingMessage$ | async }}
+    </div>
+  </div>
+</div>

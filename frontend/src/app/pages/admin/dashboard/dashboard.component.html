@@ -379,7 +379,7 @@
         </form>
 
         <!-- 2FA Settings Card -->
-        <div class="card" style="background: white; border-radius: 12px; border: 1px solid #E2E8F0; padding: 25px; box-shadow: 0 4px 6px rgba(0,0,0,0.02); margin-top: 30px;">
+        <div class="card" *ngIf="currentUser?.role?.toUpperCase() === 'SUPERADMIN'" style="background: white; border-radius: 12px; border: 1px solid #E2E8F0; padding: 25px; box-shadow: 0 4px 6px rgba(0,0,0,0.02); margin-top: 30px;">
           <h3 style="margin-top: 0; color: var(--primary); margin-bottom: 20px; font-size: 1.15rem; font-weight: 700; border-bottom: 1px solid #F1F5F9; padding-bottom: 10px;">
             🔒 Two-Factor Authentication (2FA) Security
           </h3>
@@ -1354,8 +1354,8 @@
           </div>
       </section>
 
-      <!-- User Management Tab (Admin Only) -->
-      <section *ngIf="activeTab === 'users' && currentUser?.role?.toUpperCase() === 'ADMIN'" class="tab-section animate-fade-in">
+      <!-- User Management Tab (Admin / SuperAdmin) -->
+      <section *ngIf="activeTab === 'users' && (currentUser?.role?.toUpperCase() === 'ADMIN' || currentUser?.role?.toUpperCase() === 'SUPERADMIN')" class="tab-section animate-fade-in">
         <div class="tab-header" style="border-bottom: 2px solid #E2E8F0; padding-bottom: 15px; margin-bottom: 20px;">
           <h2 style="margin: 0; color: var(--primary);">👥 User Accounts Manager</h2>
           <p style="margin: 3px 0 0 0; color: var(--text-light); font-size: 0.9rem;">Manage school portal access roles (Admins, Principals, Teachers) and toggle account activation statuses.</p>
@@ -1426,6 +1426,7 @@
                     <th style="padding: 10px 5px;">User Info</th>
                     <th style="padding: 10px 5px;">Role</th>
                     <th style="padding: 10px 5px;">Status</th>
+                    <th style="padding: 10px 5px;">2FA Security</th>
                     <th style="padding: 10px 5px; text-align: right;">Actions</th>
                   </tr>
                 </thead>
@@ -1445,18 +1446,73 @@
                         {{ u.is_active ? 'Active' : 'Inactive' }}
                       </span>
                     </td>
+                    <td style="padding: 12px 5px;">
+                      <span class="badge" [style.background-color]="u.two_factor_enabled ? '#ECFDF5' : '#F3F4F6'" [style.color]="u.two_factor_enabled ? '#065F46' : '#4B5563'" style="border-radius: 4px; padding: 2px 6px; font-size: 0.75rem; font-weight: 700;">
+                        {{ u.two_factor_enabled ? '🔒 Enabled' : '🔓 Disabled' }}
+                      </span>
+                    </td>
                     <td style="padding: 12px 5px; text-align: right;">
-                      <div style="display: inline-flex; gap: 6px;">
+                      <div style="display: inline-flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end;">
                         <button (click)="editUser(u)" class="btn-table edit" style="padding: 4px 8px; font-size: 0.8rem;">✏️ Edit</button>
                         <button (click)="toggleUserStatus(u)" class="btn-table" [style.background-color]="u.is_active ? '#F3F4F6' : '#ECFDF5'" [style.color]="u.is_active ? '#4B5563' : '#065F46'" style="padding: 4px 8px; font-size: 0.8rem; border: none; border-radius: 4px; cursor: pointer; font-weight: 600;" [disabled]="u.id === currentUser?.id">
                           {{ u.is_active ? 'Deactivate' : 'Activate' }}
                         </button>
+                        
+                        <!-- Super Admin 2FA Management Actions -->
+                        <button *ngIf="currentUser?.role?.toUpperCase() === 'SUPERADMIN' && !u.two_factor_enabled" (click)="openUser2FASetup(u)" class="btn-table" style="padding: 4px 8px; font-size: 0.8rem; background-color: #E0F2FE; color: #0369A1; border: none; border-radius: 4px; cursor: pointer; font-weight: 600;">
+                          🔒 Setup 2FA
+                        </button>
+                        <button *ngIf="currentUser?.role?.toUpperCase() === 'SUPERADMIN' && u.two_factor_enabled" (click)="disableUser2FA(u)" class="btn-table" style="padding: 4px 8px; font-size: 0.8rem; background-color: #FEE2E2; color: #991B1B; border: none; border-radius: 4px; cursor: pointer; font-weight: 600;">
+                          🔓 Disable 2FA
+                        </button>
+
                         <button (click)="deleteUser(u.id)" class="btn-table delete" style="padding: 4px 8px; font-size: 0.8rem;" [disabled]="u.id === currentUser?.id">🗑️ Delete</button>
                       </div>
                     </td>
                   </tr>
                 </tbody>
               </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- Super Admin User 2FA Setup Modal -->
+        <div class="global-loader-overlay" *ngIf="active2faUser" style="z-index: 1000000; background: rgba(15, 23, 42, 0.75);">
+          <div class="loader-container" style="background: white; width: 420px; padding: 30px; border-radius: 16px; border: 1px solid #E2E8F0; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1); color: #1e293b;">
+            <h3 style="margin-top: 0; color: var(--primary); font-size: 1.2rem; font-weight: 700; border-bottom: 1px solid #F1F5F9; padding-bottom: 10px; width: 100%; text-align: left;">
+              🔒 Setup 2FA for User
+            </h3>
+            
+            <div style="text-align: left; width: 100%; font-size: 0.9rem; color: #475569; margin-bottom: 15px;">
+              User: <strong>{{ active2faUser.full_name }}</strong> ({{ active2faUser.email }})
+            </div>
+
+            <div *ngIf="tfaSetupLoading" style="text-align: center; padding: 20px; color: #64748b;">Generating 2FA keys...</div>
+
+            <div *ngIf="!tfaSetupLoading && active2faSetupData" style="width: 100%;">
+              <p style="margin: 0 0 15px 0; color: #64748b; font-size: 0.85rem; text-align: left; line-height: 1.5; font-family: sans-serif;">
+                Scan this QR code with Google/Microsoft Authenticator, or enter the manual key: <strong style="font-family: monospace; color: var(--secondary); font-size: 0.95rem;">{{ active2faSetupData.secret }}</strong>
+              </p>
+
+              <div style="text-align: center; margin-bottom: 20px;">
+                <img [src]="active2faSetupData.qr_code_url" alt="2FA QR Code" style="background: white; padding: 10px; border: 1px solid #E2E8F0; border-radius: 8px; display: inline-block; width: 160px; height: 160px;" />
+              </div>
+
+              <form (ngSubmit)="verifyUser2FASetup()" style="width: 100%;">
+                <div class="form-group" style="margin-bottom: 20px; text-align: left;">
+                  <label class="form-label" style="display: block; font-weight: 600; font-size: 0.85rem; color: #475569; margin-bottom: 6px;">Enter 6-digit confirmation code *</label>
+                  <input type="text" [(ngModel)]="active2faSetupCode" name="active_tfa_code" required class="form-control" placeholder="123456" maxlength="6" autocomplete="off" style="width: 100%; border: 1px solid #CBD5E1; border-radius: 6px; padding: 8px 12px; font-weight: bold; letter-spacing: 4px; text-align: center; font-size: 1.2rem;" />
+                </div>
+
+                <div style="display: flex; gap: 10px; width: 100%;">
+                  <button type="submit" class="btn btn-primary" style="flex: 1; padding: 10px; border-radius: 6px; font-weight: 700;">
+                    Activate 2FA
+                  </button>
+                  <button type="button" (click)="closeUser2FASetup()" class="btn" style="flex: 1; padding: 10px; border-radius: 6px; border: 1px solid #CBD5E1; background: white; font-weight: 700; cursor: pointer; color: #1e293b;">
+                    Close
+                  </button>
+                </div>
+              </form>
             </div>
           </div>
         </div>

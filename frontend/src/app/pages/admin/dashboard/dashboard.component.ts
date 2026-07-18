@@ -187,6 +187,12 @@ export class DashboardComponent implements OnInit {
   tfaError = '';
   tfaLoading = false;
 
+  // Super Admin Managed 2FA State
+  active2faUser: any = null;
+  active2faSetupData: any = null;
+  active2faSetupCode = '';
+  tfaSetupLoading = false;
+
   // User Management State
   usersList: any[] = [];
   newUser = { full_name: '', email: '', password: '', role: 'Teacher' };
@@ -2148,6 +2154,69 @@ export class DashboardComponent implements OnInit {
       error: (err) => {
         this.tfaLoading = false;
         this.tfaError = err.error?.detail || 'Failed to disable Two-Factor Authentication.';
+      }
+    });
+  }
+
+  // --- SUPER ADMIN 2FA MANAGEMENT METHODS ---
+  openUser2FASetup(user: any): void {
+    this.active2faUser = user;
+    this.tfaSetupLoading = true;
+    this.active2faSetupData = null;
+    this.active2faSetupCode = '';
+    this.authService.getUser2faSetup(user.id).subscribe({
+      next: (res) => {
+        this.active2faSetupData = res;
+        this.tfaSetupLoading = false;
+      },
+      error: (err) => {
+        this.tfaSetupLoading = false;
+        alert(err.error?.detail || 'Failed to initialize 2FA setup for this user.');
+        this.closeUser2FASetup();
+      }
+    });
+  }
+
+  closeUser2FASetup(): void {
+    this.active2faUser = null;
+    this.active2faSetupData = null;
+    this.active2faSetupCode = '';
+  }
+
+  verifyUser2FASetup(): void {
+    if (!this.active2faSetupCode || this.active2faSetupCode.length !== 6) {
+      alert('Please enter a valid 6-digit confirmation code.');
+      return;
+    }
+    this.tfaSetupLoading = true;
+    this.authService.verifyUser2faSetup(this.active2faUser.id, this.active2faSetupData.secret, this.active2faSetupCode).subscribe({
+      next: () => {
+        this.tfaSetupLoading = false;
+        alert(`2FA security has been successfully enabled for ${this.active2faUser.full_name}!`);
+        this.closeUser2FASetup();
+        this.loadUsers();
+      },
+      error: (err) => {
+        this.tfaSetupLoading = false;
+        alert(err.error?.detail || 'Verification code failed. Please verify and try again.');
+      }
+    });
+  }
+
+  disableUser2FA(user: any): void {
+    if (!confirm(`Are you sure you want to deactivate and remove Two-Factor Authentication (2FA) security for ${user.full_name}?`)) {
+      return;
+    }
+    this.usersLoading = true;
+    this.authService.disableUser2fa(user.id).subscribe({
+      next: () => {
+        this.usersLoading = false;
+        alert(`2FA security has been successfully disabled for ${user.full_name}.`);
+        this.loadUsers();
+      },
+      error: (err) => {
+        this.usersLoading = false;
+        alert(err.error?.detail || 'Failed to disable 2FA security.');
       }
     });
   }

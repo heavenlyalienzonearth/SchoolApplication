@@ -159,9 +159,18 @@ def startup_event():
                         is_enabled=is_enabled
                     ))
             db.commit()
-            print("[Startup] Seeding of feature permissions complete!")
+        # 3. Safety Check: Reset 2FA to disabled for all users on startup to prevent lockout.
+        # All users must have their 2FA configured manually via Super Admin user setting scan.
+        active_2fa_users = db.query(models.User).filter(models.User.two_factor_enabled == True).all()
+        if active_2fa_users:
+            print(f"[Startup] Safety check: Resetting 2FA to disabled for {len(active_2fa_users)} users to prevent system lockout...")
+            for user in active_2fa_users:
+                user.two_factor_enabled = False
+                user.two_factor_secret = None
+            db.commit()
+            print("[Startup] Safety 2FA reset complete!")
             
-        # 3. CORS & DB Security configurations checks
+        # 4. CORS & DB Security configurations checks
         is_prod_db = "200.97.168.156" in settings.DATABASE_URL
         cors_origins = settings.cors_origins_list
         print(f"[Security] Active CORS Whitelist: {cors_origins}", flush=True)

@@ -207,6 +207,18 @@ export class AuthService {
     return this.apiService.delete<any>(`/auth/users/${userId}`);
   }
 
+  getUser2faSetup(userId: number): Observable<TwoFactorSetupResponse> {
+    return this.apiService.get<TwoFactorSetupResponse>(`/auth/users/${userId}/2fa/setup`);
+  }
+
+  verifyUser2faSetup(userId: number, secret: string, code: string): Observable<User> {
+    return this.apiService.post<User>(`/auth/users/${userId}/2fa/verify`, { secret, code });
+  }
+
+  disableUser2fa(userId: number): Observable<User> {
+    return this.apiService.post<User>(`/auth/users/${userId}/2fa/disable`, {});
+  }
+
   forgotPassword(email: string): Observable<any> {
     return this.apiService.post<any>('/auth/forgot-password', { email });
   }
