@@ -18,6 +18,7 @@ class UserResponse(UserBase):
     created_at: datetime
     two_factor_enabled: bool
     student_id: Optional[int] = None
+    permissions: Optional[List[str]] = None
 
     class Config:
         from_attributes = True
@@ -602,4 +603,24 @@ class MealPlanResponse(MealPlanBase):
 
     class Config:
         from_attributes = True
+
+
+# --- FEATURE PERMISSION SCHEMAS ---
+
+class FeaturePermissionBase(BaseModel):
+    role: str
+    feature: str
+    is_enabled: bool
+
+class FeaturePermissionResponse(FeaturePermissionBase):
+    id: int
+
+    class Config:
+        from_attributes = True
+
+class FeaturePermissionUpdate(BaseModel):
+    role: str
+    feature: str
+    is_enabled: bool
+
 

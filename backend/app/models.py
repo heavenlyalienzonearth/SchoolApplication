@@ -497,3 +497,13 @@ class VisitorLog(Base):
     visited_at = Column(DateTime, default=datetime.utcnow, nullable=False, index=True)
 
 
+class FeaturePermission(Base):
+    __tablename__ = "feature_permissions"
+
+    id = Column(Integer, primary_key=True, index=True)
+    role = Column(String(50), nullable=False, index=True)
+    feature = Column(String(50), nullable=False, index=True)
+    is_enabled = Column(Boolean, default=True, nullable=False)
+
+
+

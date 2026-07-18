@@ -15,120 +15,125 @@
     <!-- Sidebar -->
     <aside class="dash-sidebar">
       <ul class="sidebar-menu">
-        <li [class.active]="activeTab === 'analytics'" (click)="setTab('analytics')" *ngIf="currentUser?.role?.toUpperCase() === 'ADMIN' || currentUser?.role?.toUpperCase() === 'PRINCIPAL'">
+        <li [class.active]="activeTab === 'analytics'" (click)="setTab('analytics')" *ngIf="hasPermission('analytics')">
           <span class="icon">📊</span> Analytics Overview
         </li>
-        <li [class.active]="activeTab === 'traffic'" (click)="setTab('traffic')" *ngIf="currentUser?.role?.toUpperCase() === 'ADMIN' || currentUser?.role?.toUpperCase() === 'PRINCIPAL'">
+        <li [class.active]="activeTab === 'traffic'" (click)="setTab('traffic')" *ngIf="hasPermission('traffic')">
           <span class="icon">📡</span> Traffic Analytics
         </li>
         <!-- Settings Group -->
-        <li class="sidebar-header" (click)="togglePublicSettings()" *ngIf="currentUser?.role?.toUpperCase() === 'ADMIN' || currentUser?.role?.toUpperCase() === 'PRINCIPAL'" style="cursor: pointer; display: flex; justify-content: space-between; align-items: center; width: 100%; box-sizing: border-box;">
+        <li class="sidebar-header" (click)="togglePublicSettings()" *ngIf="hasPermission('settings') || hasPermission('hero')" style="cursor: pointer; display: flex; justify-content: space-between; align-items: center; width: 100%; box-sizing: border-box;">
           <span>🌐 Settings</span>
           <span style="font-size: 0.7rem; color: #94a3b8; font-weight: 800; margin-left: auto;">{{ publicSettingsExpanded ? '▼' : '▶' }}</span>
         </li>
-        <ng-container *ngIf="publicSettingsExpanded && (currentUser?.role?.toUpperCase() === 'ADMIN' || currentUser?.role?.toUpperCase() === 'PRINCIPAL')">
-          <li [class.active]="activeTab === 'settings'" (click)="setTab('settings')" class="submenu-item">
+        <ng-container *ngIf="publicSettingsExpanded">
+          <li [class.active]="activeTab === 'settings'" (click)="setTab('settings')" class="submenu-item" *ngIf="hasPermission('settings')">
             <span class="icon">⚙️</span> Public Settings
           </li>
-          <li [class.active]="activeTab === 'hero'" (click)="setTab('hero')" class="submenu-item">
+          <li [class.active]="activeTab === 'hero'" (click)="setTab('hero')" class="submenu-item" *ngIf="hasPermission('hero')">
             <span class="icon">🖼️</span> Modify Banner
           </li>
         </ng-container>
         <!-- School Management Group -->
-        <li class="sidebar-header" (click)="toggleSchoolManagement()" *ngIf="currentUser?.role?.toUpperCase() === 'ADMIN' || currentUser?.role?.toUpperCase() === 'PRINCIPAL'" style="cursor: pointer; display: flex; justify-content: space-between; align-items: center; width: 100%; box-sizing: border-box;">
+        <li class="sidebar-header" (click)="toggleSchoolManagement()" *ngIf="hasPermission('programs') || hasPermission('holidays') || hasPermission('gallery') || hasPermission('inquiries') || hasPermission('users') || hasPermission('circulars') || hasPermission('library') || hasPermission('admissions') || hasPermission('milestones')" style="cursor: pointer; display: flex; justify-content: space-between; align-items: center; width: 100%; box-sizing: border-box;">
           <span>🏫 School Management</span>
           <span style="font-size: 0.7rem; color: #94a3b8; font-weight: 800; margin-left: auto;">{{ schoolManagementExpanded ? '▼' : '▶' }}</span>
         </li>
-        <ng-container *ngIf="schoolManagementExpanded && (currentUser?.role?.toUpperCase() === 'ADMIN' || currentUser?.role?.toUpperCase() === 'PRINCIPAL')">
-          <li [class.active]="activeTab === 'programs'" (click)="setTab('programs')" class="submenu-item" *ngIf="currentUser?.role?.toUpperCase() === 'ADMIN' || currentUser?.role?.toUpperCase() === 'PRINCIPAL'">
+        <ng-container *ngIf="schoolManagementExpanded">
+          <li [class.active]="activeTab === 'programs'" (click)="setTab('programs')" class="submenu-item" *ngIf="hasPermission('programs')">
             <span class="icon">🎓</span> Programs
           </li>
-          <li [class.active]="activeTab === 'holidays'" (click)="setTab('holidays')" class="submenu-item">
+          <li [class.active]="activeTab === 'holidays'" (click)="setTab('holidays')" class="submenu-item" *ngIf="hasPermission('holidays')">
             <span class="icon">📅</span> Holidays
           </li>
-          <li [class.active]="activeTab === 'gallery'" (click)="setTab('gallery')" class="submenu-item" *ngIf="currentUser?.role?.toUpperCase() === 'ADMIN' || currentUser?.role?.toUpperCase() === 'PRINCIPAL'">
+          <li [class.active]="activeTab === 'gallery'" (click)="setTab('gallery')" class="submenu-item" *ngIf="hasPermission('gallery')">
             <span class="icon">📷</span> Gallery
           </li>
-          <li [class.active]="activeTab === 'inquiries'" (click)="setTab('inquiries')" class="submenu-item" *ngIf="currentUser?.role?.toUpperCase() === 'ADMIN' || currentUser?.role?.toUpperCase() === 'PRINCIPAL'">
+          <li [class.active]="activeTab === 'inquiries'" (click)="setTab('inquiries')" class="submenu-item" *ngIf="hasPermission('inquiries')">
             <span class="icon">📩</span> Admission Enquiries
           </li>
-          <li [class.active]="activeTab === 'users'" (click)="setTab('users')" class="submenu-item" *ngIf="currentUser?.role?.toUpperCase() === 'ADMIN'">
+          <li [class.active]="activeTab === 'users'" (click)="setTab('users')" class="submenu-item" *ngIf="hasPermission('users')">
             <span class="icon">👥</span> Teacher Updates
           </li>
-          <li [class.active]="activeTab === 'circulars'" (click)="setTab('circulars')" class="submenu-item">
+          <li [class.active]="activeTab === 'circulars'" (click)="setTab('circulars')" class="submenu-item" *ngIf="hasPermission('circulars')">
             <span class="icon">📢</span> Circulars
           </li>
-          <li [class.active]="activeTab === 'library'" (click)="setTab('library')" class="submenu-item">
+          <li [class.active]="activeTab === 'library'" (click)="setTab('library')" class="submenu-item" *ngIf="hasPermission('library')">
             <span class="icon">📚</span> Library
           </li>
-          <li [class.active]="activeTab === 'admissions'" (click)="setTab('admissions')" class="submenu-item" *ngIf="currentUser?.role?.toUpperCase() === 'ADMIN' || currentUser?.role?.toUpperCase() === 'PRINCIPAL'">
+          <li [class.active]="activeTab === 'admissions'" (click)="setTab('admissions')" class="submenu-item" *ngIf="hasPermission('admissions')">
             <span class="icon">🏫</span> Admissions
           </li>
-          <li [class.active]="activeTab === 'milestones'" (click)="setTab('milestones')" class="submenu-item" *ngIf="currentUser?.role?.toUpperCase() !== 'PARENT'">
+          <li [class.active]="activeTab === 'milestones'" (click)="setTab('milestones')" class="submenu-item" *ngIf="hasPermission('milestones')">
             <span class="icon">🎯</span> SetUp Milestones
           </li>
         </ng-container>
 
         <!-- Reviews Group -->
-        <li class="sidebar-header" (click)="toggleReviews()" *ngIf="currentUser?.role?.toUpperCase() === 'ADMIN' || currentUser?.role?.toUpperCase() === 'PRINCIPAL' || currentUser?.role?.toUpperCase() === 'TEACHER'" style="cursor: pointer; display: flex; justify-content: space-between; align-items: center; width: 100%; box-sizing: border-box;">
+        <li class="sidebar-header" (click)="toggleReviews()" *ngIf="hasPermission('testimonials')" style="cursor: pointer; display: flex; justify-content: space-between; align-items: center; width: 100%; box-sizing: border-box;">
           <span>💬 Reviews</span>
           <span style="font-size: 0.7rem; color: #94a3b8; font-weight: 800; margin-left: auto;">{{ reviewsExpanded ? '▼' : '▶' }}</span>
         </li>
-        <ng-container *ngIf="reviewsExpanded && (currentUser?.role?.toUpperCase() === 'ADMIN' || currentUser?.role?.toUpperCase() === 'PRINCIPAL' || currentUser?.role?.toUpperCase() === 'TEACHER')">
-          <li [class.active]="activeTab === 'testimonials'" (click)="setTab('testimonials')" class="submenu-item">
+        <ng-container *ngIf="reviewsExpanded">
+          <li [class.active]="activeTab === 'testimonials'" (click)="setTab('testimonials')" class="submenu-item" *ngIf="hasPermission('testimonials')">
             <span class="icon">💬</span> Parent Reviews
           </li>
         </ng-container>
 
         <!-- Attendance Group -->
-        <li class="sidebar-header" (click)="toggleAttendance()" *ngIf="currentUser?.role?.toUpperCase() === 'ADMIN' || currentUser?.role?.toUpperCase() === 'PRINCIPAL' || currentUser?.role?.toUpperCase() === 'TEACHER'" style="cursor: pointer; display: flex; justify-content: space-between; align-items: center; width: 100%; box-sizing: border-box;">
+        <li class="sidebar-header" (click)="toggleAttendance()" *ngIf="hasPermission('attendance')" style="cursor: pointer; display: flex; justify-content: space-between; align-items: center; width: 100%; box-sizing: border-box;">
           <span>📅 Attendance</span>
           <span style="font-size: 0.7rem; color: #94a3b8; font-weight: 800; margin-left: auto;">{{ attendanceExpanded ? '▼' : '▶' }}</span>
         </li>
-        <ng-container *ngIf="attendanceExpanded && (currentUser?.role?.toUpperCase() === 'ADMIN' || currentUser?.role?.toUpperCase() === 'PRINCIPAL' || currentUser?.role?.toUpperCase() === 'TEACHER')">
-          <li [class.active]="activeTab === 'attendance'" (click)="setTab('attendance')" class="submenu-item">
+        <ng-container *ngIf="attendanceExpanded">
+          <li [class.active]="activeTab === 'attendance'" (click)="setTab('attendance')" class="submenu-item" *ngIf="hasPermission('attendance')">
             <span class="icon">📅</span> Student Attendance
           </li>
         </ng-container>
 
         <!-- Finance & Billing Group -->
-        <li class="sidebar-header" (click)="toggleFinance()" *ngIf="currentUser?.role?.toUpperCase() === 'ADMIN' || currentUser?.role?.toUpperCase() === 'PRINCIPAL'" style="cursor: pointer; display: flex; justify-content: space-between; align-items: center; width: 100%; box-sizing: border-box;">
+        <li class="sidebar-header" (click)="toggleFinance()" *ngIf="hasPermission('finance-structures') || hasPermission('finance-ledger')" style="cursor: pointer; display: flex; justify-content: space-between; align-items: center; width: 100%; box-sizing: border-box;">
           <span>💰 Finance & Billing</span>
           <span style="font-size: 0.7rem; color: #94a3b8; font-weight: 800; margin-left: auto;">{{ financeExpanded ? '▼' : '▶' }}</span>
         </li>
-        <ng-container *ngIf="financeExpanded && (currentUser?.role?.toUpperCase() === 'ADMIN' || currentUser?.role?.toUpperCase() === 'PRINCIPAL')">
-          <li [class.active]="activeTab === 'finance-structures'" (click)="setTab('finance-structures')" class="submenu-item">
+        <ng-container *ngIf="financeExpanded">
+          <li [class.active]="activeTab === 'finance-structures'" (click)="setTab('finance-structures')" class="submenu-item" *ngIf="hasPermission('finance-structures')">
             <span class="icon">⚙️</span> Fee Structures
           </li>
-          <li [class.active]="activeTab === 'finance-ledger'" (click)="setTab('finance-ledger')" class="submenu-item">
+          <li [class.active]="activeTab === 'finance-ledger'" (click)="setTab('finance-ledger')" class="submenu-item" *ngIf="hasPermission('finance-ledger')">
             <span class="icon">📊</span> Invoices & Ledger
           </li>
         </ng-container>
 
         <!-- Stationery Group -->
-        <li class="sidebar-header" (click)="toggleStationery()" *ngIf="currentUser?.role?.toUpperCase() === 'ADMIN' || currentUser?.role?.toUpperCase() === 'PRINCIPAL' || currentUser?.role?.toUpperCase() === 'TEACHER'" style="cursor: pointer; display: flex; justify-content: space-between; align-items: center; width: 100%; box-sizing: border-box;">
+        <li class="sidebar-header" (click)="toggleStationery()" *ngIf="hasPermission('stationary')" style="cursor: pointer; display: flex; justify-content: space-between; align-items: center; width: 100%; box-sizing: border-box;">
           <span>✏️ Stationery</span>
           <span style="font-size: 0.7rem; color: #94a3b8; font-weight: 800; margin-left: auto;">{{ stationeryExpanded ? '▼' : '▶' }}</span>
         </li>
-        <ng-container *ngIf="stationeryExpanded && (currentUser?.role?.toUpperCase() === 'ADMIN' || currentUser?.role?.toUpperCase() === 'PRINCIPAL' || currentUser?.role?.toUpperCase() === 'TEACHER')">
-          <li [class.active]="activeTab === 'stationary'" (click)="setTab('stationary')" class="submenu-item">
+        <ng-container *ngIf="stationeryExpanded">
+          <li [class.active]="activeTab === 'stationary'" (click)="setTab('stationary')" class="submenu-item" *ngIf="hasPermission('stationary')">
             <span class="icon">✏️</span> Stationery Center
           </li>
         </ng-container>
 
         <!-- Daily Updates Group -->
-        <li class="sidebar-header" (click)="toggleDailyUpdates()" *ngIf="currentUser?.role?.toUpperCase() === 'ADMIN' || currentUser?.role?.toUpperCase() === 'PRINCIPAL' || currentUser?.role?.toUpperCase() === 'TEACHER'" style="cursor: pointer; display: flex; justify-content: space-between; align-items: center; width: 100%; box-sizing: border-box;">
+        <li class="sidebar-header" (click)="toggleDailyUpdates()" *ngIf="hasPermission('moments') || hasPermission('leaves')" style="cursor: pointer; display: flex; justify-content: space-between; align-items: center; width: 100%; box-sizing: border-box;">
           <span>📸 Daily Updates</span>
           <span style="font-size: 0.7rem; color: #94a3b8; font-weight: 800; margin-left: auto;">{{ dailyUpdatesExpanded ? '▼' : '▶' }}</span>
         </li>
-        <ng-container *ngIf="dailyUpdatesExpanded && (currentUser?.role?.toUpperCase() === 'ADMIN' || currentUser?.role?.toUpperCase() === 'PRINCIPAL' || currentUser?.role?.toUpperCase() === 'TEACHER')">
-          <li [class.active]="activeTab === 'moments'" (click)="setTab('moments')" class="submenu-item">
+        <ng-container *ngIf="dailyUpdatesExpanded">
+          <li [class.active]="activeTab === 'moments'" (click)="setTab('moments')" class="submenu-item" *ngIf="hasPermission('moments')">
             <span class="icon">📸</span> Daily Moments
           </li>
-          <li [class.active]="activeTab === 'leaves'" (click)="setTab('leaves')" class="submenu-item">
+          <li [class.active]="activeTab === 'leaves'" (click)="setTab('leaves')" class="submenu-item" *ngIf="hasPermission('leaves')">
             <span class="icon">📅</span> Parent Requests
           </li>
         </ng-container>
+
+        <!-- SuperAdmin Configuration Screen -->
+        <li [class.active]="activeTab === 'permissions'" (click)="setTab('permissions')" *ngIf="currentUser?.role?.toUpperCase() === 'SUPERADMIN'" style="border-top: 1px solid #e2e8f0; margin-top: 15px; padding-top: 15px;">
+          <span class="icon">🛠️</span> Feature Access Control
+        </li>
       </ul>
     </aside>
 
@@ -3248,6 +3253,105 @@
                 <button class="btn btn-secondary" [disabled]="trafficLogs.length < trafficPageSize" (click)="trafficPage = trafficPage + 1; loadTrafficLogs()" style="padding:6px 12px; font-size:0.8rem; border-radius: 4px;">Next →</button>
               </div>
             </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Feature Access Control Section (SuperAdmin only) -->
+      <section *ngIf="activeTab === 'permissions'" class="tab-section animate-fade-in">
+        <div class="section-title-bar" style="margin-bottom: 25px;">
+          <h2>🛠️ Feature Access Control</h2>
+          <p class="subtitle">Dynamically configure module visibility and API endpoint permissions per user role across the application.</p>
+        </div>
+
+        <div class="card" style="padding:28px 32px; border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); border-top: 4px solid var(--primary); margin-bottom:28px; width:100%; box-sizing:border-box;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:24px; flex-wrap:wrap; gap:15px;">
+            <div>
+              <h4 style="margin:0 0 6px 0; font-size:1.1rem; font-weight:800; color:#1e293b;">Role Permission Configuration Board</h4>
+              <p style="margin:0; font-size:0.82rem; color:#64748b; font-weight:500;">Checkboxes govern access to sidebar options, action buttons, and portal tabs.</p>
+            </div>
+            
+            <div style="display:flex; gap:12px;">
+              <button type="button" class="btn btn-secondary" (click)="loadPermissions()" style="padding:10px 20px; border-radius: 8px; font-weight: 700; height: 42px; display: inline-flex; align-items: center; gap: 6px; border: 1.5px solid #e2e8f0; background: white; color: #475569; cursor: pointer; transition: all 0.2s;" onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background='white'">
+                🔄 Reload Defaults
+              </button>
+              <button type="button" class="btn btn-primary" (click)="savePermissions()" style="padding:10px 24px; border-radius: 8px; font-weight: 700; height: 42px; display: inline-flex; align-items: center; gap: 6px; background: var(--primary); border: none; color: white; cursor: pointer; transition: opacity 0.2s;" onmouseover="this.style.opacity='0.9'" onmouseout="this.style.opacity='1'">
+                💾 Save Configurations
+              </button>
+            </div>
+          </div>
+
+          <!-- API Rate Limiting Control -->
+          <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 20px; margin-bottom: 24px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 15px;">
+            <div style="flex: 1; min-width: 280px;">
+              <h5 style="margin: 0 0 4px 0; font-size: 0.95rem; font-weight: 800; color: #1e293b; display: flex; align-items: center; gap: 6px;">
+                🔒 Dynamic Request Rate Limiter
+              </h5>
+              <p style="margin: 0; font-size: 0.8rem; color: #64748b; font-weight: 500;">
+                Defines the maximum API calls allowed per client IP within a 60-second window. Set to 0 to disable rate limiting.
+              </p>
+            </div>
+            <div style="display: flex; align-items: center; gap: 10px; background: white; padding: 8px 16px; border-radius: 8px; border: 1.5px solid #e2e8f0;">
+              <span style="font-weight: 700; color: #475569; font-size: 0.85rem;">⏱️ Max Allowed:</span>
+              <input type="number" [(ngModel)]="rateLimitPerMin" min="0" max="1000" style="width: 80px; height: 32px; border: 1px solid #cbd5e1; border-radius: 6px; padding: 4px 8px; font-weight: 700; text-align: center; color: #1e293b;" />
+              <span style="font-weight: 700; color: #64748b; font-size: 0.85rem;">req/min</span>
+            </div>
+          </div>
+
+          <div style="overflow-x:auto; border: 1px solid #e2e8f0; border-radius: 8px; background: white;">
+            <table style="width:100%; border-collapse:collapse; text-align:left; font-size:0.88rem;">
+              <thead>
+                <tr style="background:#f8fafc; border-bottom:2px solid #e2e8f0; color:#334155; font-weight:800;">
+                  <th style="padding:16px 20px;">Feature Module Name</th>
+                  <th style="padding:16px 20px; text-align:center; width: 140px;">Admin</th>
+                  <th style="padding:16px 20px; text-align:center; width: 140px;">Principal</th>
+                  <th style="padding:16px 20px; text-align:center; width: 140px;">Teacher</th>
+                  <th style="padding:16px 20px; text-align:center; width: 140px;">Parent</th>
+                  <th style="padding:16px 20px; text-align:center; width: 150px; background:#f1f5f9; border-left:1px solid #e2e8f0;">SuperAdmin</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let feat of featuresList" style="border-bottom:1px solid #f1f5f9; transition: background 0.15s;" onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background='white'">
+                  <td style="padding:14px 20px; font-weight:700; color:#1e293b;">
+                    {{ feat.name }}
+                    <span style="display:block; font-size:0.75rem; color:#64748b; font-weight:500; margin-top:2px;">Feature identifier: <code>{{ feat.code }}</code></span>
+                  </td>
+                  
+                  <!-- Checkbox for Admin -->
+                  <td style="padding:14px 20px; text-align:center; vertical-align:middle;">
+                    <input type="checkbox" [(ngModel)]="permissionGrid[feat.code]['Admin']" style="width:20px; height:20px; accent-color:var(--primary); cursor:pointer;" />
+                  </td>
+
+                  <!-- Checkbox for Principal -->
+                  <td style="padding:14px 20px; text-align:center; vertical-align:middle;">
+                    <input type="checkbox" [(ngModel)]="permissionGrid[feat.code]['Principal']" style="width:20px; height:20px; accent-color:#3b82f6; cursor:pointer;" />
+                  </td>
+
+                  <!-- Checkbox for Teacher -->
+                  <td style="padding:14px 20px; text-align:center; vertical-align:middle;">
+                    <input type="checkbox" [(ngModel)]="permissionGrid[feat.code]['Teacher']" style="width:20px; height:20px; accent-color:#10b981; cursor:pointer;" />
+                  </td>
+
+                  <!-- Checkbox for Parent -->
+                  <td style="padding:14px 20px; text-align:center; vertical-align:middle;">
+                    <input type="checkbox" [(ngModel)]="permissionGrid[feat.code]['Parent']" style="width:20px; height:20px; accent-color:#f59e0b; cursor:pointer;" />
+                  </td>
+
+                  <!-- Static SuperAdmin Badge -->
+                  <td style="padding:14px 20px; text-align:center; vertical-align:middle; background:#f8fafc; border-left:1px solid #e2e8f0;">
+                    <span style="background:#dcfce7; color:#15803d; font-size:0.72rem; font-weight:800; padding:4px 10px; border-radius:12px; display:inline-block;">
+                      🔒 Always Allowed
+                    </span>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div style="display:flex; justify-content:flex-end; margin-top:24px; gap:12px;">
+            <button type="button" class="btn btn-primary" (click)="savePermissions()" style="padding:12px 32px; border-radius: 8px; font-weight: 700; background: var(--primary); border: none; color: white; cursor: pointer; box-shadow: 0 4px 6px -1px rgba(59, 130, 246, 0.2); transition: all 0.2s;" onmouseover="this.style.opacity='0.9'; this.style.transform='translateY(-1px)'" onmouseout="this.style.opacity='1'; this.style.transform='translateY(0)'">
+              💾 Save Dynamic Permissions
+            </button>
           </div>
         </div>
       </section>

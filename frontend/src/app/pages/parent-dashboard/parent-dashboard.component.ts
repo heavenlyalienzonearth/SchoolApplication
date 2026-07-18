@@ -38,22 +38,22 @@ import { ContentService } from '../../core/services/content.service';
           <button class="tab-btn-pill" [class.active]="activeTab === 'overview'" (click)="setTab('overview')">
             <span>📋</span> Portal Overview
           </button>
-          <button class="tab-btn-pill" [class.active]="activeTab === 'billing'" (click)="setTab('billing')">
+          <button class="tab-btn-pill" [class.active]="activeTab === 'billing'" (click)="setTab('billing')" *ngIf="hasPermission('finance-ledger')">
             <span>💳</span> Fees & Ledger
           </button>
-          <button class="tab-btn-pill" [class.active]="activeTab === 'milestones'" (click)="setTab('milestones')">
+          <button class="tab-btn-pill" [class.active]="activeTab === 'milestones'" (click)="setTab('milestones')" *ngIf="hasPermission('milestones')">
             <span>🎯</span> Milestones Tracker
           </button>
-          <button class="tab-btn-pill" [class.active]="activeTab === 'meals'" (click)="setTab('meals')">
+          <button class="tab-btn-pill" [class.active]="activeTab === 'meals'" (click)="setTab('meals')" *ngIf="hasPermission('meals')">
             <span>🍽️</span> Weekly Menu
           </button>
-          <button class="tab-btn-pill" [class.active]="activeTab === 'leaves'" (click)="setTab('leaves')">
+          <button class="tab-btn-pill" [class.active]="activeTab === 'leaves'" (click)="setTab('leaves')" *ngIf="hasPermission('leaves')">
             <span>📅</span> Parent Requests
           </button>
-          <button class="tab-btn-pill" [class.active]="activeTab === 'calendar'" (click)="setTab('calendar')">
+          <button class="tab-btn-pill" [class.active]="activeTab === 'calendar'" (click)="setTab('calendar')" *ngIf="hasPermission('holidays')">
             <span>🗓️</span> School Calendar
           </button>
-          <button class="tab-btn-pill" [class.active]="activeTab === 'circulars'" (click)="setTab('circulars')">
+          <button class="tab-btn-pill" [class.active]="activeTab === 'circulars'" (click)="setTab('circulars')" *ngIf="hasPermission('circulars')">
             <span>📢</span> School Circulars
           </button>
         </div>
@@ -2919,6 +2919,10 @@ export class ParentDashboardComponent implements OnInit {
     private contentService: ContentService
   ) {}
 
+  hasPermission(feature: string): boolean {
+    return this.authService.hasPermission(feature);
+  }
+
   ngOnInit(): void {
     const user = this.authService.currentUserValue;
     if (!user || user.role?.toUpperCase() !== 'PARENT') {
@@ -2969,6 +2973,18 @@ export class ParentDashboardComponent implements OnInit {
   }
 
   setTab(tab: string): void {
+    const permissionKeyMap: { [key: string]: string } = {
+      'billing': 'finance-ledger',
+      'milestones': 'milestones',
+      'meals': 'meals',
+      'leaves': 'leaves',
+      'calendar': 'holidays',
+      'circulars': 'circulars'
+    };
+    const feature = permissionKeyMap[tab];
+    if (feature && !this.hasPermission(feature)) {
+      return;
+    }
     this.activeTab = tab;
     this.errorMessage = '';
     this.successMessage = '';

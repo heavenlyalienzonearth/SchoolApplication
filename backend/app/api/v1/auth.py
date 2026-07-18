@@ -360,7 +360,15 @@ def logout(request: schemas.RefreshRequest, db: Session = Depends(get_db)):
     return {"detail": "Successfully logged out"}
 
 @router.get("/me", response_model=schemas.UserResponse)
-def get_me(current_user: models.User = Depends(get_current_user)):
+def get_me(
+    current_user: models.User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    perms = db.query(models.FeaturePermission).filter(
+        models.FeaturePermission.role == current_user.role,
+        models.FeaturePermission.is_enabled == True
+    ).all()
+    current_user.permissions = [p.feature for p in perms]
     return current_user
 
 # --- USER MANAGEMENT CRUD (ADMIN ONLY) ---
@@ -370,7 +378,7 @@ def get_users(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(get_current_user)
 ):
-    if current_user.role.upper() != "ADMIN":
+    if current_user.role.upper() not in ["ADMIN", "SUPERADMIN"]:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Only administrators have authority to view users."
@@ -383,7 +391,7 @@ def create_user(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(get_current_user)
 ):
-    if current_user.role.upper() != "ADMIN":
+    if current_user.role.upper() not in ["ADMIN", "SUPERADMIN"]:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Only administrators have authority to create users."
@@ -397,9 +405,9 @@ def create_user(
             detail="Email address is already in use by another user."
         )
     
-    # Validate role is Admin, Principal, or Teacher
+    # Validate role is Admin, Principal, Teacher, or SuperAdmin
     role_formatted = request.role.strip()
-    valid_roles = ["Admin", "Principal", "Teacher"]
+    valid_roles = ["Admin", "Principal", "Teacher", "SuperAdmin"]
     matched_role = next((r for r in valid_roles if r.lower() == role_formatted.lower()), None)
     if not matched_role:
         raise HTTPException(
@@ -427,7 +435,7 @@ def update_user(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(get_current_user)
 ):
-    if current_user.role.upper() != "ADMIN":
+    if current_user.role.upper() not in ["ADMIN", "SUPERADMIN"]:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Only administrators have authority to modify users."
@@ -462,18 +470,18 @@ def update_user(
         target_user.email = request.email
         
     if request.role is not None:
-        valid_roles = ["Admin", "Principal", "Teacher"]
+        valid_roles = ["Admin", "Principal", "Teacher", "SuperAdmin"]
         matched_role = next((r for r in valid_roles if r.lower() == request.role.strip().lower()), None)
         if not matched_role:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail=f"Invalid role. Must be one of: {', '.join(valid_roles)}"
             )
-        # Prevent changing own role away from Admin
-        if target_user.id == current_user.id and matched_role != "Admin":
+        # Prevent changing own role away from Admin/SuperAdmin
+        if target_user.id == current_user.id and matched_role not in ["Admin", "SuperAdmin"]:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail="You cannot change your own role from Admin."
+                detail="You cannot change your own role from Admin/SuperAdmin."
             )
         target_user.role = matched_role
         
@@ -493,7 +501,7 @@ def delete_user(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(get_current_user)
 ):
-    if current_user.role.upper() != "ADMIN":
+    if current_user.role.upper() not in ["ADMIN", "SUPERADMIN"]:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Only administrators have authority to delete users."

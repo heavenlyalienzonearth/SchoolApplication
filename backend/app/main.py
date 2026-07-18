@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.core.config import settings
-from app.api.v1 import auth, settings as api_settings, content, submissions, chatbot, attendance, admissions, holidays, stationary, parent, finance, moments, circulars, library, meals, traffic
+from app.api.v1 import auth, settings as api_settings, content, submissions, chatbot, attendance, admissions, holidays, stationary, parent, finance, moments, circulars, library, meals, traffic, permissions
 from app.middleware.traffic import TrafficLoggingMiddleware
 
 from fastapi.staticfiles import StaticFiles
@@ -42,6 +42,126 @@ app.include_router(finance.router, prefix="/api/v1")
 app.include_router(moments.router, prefix="/api/v1")
 app.include_router(meals.router, prefix="/api/v1")
 app.include_router(traffic.router, prefix="/api/v1")
+app.include_router(permissions.router, prefix="/api/v1")
+
+
+@app.on_event("startup")
+def startup_event():
+    from app.core.database import engine, Base
+    from app.core.database import SessionLocal
+    import app.models as models
+    from app.core.security import get_password_hash
+    
+    # 1. Automatically create all tables (if not already existing)
+    Base.metadata.create_all(bind=engine)
+    
+    # 2. Seed Super Admin and default Feature Permissions
+    db = SessionLocal()
+    try:
+        # Check if SuperAdmin exists
+        super_admin = db.query(models.User).filter(models.User.role == "SuperAdmin").first()
+        if not super_admin:
+            print("[Startup] Seeding SuperAdmin user...")
+            hashed_pw = get_password_hash("superadmin@123")
+            new_super = models.User(
+                email="superadmin@school.com",
+                full_name="Super Administrator",
+                hashed_password=hashed_pw,
+                role="SuperAdmin",
+                is_active=True
+            )
+            db.add(new_super)
+            db.commit()
+            print("[Startup] SuperAdmin user seeded successfully!")
+        
+        # Check if permissions exist
+        perm_count = db.query(models.FeaturePermission).count()
+        if perm_count == 0:
+            print("[Startup] Seeding default feature permissions...")
+            default_features = [
+                "analytics", "settings", "hero", "programs", "holidays", "gallery", 
+                "inquiries", "users", "circulars", "library", "admissions", "milestones", 
+                "testimonials", "attendance", "finance-structures", "finance-ledger", 
+                "stationary", "moments", "leaves", "traffic", "permissions"
+            ]
+            
+            permissions_map = {
+                "SuperAdmin": {f: True for f in default_features},
+                
+                "Admin": {
+                    "settings": False,
+                    "traffic": False,
+                    "permissions": False,
+                    **{f: True for f in default_features if f not in ["settings", "traffic", "permissions"]}
+                },
+                
+                "Principal": {
+                    "finance-structures": False,
+                    "finance-ledger": False,
+                    "permissions": False,
+                    "settings": False,
+                    "traffic": False,
+                    **{f: True for f in default_features if f not in ["finance-structures", "finance-ledger", "permissions", "settings", "traffic"]}
+                },
+                
+                "Teacher": {
+                    "settings": False,
+                    "traffic": False,
+                    "permissions": False,
+                    "finance-structures": False,
+                    "finance-ledger": False,
+                    "programs": False,
+                    "gallery": False,
+                    "inquiries": False,
+                    "admissions": False,
+                    "users": False,
+                    **{f: True for f in default_features if f not in [
+                        "settings", "traffic", "permissions", "finance-structures", 
+                        "finance-ledger", "programs", "gallery", "inquiries", "admissions", "users"
+                    ]}
+                },
+                
+                "Parent": {
+                    "settings": False,
+                    "traffic": False,
+                    "permissions": False,
+                    "finance-structures": False,
+                    "finance-ledger": False,
+                    "programs": False,
+                    "gallery": False,
+                    "inquiries": False,
+                    "admissions": False,
+                    "users": False,
+                    "circulars": True,
+                    "library": True,
+                    "attendance": True,
+                    "milestones": True,
+                    "leaves": True,
+                    "moments": True,
+                    "stationary": True,
+                    "meals": True,
+                    "analytics": False,
+                    "hero": False,
+                    "holidays": True,
+                    "testimonials": False
+                }
+            }
+            
+            for role, features in permissions_map.items():
+                for feature, is_enabled in features.items():
+                    db.add(models.FeaturePermission(
+                        role=role,
+                        feature=feature,
+                        is_enabled=is_enabled
+                    ))
+            db.commit()
+            print("[Startup] Seeding of feature permissions complete!")
+            
+    except Exception as e:
+        print(f"[Startup] Error seeding database: {e}")
+        db.rollback()
+    finally:
+        db.close()
 
 
 # Create and mount static directory

@@ -12,6 +12,7 @@ export interface User {
   is_active: boolean;
   created_at: string;
   two_factor_enabled?: boolean;
+  permissions?: string[];
 }
 
 export interface AuthResponse {
@@ -202,5 +203,13 @@ export class AuthService {
 
   resetPassword(token: string, newPassword: string): Observable<any> {
     return this.apiService.post<any>('/auth/reset-password', { token, new_password: newPassword });
+  }
+
+  hasPermission(feature: string): boolean {
+    const user = this.currentUserValue;
+    if (!user) return false;
+    if (user.role?.toUpperCase() === 'SUPERADMIN') return true;
+    if (!user.permissions) return false;
+    return user.permissions.includes(feature);
   }
 }

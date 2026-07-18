@@ -5,11 +5,14 @@ Geolocation is resolved asynchronously via ip-api.com after the response is sent
 """
 import re
 import threading
+import time
+from collections import defaultdict
 import requests as http_requests
 from datetime import datetime
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.requests import Request
 from starlette.responses import Response
+from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
 from app.core.database import SessionLocal
 from app import models
@@ -99,6 +102,63 @@ def resolve_geo_async(log_id: int, ip: str):
                 db.close()
     except Exception:
         pass  # Never crash the app on geo failure
+# Dynamic Rate Limiting State and Cache
+rate_limit_lock = threading.Lock()
+ip_request_timestamps = defaultdict(list)
+rate_limit_cache = {"value": 50, "last_updated": 0.0}
+
+def get_rate_limit_config() -> int:
+    """Retrieve rate limit per minute config from DB with 10-second in-memory caching."""
+    now = time.time()
+    if now - rate_limit_cache["last_updated"] < 10.0:
+        return rate_limit_cache["value"]
+        
+    db: Session = SessionLocal()
+    try:
+        setting = db.query(models.SiteSetting).filter(models.SiteSetting.config_key == "rate_limit_per_min").first()
+        if setting:
+            try:
+                rate_limit_cache["value"] = int(setting.config_value)
+            except ValueError:
+                rate_limit_cache["value"] = 50
+        else:
+            # Create setting with default of 50 if missing
+            new_setting = models.SiteSetting(
+                config_key="rate_limit_per_min",
+                config_value="50",
+                category="security"
+            )
+            db.add(new_setting)
+            db.commit()
+            rate_limit_cache["value"] = 50
+        rate_limit_cache["last_updated"] = now
+    except Exception:
+        pass  # Fallback to current cached value on DB failure
+    finally:
+        db.close()
+        
+    return rate_limit_cache["value"]
+
+def is_rate_limited(ip: str, limit_per_min: int) -> bool:
+    """Rolling window rate limit check. Returns True if IP exceeds limit_per_min."""
+    if limit_per_min <= 0:
+        return False  # Disabled
+        
+    now = time.time()
+    one_min_ago = now - 60.0
+    
+    with rate_limit_lock:
+        timestamps = ip_request_timestamps[ip]
+        # Keep only timestamps from the last 60 seconds
+        filtered = [t for t in timestamps if t > one_min_ago]
+        
+        if len(filtered) >= limit_per_min:
+            ip_request_timestamps[ip] = filtered
+            return True
+            
+        filtered.append(now)
+        ip_request_timestamps[ip] = filtered
+        return False
 
 
 class TrafficLoggingMiddleware(BaseHTTPMiddleware):
@@ -111,6 +171,18 @@ class TrafficLoggingMiddleware(BaseHTTPMiddleware):
         # Get real IP (respects X-Forwarded-For from reverse proxies / nginx)
         forwarded = request.headers.get("x-forwarded-for")
         ip = forwarded.split(",")[0].strip() if forwarded else (request.client.host if request.client else "unknown")
+
+        # Dynamic Rate Limiting Check
+        limit = get_rate_limit_config()
+        if is_rate_limited(ip, limit):
+            return JSONResponse(
+                status_code=429,
+                content={
+                    "detail": "Too many requests. Rate limit exceeded. Please try again in a minute.",
+                    "ip": ip,
+                    "limit_per_min": limit
+                }
+            )
 
         ua = request.headers.get("user-agent", "")
         referer = request.headers.get("referer", "")

@@ -18,6 +18,34 @@ import { MomentsService, StudentMoment } from '../../../core/services/moments.se
 export class DashboardComponent implements OnInit {
   activeTab = 'analytics';
 
+  // Feature Access Control Matrix
+  permissionsList: any[] = [];
+  permissionGrid: { [feature: string]: { [role: string]: boolean } } = {};
+  rolesList: string[] = ['Admin', 'Principal', 'Teacher', 'Parent'];
+  rateLimitPerMin: number = 50;
+  featuresList: { code: string; name: string }[] = [
+    { code: 'analytics', name: '📊 Analytics Overview' },
+    { code: 'settings', name: '⚙️ Public Settings' },
+    { code: 'hero', name: '🖼️ Hero/Banner Management' },
+    { code: 'programs', name: '🎓 Program List' },
+    { code: 'holidays', name: '📅 Holidays Management' },
+    { code: 'gallery', name: '📷 Gallery Management' },
+    { code: 'inquiries', name: '📨 Admission Enquiries' },
+    { code: 'users', name: '👤 Teacher Updates' },
+    { code: 'circulars', name: '📢 Circulars Management' },
+    { code: 'library', name: '📚 Library Management' },
+    { code: 'admissions', name: '📝 Admissions Management' },
+    { code: 'milestones', name: '🎯 SetUp Milestones' },
+    { code: 'testimonials', name: '⭐ Parent Reviews' },
+    { code: 'attendance', name: '✅ Student Attendance' },
+    { code: 'finance-structures', name: '💵 Fee Structures' },
+    { code: 'finance-ledger', name: '🧾 Invoices & Ledger' },
+    { code: 'stationary', name: '✏️ Stationery Center' },
+    { code: 'moments', name: '✨ Daily Moments' },
+    { code: 'leaves', name: '✉️ Parent Requests' },
+    { code: 'traffic', name: '📡 Traffic Analytics' }
+  ];
+
   // Traffic Analytics
   trafficDays: number = 7;
   trafficExcludeLocal: boolean = true;
@@ -318,6 +346,13 @@ export class DashboardComponent implements OnInit {
 
   // --- TAB TOGGLE ---
   setTab(tab: string): void {
+    if (tab === 'permissions' && this.currentUser?.role?.toUpperCase() !== 'SUPERADMIN') {
+      this.activeTab = 'analytics';
+      return;
+    }
+    if (tab !== 'permissions' && tab !== 'analytics' && !this.hasPermission(tab)) {
+      return;
+    }
     this.activeTab = tab;
     if (tab === 'analytics') {
       this.loadAnalytics();
@@ -358,6 +393,8 @@ export class DashboardComponent implements OnInit {
     } else if (tab === 'traffic') {
       this.loadTrafficSummary();
       this.loadTrafficLogs();
+    } else if (tab === 'permissions') {
+      this.loadPermissions();
     }
   }
 
@@ -2649,5 +2686,69 @@ export class DashboardComponent implements OnInit {
     const g = Math.round(130 + pct * (68 - 130));
     const b = Math.round(246 + pct * (68 - 246));
     return `rgb(${r},${g},${b})`;
+  }
+
+  // --- ROLE-BASED ACCESS CONTROL METHODS ---
+  loadPermissions(): void {
+    // Load rate limit setting first
+    this.apiService.get<any>('/settings').subscribe({
+      next: (settings) => {
+        if (settings && settings.rate_limit_per_min) {
+          this.rateLimitPerMin = parseInt(settings.rate_limit_per_min, 10);
+        }
+      }
+    });
+
+    this.apiService.get<any[]>('/permissions/all').subscribe({
+      next: (data) => {
+        this.permissionsList = data;
+        this.permissionGrid = {};
+        for (const feature of this.featuresList) {
+          this.permissionGrid[feature.code] = {};
+          for (const role of this.rolesList) {
+            this.permissionGrid[feature.code][role] = false;
+          }
+        }
+        for (const perm of data) {
+          if (this.permissionGrid[perm.feature]) {
+            this.permissionGrid[perm.feature][perm.role] = perm.is_enabled;
+          }
+        }
+      },
+      error: () => this.showToast('Failed to load permission configurations.', 'error')
+    });
+  }
+
+  savePermissions(): void {
+    const updates: any[] = [];
+    for (const feature of this.featuresList) {
+      for (const role of this.rolesList) {
+        updates.push({
+          role: role,
+          feature: feature.code,
+          is_enabled: this.permissionGrid[feature.code][role] || false
+        });
+      }
+    }
+
+    // Save the rate limit setting first, then save the permissions
+    this.apiService.put<any>('/settings', {
+      rate_limit_per_min: this.rateLimitPerMin.toString()
+    }).subscribe({
+      next: () => {
+        this.apiService.put<any>('/permissions', updates).subscribe({
+          next: (res) => {
+            this.showToast(res.message || 'Permissions and settings saved successfully!', 'success');
+            this.loadPermissions();
+          },
+          error: () => this.showToast('Failed to save feature permissions.', 'error')
+        });
+      },
+      error: () => this.showToast('Failed to save rate limit settings.', 'error')
+    });
+  }
+
+  hasPermission(feature: string): boolean {
+    return this.authService.hasPermission(feature);
   }
 }
