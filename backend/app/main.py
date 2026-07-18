@@ -3,6 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.core.config import settings
 from app.api.v1 import auth, settings as api_settings, content, submissions, chatbot, attendance, admissions, holidays, stationary, parent, finance, moments, circulars, library, meals, traffic, permissions
 from app.middleware.traffic import TrafficLoggingMiddleware
+from app.middleware.security import SecurityHeadersMiddleware
 
 from fastapi.staticfiles import StaticFiles
 import os
@@ -21,6 +22,9 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# HTTP Security Headers Middleware
+app.add_middleware(SecurityHeadersMiddleware)
 
 # Traffic Logging Middleware (must be added AFTER CORS)
 app.add_middleware(TrafficLoggingMiddleware)
