@@ -75,6 +75,14 @@ def require_permission(feature: str):
         return current_user
     return dependency
 
+def populate_user_permissions(user: models.User, db: Session) -> models.User:
+    perms = db.query(models.FeaturePermission).filter(
+        models.FeaturePermission.role == user.role,
+        models.FeaturePermission.is_enabled == True
+    ).all()
+    user.permissions = [p.feature for p in perms]
+    return user
+
 @router.get("/captcha", response_model=schemas.CaptchaResponse)
 def get_captcha(response: Response):
     response.headers["Cache-Control"] = "no-store, no-cache, must-revalidate, max-age=0"
@@ -205,7 +213,7 @@ def login(request: schemas.LoginRequest, db: Session = Depends(get_db)):
         "access_token": access_token,
         "refresh_token": refresh_token_str,
         "token_type": "bearer",
-        "user": user,
+        "user": populate_user_permissions(user, db),
         "two_factor_required": False,
         "two_factor_token": None
     }
@@ -315,7 +323,7 @@ def two_factor_login(request: schemas.TwoFactorLoginRequest, db: Session = Depen
         "access_token": access_token,
         "refresh_token": refresh_token_str,
         "token_type": "bearer",
-        "user": user,
+        "user": populate_user_permissions(user, db),
         "two_factor_required": False,
         "two_factor_token": None
     }
@@ -370,7 +378,7 @@ def refresh(request: schemas.RefreshRequest, db: Session = Depends(get_db)):
         "access_token": access_token,
         "refresh_token": new_refresh_token_str,
         "token_type": "bearer",
-        "user": user
+        "user": populate_user_permissions(user, db)
     }
 
 @router.post("/logout")
@@ -389,12 +397,7 @@ def get_me(
     current_user: models.User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    perms = db.query(models.FeaturePermission).filter(
-        models.FeaturePermission.role == current_user.role,
-        models.FeaturePermission.is_enabled == True
-    ).all()
-    current_user.permissions = [p.feature for p in perms]
-    return current_user
+    return populate_user_permissions(current_user, db)
 
 # --- USER MANAGEMENT CRUD (ADMIN ONLY) ---
 

@@ -52,6 +52,16 @@ export class AuthService {
       if (storedUser) {
         try {
           this.currentUserSubject.next(JSON.parse(storedUser));
+          // Asynchronously sync user permissions from backend to reflect real-time DB changes
+          this.apiService.get<User>('/auth/me').subscribe({
+            next: (freshUser) => {
+              if (freshUser) {
+                localStorage.setItem('school_user', JSON.stringify(freshUser));
+                this.currentUserSubject.next(freshUser);
+              }
+            },
+            error: () => {}
+          });
         } catch (e) {
           this.clearStorage();
         }
