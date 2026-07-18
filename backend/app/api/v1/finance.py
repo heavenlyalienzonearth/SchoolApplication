@@ -5,7 +5,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 from pydantic import BaseModel
 from app.core.database import get_db
-from app.api.v1.auth import get_current_user
+from app.api.v1.auth import get_current_user, require_permission
 from app import models
 
 router = APIRouter(tags=["Finance"])
@@ -33,9 +33,7 @@ class WaiverIssue(BaseModel):
 # --- ROUTE HANDLERS ---
 
 @router.get("/finance/fee-structures")
-def get_fee_structures(db: Session = Depends(get_db), current_user: models.User = Depends(get_current_user)):
-    if current_user.role.upper() not in ["ADMIN", "PRINCIPAL"]:
-        raise HTTPException(status_code=403, detail="Permission denied.")
+def get_fee_structures(db: Session = Depends(get_db), current_user: models.User = Depends(require_permission("finance-structures"))):
     structures = db.query(models.FeeStructure).all()
     return [
         {
@@ -55,10 +53,8 @@ def get_fee_structures(db: Session = Depends(get_db), current_user: models.User 
 def create_fee_structure(
     data: FeeStructureCreate,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(get_current_user)
+    current_user: models.User = Depends(require_permission("finance-structures"))
 ):
-    if current_user.role.upper() not in ["ADMIN", "PRINCIPAL"]:
-        raise HTTPException(status_code=403, detail="Permission denied.")
     structure = models.FeeStructure(
         name=data.name,
         category=data.category,
@@ -75,10 +71,8 @@ def create_fee_structure(
 def delete_fee_structure(
     structure_id: int,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(get_current_user)
+    current_user: models.User = Depends(require_permission("finance-structures"))
 ):
-    if current_user.role.upper() not in ["ADMIN", "PRINCIPAL"]:
-        raise HTTPException(status_code=403, detail="Permission denied.")
     structure = db.query(models.FeeStructure).filter(models.FeeStructure.id == structure_id).first()
     if not structure:
         raise HTTPException(status_code=404, detail="Structure not found.")
@@ -92,11 +86,8 @@ def get_invoices(
     program_id: Optional[int] = None,
     search: Optional[str] = None,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(get_current_user)
+    current_user: models.User = Depends(require_permission("finance-ledger"))
 ):
-    if current_user.role.upper() not in ["ADMIN", "PRINCIPAL"]:
-        raise HTTPException(status_code=403, detail="Permission denied.")
-        
     query = db.query(models.ParentBill).join(models.Student)
     
     if status:
@@ -146,11 +137,8 @@ def get_invoices(
 def generate_term_invoices(
     data: InvoicesGenerate,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(get_current_user)
+    current_user: models.User = Depends(require_permission("finance-ledger"))
 ):
-    if current_user.role.upper() not in ["ADMIN", "PRINCIPAL"]:
-        raise HTTPException(status_code=403, detail="Permission denied.")
-        
     std_query = db.query(models.Student).filter(models.Student.status == "Approved")
     if data.program_id:
         std_query = std_query.filter(models.Student.program_id == data.program_id)
@@ -197,11 +185,8 @@ def record_manual_payment(
     invoice_id: int,
     data: ManualPayment,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(get_current_user)
+    current_user: models.User = Depends(require_permission("finance-ledger"))
 ):
-    if current_user.role.upper() not in ["ADMIN", "PRINCIPAL"]:
-        raise HTTPException(status_code=403, detail="Permission denied.")
-        
     bill = db.query(models.ParentBill).filter(models.ParentBill.id == invoice_id).first()
     if not bill:
         raise HTTPException(status_code=404, detail="Invoice not found.")
@@ -222,11 +207,8 @@ def issue_waiver(
     invoice_id: int,
     data: WaiverIssue,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(get_current_user)
+    current_user: models.User = Depends(require_permission("finance-ledger"))
 ):
-    if current_user.role.upper() not in ["ADMIN", "PRINCIPAL"]:
-        raise HTTPException(status_code=403, detail="Permission denied.")
-        
     bill = db.query(models.ParentBill).filter(models.ParentBill.id == invoice_id).first()
     if not bill:
         raise HTTPException(status_code=404, detail="Invoice not found.")
@@ -256,11 +238,8 @@ def issue_waiver(
 def send_payment_reminder(
     invoice_id: int,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(get_current_user)
+    current_user: models.User = Depends(require_permission("finance-ledger"))
 ):
-    if current_user.role.upper() not in ["ADMIN", "PRINCIPAL"]:
-        raise HTTPException(status_code=403, detail="Permission denied.")
-        
     bill = db.query(models.ParentBill).filter(models.ParentBill.id == invoice_id).first()
     if not bill:
         raise HTTPException(status_code=404, detail="Invoice not found.")
@@ -292,11 +271,8 @@ def send_payment_reminder(
 @router.post("/finance/invoices/remind-all")
 def send_bulk_payment_reminders(
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(get_current_user)
+    current_user: models.User = Depends(require_permission("finance-ledger"))
 ):
-    if current_user.role.upper() not in ["ADMIN", "PRINCIPAL"]:
-        raise HTTPException(status_code=403, detail="Permission denied.")
-        
     overdue_bills = db.query(models.ParentBill).filter(models.ParentBill.status == "Unpaid").all()
     
     reminded_count = 0

@@ -50,6 +50,31 @@ def get_current_user(
         )
     return user
 
+def check_permission(feature: str, db: Session, current_user: models.User) -> bool:
+    # SuperAdmin bypasses all permissions
+    if current_user.role.upper() == "SUPERADMIN":
+        return True
+        
+    permission = db.query(models.FeaturePermission).filter(
+        models.FeaturePermission.role == current_user.role,
+        models.FeaturePermission.feature == feature
+    ).first()
+    
+    if permission:
+        return permission.is_enabled
+        
+    return False
+
+def require_permission(feature: str):
+    def dependency(
+        db: Session = Depends(get_db),
+        current_user: models.User = Depends(get_current_user)
+    ):
+        if not check_permission(feature, db, current_user):
+            raise HTTPException(status_code=403, detail=f"Access denied. Missing permission: {feature}")
+        return current_user
+    return dependency
+
 @router.get("/captcha", response_model=schemas.CaptchaResponse)
 def get_captcha(response: Response):
     response.headers["Cache-Control"] = "no-store, no-cache, must-revalidate, max-age=0"

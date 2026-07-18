@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 from typing import List, Optional
 from datetime import datetime
 from app.core.database import get_db
-from app.api.v1.auth import get_current_user
+from app.api.v1.auth import get_current_user, require_permission
 from app import models, schemas
 
 router = APIRouter(tags=["School Library"])
@@ -18,10 +18,8 @@ def get_books(db: Session = Depends(get_db)):
 def create_book(
     book: schemas.BookCreate,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(get_current_user)
+    current_user: models.User = Depends(require_permission("library"))
 ):
-    if current_user.role not in ["ADMIN", "TEACHER", "PRINCIPAL"]:
-        raise HTTPException(status_code=403, detail="Not authorized to manage library books")
         
     db_book = models.LibraryBook(**book.model_dump())
     db.add(db_book)
@@ -34,10 +32,8 @@ def update_book(
     book_id: int,
     book_update: schemas.BookCreate,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(get_current_user)
+    current_user: models.User = Depends(require_permission("library"))
 ):
-    if current_user.role not in ["ADMIN", "TEACHER", "PRINCIPAL"]:
-        raise HTTPException(status_code=403, detail="Not authorized to manage library books")
         
     db_book = db.query(models.LibraryBook).filter(models.LibraryBook.id == book_id).first()
     if not db_book:
@@ -62,10 +58,8 @@ def update_book(
 def delete_book(
     book_id: int,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(get_current_user)
+    current_user: models.User = Depends(require_permission("library"))
 ):
-    if current_user.role not in ["ADMIN", "TEACHER", "PRINCIPAL"]:
-        raise HTTPException(status_code=403, detail="Not authorized to manage library books")
         
     db_book = db.query(models.LibraryBook).filter(models.LibraryBook.id == book_id).first()
     if not db_book:
@@ -85,10 +79,8 @@ def get_borrows(db: Session = Depends(get_db)):
 def issue_book(
     borrow: schemas.BorrowCreate,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(get_current_user)
+    current_user: models.User = Depends(require_permission("library"))
 ):
-    if current_user.role not in ["ADMIN", "TEACHER", "PRINCIPAL"]:
-        raise HTTPException(status_code=403, detail="Not authorized to issue library books")
         
     db_book = db.query(models.LibraryBook).filter(models.LibraryBook.id == borrow.book_id).first()
     if not db_book:
@@ -114,10 +106,8 @@ def issue_book(
 def return_book(
     borrow_id: int,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(get_current_user)
+    current_user: models.User = Depends(require_permission("library"))
 ):
-    if current_user.role not in ["ADMIN", "TEACHER", "PRINCIPAL"]:
-        raise HTTPException(status_code=403, detail="Not authorized to return library books")
         
     db_borrow = db.query(models.LibraryBorrow).filter(models.LibraryBorrow.id == borrow_id).first()
     if not db_borrow:

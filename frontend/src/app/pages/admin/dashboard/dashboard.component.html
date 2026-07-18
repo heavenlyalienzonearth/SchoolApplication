@@ -143,26 +143,27 @@
       <div class="mobile-tab-nav">
         <label class="form-label" for="mobileTabSelect">Dashboard Navigation:</label>
         <select id="mobileTabSelect" [ngModel]="activeTab" (ngModelChange)="setTab($event)" class="form-control select-tab">
-          <option value="analytics">📊 Analytics Overview</option>
-          <option value="settings" *ngIf="currentUser?.role?.toUpperCase() === 'ADMIN' || currentUser?.role?.toUpperCase() === 'PRINCIPAL'">⚙️ Public Settings</option>
-          <option value="hero" *ngIf="currentUser?.role?.toUpperCase() === 'ADMIN' || currentUser?.role?.toUpperCase() === 'PRINCIPAL'">🖼️ Modify Banner</option>
-          <option value="programs" *ngIf="currentUser?.role?.toUpperCase() === 'ADMIN' || currentUser?.role?.toUpperCase() === 'PRINCIPAL'">🎓 Programs</option>
-          <option value="testimonials" *ngIf="currentUser?.role?.toUpperCase() === 'ADMIN' || currentUser?.role?.toUpperCase() === 'PRINCIPAL'">💬 Parent Reviews</option>
-          <option value="gallery" *ngIf="currentUser?.role?.toUpperCase() === 'ADMIN' || currentUser?.role?.toUpperCase() === 'PRINCIPAL'">📷 Gallery</option>
-          <option value="inquiries" *ngIf="currentUser?.role?.toUpperCase() === 'ADMIN' || currentUser?.role?.toUpperCase() === 'PRINCIPAL'">📩 Admission Enquiries</option>
-          <option value="attendance">📅 Student Attendance</option>
-          <option value="admissions" *ngIf="currentUser?.role?.toUpperCase() === 'ADMIN' || currentUser?.role?.toUpperCase() === 'PRINCIPAL'">🏫 Admissions</option>
-          <option value="holidays">📅 Holidays</option>
-          <option value="users" *ngIf="currentUser?.role?.toUpperCase() === 'ADMIN'">👥 Teacher Updates</option>
-          <option value="circulars">📢 Circulars</option>
-          <option value="library">📚 Library</option>
-          <option value="stationary" *ngIf="currentUser?.role?.toUpperCase() === 'ADMIN' || currentUser?.role?.toUpperCase() === 'PRINCIPAL'">✏️ Stationery Center</option>
-          <option value="moments" *ngIf="currentUser?.role?.toUpperCase() === 'ADMIN' || currentUser?.role?.toUpperCase() === 'PRINCIPAL' || currentUser?.role?.toUpperCase() === 'TEACHER'">📸 Daily Moments</option>
-          <option value="milestones" *ngIf="currentUser?.role?.toUpperCase() !== 'PARENT'">🎯 SetUp Milestones</option>
-          <option value="leaves" *ngIf="currentUser?.role?.toUpperCase() === 'ADMIN' || currentUser?.role?.toUpperCase() === 'PRINCIPAL' || currentUser?.role?.toUpperCase() === 'TEACHER'">📅 Parent Requests</option>
-          <option value="finance-structures" *ngIf="currentUser?.role?.toUpperCase() === 'ADMIN' || currentUser?.role?.toUpperCase() === 'PRINCIPAL'">⚙️ Fee Structures</option>
-          <option value="finance-ledger" *ngIf="currentUser?.role?.toUpperCase() === 'ADMIN' || currentUser?.role?.toUpperCase() === 'PRINCIPAL'">📊 Invoices & Ledger</option>
-          <option value="traffic" *ngIf="currentUser?.role?.toUpperCase() === 'ADMIN' || currentUser?.role?.toUpperCase() === 'PRINCIPAL'">📡 Traffic Analytics</option>
+          <option value="analytics" *ngIf="hasPermission('analytics')">📊 Analytics Overview</option>
+          <option value="settings" *ngIf="hasPermission('settings')">⚙️ Public Settings</option>
+          <option value="hero" *ngIf="hasPermission('hero')">🖼️ Modify Banner</option>
+          <option value="programs" *ngIf="hasPermission('programs')">🎓 Programs</option>
+          <option value="testimonials" *ngIf="hasPermission('testimonials')">💬 Parent Reviews</option>
+          <option value="gallery" *ngIf="hasPermission('gallery')">📷 Gallery</option>
+          <option value="inquiries" *ngIf="hasPermission('inquiries')">📩 Admission Enquiries</option>
+          <option value="attendance" *ngIf="hasPermission('attendance')">📅 Student Attendance</option>
+          <option value="admissions" *ngIf="hasPermission('admissions')">🏫 Admissions</option>
+          <option value="holidays" *ngIf="hasPermission('holidays')">📅 Holidays</option>
+          <option value="users" *ngIf="hasPermission('users')">👥 Teacher Updates</option>
+          <option value="circulars" *ngIf="hasPermission('circulars')">📢 Circulars</option>
+          <option value="library" *ngIf="hasPermission('library')">📚 Library</option>
+          <option value="stationary" *ngIf="hasPermission('stationary')">✏️ Stationery Center</option>
+          <option value="moments" *ngIf="hasPermission('moments')">📸 Daily Moments</option>
+          <option value="milestones" *ngIf="hasPermission('milestones')">🎯 SetUp Milestones</option>
+          <option value="leaves" *ngIf="hasPermission('leaves')">📅 Parent Requests</option>
+          <option value="finance-structures" *ngIf="hasPermission('finance-structures')">⚙️ Fee Structures</option>
+          <option value="finance-ledger" *ngIf="hasPermission('finance-ledger')">📊 Invoices & Ledger</option>
+          <option value="traffic" *ngIf="hasPermission('traffic')">📡 Traffic Analytics</option>
+          <option value="permissions" *ngIf="currentUser?.role?.toUpperCase() === 'SUPERADMIN'">🛠️ Access Control Matrix</option>
         </select>
       </div>
       

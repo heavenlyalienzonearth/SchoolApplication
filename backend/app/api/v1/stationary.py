@@ -4,7 +4,7 @@ from typing import List
 from datetime import datetime
 
 from app.core.database import get_db
-from app.api.v1.auth import get_current_user
+from app.api.v1.auth import get_current_user, require_permission
 from app import models, schemas
 
 router = APIRouter(prefix="/stationary", tags=["Stationery"])
@@ -19,13 +19,8 @@ def get_items(db: Session = Depends(get_db)):
 def create_item(
     request: schemas.StationaryItemCreate,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(get_current_user)
+    current_user: models.User = Depends(require_permission("stationary"))
 ):
-    if current_user.role.upper() != "ADMIN":
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Only administrators can manage stationery inventory."
-        )
     new_item = models.StationaryItem(**request.model_dump())
     db.add(new_item)
     db.commit()
@@ -37,13 +32,8 @@ def update_item(
     item_id: int,
     request: schemas.StationaryItemCreate,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(get_current_user)
+    current_user: models.User = Depends(require_permission("stationary"))
 ):
-    if current_user.role.upper() != "ADMIN":
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Only administrators can manage stationery inventory."
-        )
     item = db.query(models.StationaryItem).filter(models.StationaryItem.id == item_id).first()
     if not item:
         raise HTTPException(status_code=404, detail="Stationery item not found.")
@@ -59,13 +49,8 @@ def update_item(
 def delete_item(
     item_id: int,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(get_current_user)
+    current_user: models.User = Depends(require_permission("stationary"))
 ):
-    if current_user.role.upper() != "ADMIN":
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Only administrators can manage stationery inventory."
-        )
     item = db.query(models.StationaryItem).filter(models.StationaryItem.id == item_id).first()
     if not item:
         raise HTTPException(status_code=404, detail="Stationery item not found.")
@@ -150,13 +135,8 @@ def update_order_status(
     order_id: int,
     request: schemas.StationaryOrderStatusUpdate,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(get_current_user)
+    current_user: models.User = Depends(require_permission("stationary"))
 ):
-    if current_user.role.upper() != "ADMIN":
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Only administrators can update order status."
-        )
         
     order = db.query(models.StationaryOrder).filter(models.StationaryOrder.id == order_id).first()
     if not order:

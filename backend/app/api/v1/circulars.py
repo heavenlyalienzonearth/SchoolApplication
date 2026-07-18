@@ -6,7 +6,7 @@ from sqlalchemy.orm import Session
 from typing import List, Optional
 from datetime import datetime
 from app.core.database import get_db
-from app.api.v1.auth import get_current_user
+from app.api.v1.auth import get_current_user, require_permission
 from app import models, schemas
 
 router = APIRouter(tags=["School Circulars"])
@@ -30,10 +30,8 @@ def get_circulars(
 @router.get("/admin", response_model=List[schemas.CircularResponse])
 def get_circulars_admin(
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(get_current_user)
+    current_user: models.User = Depends(require_permission("circulars"))
 ):
-    if current_user.role not in ["ADMIN", "TEACHER", "PRINCIPAL"]:
-        raise HTTPException(status_code=403, detail="Not authorized to view admin circulars")
         
     return db.query(models.Circular).order_by(models.Circular.created_at.desc()).all()
 
@@ -41,10 +39,8 @@ def get_circulars_admin(
 def create_circular(
     circular: schemas.CircularCreate,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(get_current_user)
+    current_user: models.User = Depends(require_permission("circulars"))
 ):
-    if current_user.role not in ["ADMIN", "TEACHER", "PRINCIPAL"]:
-        raise HTTPException(status_code=403, detail="Not authorized to create circulars")
         
     db_circular = models.Circular(**circular.model_dump())
     db.add(db_circular)
@@ -98,10 +94,8 @@ def update_circular(
     circular_id: int,
     circular_update: schemas.CircularCreate,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(get_current_user)
+    current_user: models.User = Depends(require_permission("circulars"))
 ):
-    if current_user.role not in ["ADMIN", "TEACHER", "PRINCIPAL"]:
-        raise HTTPException(status_code=403, detail="Not authorized to update circulars")
         
     db_circular = db.query(models.Circular).filter(models.Circular.id == circular_id).first()
     if not db_circular:
@@ -118,10 +112,8 @@ def update_circular(
 def delete_circular(
     circular_id: int,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(get_current_user)
+    current_user: models.User = Depends(require_permission("circulars"))
 ):
-    if current_user.role not in ["ADMIN", "TEACHER", "PRINCIPAL"]:
-        raise HTTPException(status_code=403, detail="Not authorized to delete circulars")
         
     db_circular = db.query(models.Circular).filter(models.Circular.id == circular_id).first()
     if not db_circular:

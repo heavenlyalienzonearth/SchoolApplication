@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from typing import List, Optional, Dict, Any
 from app.core.database import get_db
-from app.api.v1.auth import get_current_user
+from app.api.v1.auth import get_current_user, require_permission
 from app import models, schemas
 from sqlalchemy import text
 
@@ -193,11 +193,8 @@ def get_milestone_templates(
 def create_milestone_template(
     data: MilestoneTemplateCreate,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(get_current_user)
+    current_user: models.User = Depends(require_permission("milestones"))
 ):
-    if current_user.role.upper() not in ["ADMIN", "PRINCIPAL"]:
-        raise HTTPException(status_code=403, detail="Permission denied.")
-        
     template = models.MilestoneTemplate(
         program_id=data.program_id,
         milestone_name=data.milestone_name,
@@ -211,11 +208,8 @@ def create_milestone_template(
 def delete_milestone_template(
     template_id: int,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(get_current_user)
+    current_user: models.User = Depends(require_permission("milestones"))
 ):
-    if current_user.role.upper() not in ["ADMIN", "PRINCIPAL"]:
-        raise HTTPException(status_code=403, detail="Permission denied.")
-        
     template = db.query(models.MilestoneTemplate).filter(models.MilestoneTemplate.id == template_id).first()
     if not template:
         raise HTTPException(status_code=404, detail="Template not found.")
@@ -229,11 +223,8 @@ def update_milestone_template(
     template_id: int,
     data: MilestoneTemplateUpdate,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(get_current_user)
+    current_user: models.User = Depends(require_permission("milestones"))
 ):
-    if current_user.role.upper() not in ["ADMIN", "PRINCIPAL"]:
-        raise HTTPException(status_code=403, detail="Permission denied.")
-        
     template = db.query(models.MilestoneTemplate).filter(models.MilestoneTemplate.id == template_id).first()
     if not template:
         raise HTTPException(status_code=404, detail="Template not found.")
@@ -311,11 +302,8 @@ def save_student_milestones(
 @router.get("/leaves")
 def get_all_leave_requests(
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(get_current_user)
+    current_user: models.User = Depends(require_permission("leaves"))
 ):
-    if current_user.role.upper() not in ["ADMIN", "PRINCIPAL", "TEACHER"]:
-        raise HTTPException(status_code=403, detail="Permission denied.")
-        
     leaves = db.query(models.LeaveRequest).order_by(models.LeaveRequest.created_at.desc()).all()
     
     leaves_list = []
@@ -341,11 +329,8 @@ def update_leave_request_status(
     leave_id: int,
     req: LeaveStatusUpdate,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(get_current_user)
+    current_user: models.User = Depends(require_permission("leaves"))
 ):
-    if current_user.role.upper() not in ["ADMIN", "PRINCIPAL", "TEACHER"]:
-        raise HTTPException(status_code=403, detail="Permission denied.")
-        
     leave = db.query(models.LeaveRequest).filter(models.LeaveRequest.id == leave_id).first()
     if not leave:
         raise HTTPException(status_code=404, detail="Leave request not found.")

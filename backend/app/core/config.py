@@ -16,10 +16,26 @@ class Settings(BaseSettings):
 
     @property
     def cors_origins_list(self) -> List[str]:
-        try:
-            return json.loads(self.CORS_ORIGINS)
-        except Exception:
+        if not self.CORS_ORIGINS:
             return ["http://localhost:4200"]
+            
+        raw = self.CORS_ORIGINS.strip()
+        
+        # 1. Parse JSON list format (e.g. ["http://a.com", "http://b.com"])
+        if raw.startswith("[") and raw.endswith("]"):
+            try:
+                origins = json.loads(raw)
+                if isinstance(origins, list):
+                    return [o.strip().rstrip("/") for o in origins if o.strip()]
+            except Exception:
+                pass
+                
+        # 2. Parse comma-separated lists (e.g. "http://a.com, http://b.com")
+        if "," in raw:
+            return [o.strip().rstrip("/") for o in raw.split(",") if o.strip()]
+            
+        # 3. Single value
+        return [raw.rstrip("/")]
 
     class Config:
         env_file = ".env"

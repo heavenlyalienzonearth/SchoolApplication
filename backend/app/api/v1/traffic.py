@@ -11,18 +11,10 @@ from sqlalchemy.orm import Session
 from sqlalchemy import func, desc
 
 from app.core.database import get_db
-from app.api.v1.auth import get_current_user
+from app.api.v1.auth import get_current_user, require_permission
 from app import models
 
 router = APIRouter(prefix="/traffic", tags=["Traffic Analytics"])
-
-ADMIN_ROLES = {"ADMIN", "PRINCIPAL"}
-
-
-def require_admin(current_user: models.User = Depends(get_current_user)):
-    if current_user.role.upper() not in ADMIN_ROLES:
-        raise HTTPException(status_code=403, detail="Admin access required.")
-    return current_user
 
 
 @router.get("/summary", response_model=Dict[str, Any])
@@ -30,7 +22,7 @@ def get_traffic_summary(
     days: int = Query(7, ge=1, le=90, description="Number of past days to analyse"),
     exclude_local: bool = Query(True, description="Exclude local development and test IP addresses"),
     db: Session = Depends(get_db),
-    _: models.User = Depends(require_admin)
+    _: models.User = Depends(require_permission("traffic"))
 ):
     """High-level traffic summary for admin dashboard cards."""
     since = datetime.utcnow() - timedelta(days=days)
@@ -226,7 +218,7 @@ def get_traffic_logs(
     days: int = Query(7, ge=1, le=90),
     exclude_local: bool = Query(True, description="Exclude local development and test IP addresses"),
     db: Session = Depends(get_db),
-    _: models.User = Depends(require_admin)
+    _: models.User = Depends(require_permission("traffic"))
 ):
     """Paginated raw visitor log for the admin table view."""
     since = datetime.utcnow() - timedelta(days=days)
@@ -283,7 +275,7 @@ def get_traffic_logs(
 def purge_old_logs(
     older_than_days: int = Query(30, ge=1),
     db: Session = Depends(get_db),
-    _: models.User = Depends(require_admin)
+    _: models.User = Depends(require_permission("traffic"))
 ):
     """Delete traffic logs older than N days to keep DB lean."""
     cutoff = datetime.utcnow() - timedelta(days=older_than_days)
@@ -295,7 +287,7 @@ def purge_old_logs(
 @router.delete("/logs/clear")
 def clear_all_logs(
     db: Session = Depends(get_db),
-    _: models.User = Depends(require_admin)
+    _: models.User = Depends(require_permission("traffic"))
 ):
     """Delete ALL traffic logs (clean the grid data)."""
     deleted = db.query(models.VisitorLog).delete()

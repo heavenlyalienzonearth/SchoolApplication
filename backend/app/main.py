@@ -161,6 +161,16 @@ def startup_event():
             db.commit()
             print("[Startup] Seeding of feature permissions complete!")
             
+        # 3. CORS & DB Security configurations checks
+        is_prod_db = "200.97.168.156" in settings.DATABASE_URL
+        cors_origins = settings.cors_origins_list
+        print(f"[Security] Active CORS Whitelist: {cors_origins}", flush=True)
+        if is_prod_db:
+            if "*" in cors_origins:
+                print("[WARNING] SECURITY HAZARD: CORS origin is set to wildcard '*' while connected to a production database!", flush=True)
+            elif all("localhost" in origin or "127.0.0.1" in origin for origin in cors_origins):
+                print("[WARNING] DEPLOYMENT WARNING: Active database is Production, but CORS origins only allow localhost/dev access. The production frontend will be BLOCKED from accessing this API!", flush=True)
+            
     except Exception as e:
         print(f"[Startup] Error seeding database: {e}")
         db.rollback()
