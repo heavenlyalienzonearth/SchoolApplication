@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
@@ -15,8 +15,10 @@ import { MomentsService, StudentMoment } from '../../../core/services/moments.se
   templateUrl: './dashboard.component.html',
   styleUrls: ['./dashboard.component.css']
 })
-export class DashboardComponent implements OnInit {
+export class DashboardComponent implements OnInit, OnDestroy {
   activeTab = 'analytics';
+  loginTime: string = '';
+  clockInterval: any;
 
   // Feature Access Control Matrix
   permissionsList: any[] = [];
@@ -24,7 +26,7 @@ export class DashboardComponent implements OnInit {
   rolesList: string[] = ['Admin', 'Principal', 'Teacher', 'Parent'];
   rateLimitPerMin: number = 50;
   featuresList: { code: string; name: string }[] = [
-    { code: 'analytics', name: '📊 Analytics Overview' },
+    { code: 'analytics', name: '📊 Rolewise CPanel' },
     { code: 'settings', name: '⚙️ Public Settings' },
     { code: 'hero', name: '🖼️ Hero/Banner Management' },
     { code: 'programs', name: '🎓 Program List' },
@@ -310,11 +312,18 @@ export class DashboardComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
+    const updateClock = () => {
+      const day = new Date().toLocaleDateString('en-US', { weekday: 'long' });
+      const time = new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true });
+      this.loginTime = `${day}, ${time}`;
+    };
+    updateClock();
+    this.clockInterval = setInterval(updateClock, 1000);
     const schoolMgmtTabs = ['programs', 'holidays', 'gallery', 'inquiries', 'users', 'circulars', 'library', 'admissions', 'milestones'];
     if (schoolMgmtTabs.includes(this.activeTab)) {
       this.schoolManagementExpanded = true;
     }
-    const publicSettingsTabs = ['settings', 'hero'];
+    const publicSettingsTabs = ['settings', 'hero', 'traffic', 'permissions'];
     if (publicSettingsTabs.includes(this.activeTab)) {
       this.publicSettingsExpanded = true;
     }
@@ -2819,5 +2828,11 @@ export class DashboardComponent implements OnInit {
 
   hasPermission(feature: string): boolean {
     return this.authService.hasPermission(feature);
+  }
+
+  ngOnDestroy(): void {
+    if (this.clockInterval) {
+      clearInterval(this.clockInterval);
+    }
   }
 }

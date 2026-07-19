@@ -16,13 +16,10 @@
     <aside class="dash-sidebar">
       <ul class="sidebar-menu">
         <li [class.active]="activeTab === 'analytics'" (click)="setTab('analytics')" *ngIf="hasPermission('analytics')">
-          <span class="icon">📊</span> Analytics Overview
-        </li>
-        <li [class.active]="activeTab === 'traffic'" (click)="setTab('traffic')" *ngIf="hasPermission('traffic')">
-          <span class="icon">📡</span> Traffic Analytics
+          <span class="icon">📊</span> Rolewise CPanel
         </li>
         <!-- Settings Group -->
-        <li class="sidebar-header" (click)="togglePublicSettings()" *ngIf="hasPermission('settings') || hasPermission('hero')" style="cursor: pointer; display: flex; justify-content: space-between; align-items: center; width: 100%; box-sizing: border-box;">
+        <li class="sidebar-header" (click)="togglePublicSettings()" *ngIf="hasPermission('settings') || hasPermission('hero') || hasPermission('traffic') || currentUser?.role?.toUpperCase() === 'SUPERADMIN'" style="cursor: pointer; display: flex; justify-content: space-between; align-items: center; width: 100%; box-sizing: border-box;">
           <span>🌐 Settings</span>
           <span style="font-size: 0.7rem; color: #94a3b8; font-weight: 800; margin-left: auto;">{{ publicSettingsExpanded ? '▼' : '▶' }}</span>
         </li>
@@ -32,6 +29,12 @@
           </li>
           <li [class.active]="activeTab === 'hero'" (click)="setTab('hero')" class="submenu-item" *ngIf="hasPermission('hero')">
             <span class="icon">🖼️</span> Modify Banner
+          </li>
+          <li [class.active]="activeTab === 'traffic'" (click)="setTab('traffic')" class="submenu-item" *ngIf="hasPermission('traffic')">
+            <span class="icon">📡</span> Traffic Analytics
+          </li>
+          <li [class.active]="activeTab === 'permissions'" (click)="setTab('permissions')" class="submenu-item" *ngIf="currentUser?.role?.toUpperCase() === 'SUPERADMIN'">
+            <span class="icon">🛠️</span> Feature Access Control
           </li>
         </ng-container>
         <!-- School Management Group -->
@@ -129,11 +132,6 @@
             <span class="icon">📅</span> Parent Requests
           </li>
         </ng-container>
-
-        <!-- SuperAdmin Configuration Screen -->
-        <li [class.active]="activeTab === 'permissions'" (click)="setTab('permissions')" *ngIf="currentUser?.role?.toUpperCase() === 'SUPERADMIN'" style="border-top: 1px solid #e2e8f0; margin-top: 15px; padding-top: 15px;">
-          <span class="icon">🛠️</span> Feature Access Control
-        </li>
       </ul>
     </aside>
 
@@ -143,7 +141,7 @@
       <div class="mobile-tab-nav">
         <label class="form-label" for="mobileTabSelect">Dashboard Navigation:</label>
         <select id="mobileTabSelect" [ngModel]="activeTab" (ngModelChange)="setTab($event)" class="form-control select-tab">
-          <option value="analytics" *ngIf="hasPermission('analytics')">📊 Analytics Overview</option>
+          <option value="analytics" *ngIf="hasPermission('analytics')">📊 Rolewise CPanel</option>
           <option value="settings" *ngIf="hasPermission('settings')">⚙️ Public Settings</option>
           <option value="hero" *ngIf="hasPermission('hero')">🖼️ Modify Banner</option>
           <option value="programs" *ngIf="hasPermission('programs')">🎓 Programs</option>
@@ -170,9 +168,24 @@
       
       <!-- ANALYTICS TAB -->
       <section *ngIf="activeTab === 'analytics'" class="tab-section">
-        <div class="section-title-bar">
-          <h2>Dashboard Analytics</h2>
-          <p>Key metrics, admissions activity, transfer request stats, and parental reviews.</p>
+        <div class="section-title-bar" style="background: linear-gradient(135deg, #fff5f5, #f0f9ff); border: 1.5px solid #fecdd3; border-left: 6px solid #fb7185; padding: 24px 32px; border-radius: 16px; margin-bottom: 28px; box-shadow: 0 10px 15px -3px rgba(244,63,94,0.04); display: flex; justify-content: space-between; align-items: center; gap: 20px; flex-wrap: wrap; text-align: left;">
+          <div style="flex: 1; min-width: 250px;">
+            <h2 style="margin: 0; color: #9f1239; font-size: 1.55rem; font-weight: 800; letter-spacing: -0.5px; display: flex; align-items: center; gap: 8px;">
+              🎈 Welcome, {{ currentUser?.full_name }}
+            </h2>
+            <p style="margin: 8px 0 0 0; font-size: 0.88rem; color: #4c1d95; line-height: 1.5; font-weight: 600;">
+              Access granted to your personalized control panel. Here is a summary of school admissions, form submissions, and parent testimonials.
+            </p>
+          </div>
+          
+          <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 6px; min-width: 180px; text-align: right;">
+            <span style="background: #ffe4e6; color: #e11d48; border: 1px solid #fda4af; padding: 4px 14px; border-radius: 9999px; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; display: inline-block;">
+              🧸 {{ currentUser?.role }} CPANEL
+            </span>
+            <span style="font-size: 0.78rem; color: #475569; font-family: monospace; font-weight: 700;">
+              🕒 Session: {{ loginTime }}
+            </span>
+          </div>
         </div>
 
         <!-- Admissions stats cards -->

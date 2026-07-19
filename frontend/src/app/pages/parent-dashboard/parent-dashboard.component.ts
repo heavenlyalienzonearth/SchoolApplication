@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
@@ -78,9 +78,24 @@ import { ContentService } from '../../core/services/content.service';
 
         <!-- 1. OVERVIEW TAB -->
         <div *ngIf="activeTab === 'overview'" class="tab-content animate-fade-in">
-          <div class="welcome-banner">
-            <h2>Welcome Back!</h2>
-            <p>Here is a summary of <strong>{{ dashboardData.kid?.name }}'s</strong> school profile, daily schedule, and attendance record.</p>
+          <div class="welcome-banner" style="background: linear-gradient(135deg, #f0fdf4, #e0f2fe); border: 1.5px solid #bbf7d0; border-left: 6px solid #4ade80; padding: 24px 32px; border-radius: 16px; margin-bottom: 28px; box-shadow: 0 10px 15px -3px rgba(34,197,94,0.04); display: flex; justify-content: space-between; align-items: center; gap: 20px; flex-wrap: wrap; text-align: left;">
+            <div style="flex: 1; min-width: 250px;">
+              <h2 style="margin: 0; color: #166534; font-size: 1.55rem; font-weight: 800; letter-spacing: -0.5px; display: flex; align-items: center; gap: 8px;">
+                🎒 Welcome, {{ parentName }}
+              </h2>
+              <p style="margin: 8px 0 0 0; font-size: 0.88rem; color: #1e3a8a; line-height: 1.5; font-weight: 600;">
+                Here is a summary of <strong>{{ dashboardData.kid?.name }}'s</strong> school profile, daily schedule, and attendance record.
+              </p>
+            </div>
+            
+            <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 6px; min-width: 180px; text-align: right;">
+              <span style="background: #dcfce7; color: #16a34a; border: 1px solid #bbf7d0; padding: 4px 14px; border-radius: 9999px; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; display: inline-block;">
+                🌈 PARENT CPANEL
+              </span>
+              <span style="font-size: 0.78rem; color: #475569; font-family: monospace; font-weight: 700;">
+                🕒 Session: {{ loginTime }}
+              </span>
+            </div>
           </div>
 
           <div class="dashboard-grid">
@@ -2675,9 +2690,11 @@ import { ContentService } from '../../core/services/content.service';
     }
   `]
 })
-export class ParentDashboardComponent implements OnInit {
+export class ParentDashboardComponent implements OnInit, OnDestroy {
   mediaBaseUrl = window.location.hostname === 'localhost' ? 'http://localhost:8000' : '';
   parentName = '';
+  loginTime = '';
+  clockInterval: any;
   loading = true;
   errorMessage = '';
   successMessage = '';
@@ -2924,6 +2941,13 @@ export class ParentDashboardComponent implements OnInit {
   }
 
   ngOnInit(): void {
+    const updateClock = () => {
+      const day = new Date().toLocaleDateString('en-US', { weekday: 'long' });
+      const time = new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true });
+      this.loginTime = `${day}, ${time}`;
+    };
+    updateClock();
+    this.clockInterval = setInterval(updateClock, 1000);
     const user = this.authService.currentUserValue;
     if (!user || user.role?.toUpperCase() !== 'PARENT') {
       this.router.navigate(['/admin/login']);
@@ -3544,5 +3568,11 @@ export class ParentDashboardComponent implements OnInit {
     if (parts.length !== 3) return dateStr;
     const date = new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]));
     return date.toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' });
+  }
+
+  ngOnDestroy(): void {
+    if (this.clockInterval) {
+      clearInterval(this.clockInterval);
+    }
   }
 }
