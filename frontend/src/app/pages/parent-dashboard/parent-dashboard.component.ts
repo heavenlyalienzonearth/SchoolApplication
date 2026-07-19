@@ -109,7 +109,7 @@ import { StationaryService, StationaryItem, StationaryOrder } from '../../core/s
               <div class="card kid-card">
                 <div class="kid-header">
                   <div class="avatar-wrapper">
-                    <img [src]="dashboardData.kid?.photo_url ? mediaBaseUrl + dashboardData.kid.photo_url : 'assets/parent_avatar1_1783324784413.png'" alt="Kid Photo" class="kid-photo" (error)="onImgError($event)" />
+                    <img [src]="getMediaUrl(dashboardData.kid?.photo_url, 'assets/images/parent_avatar1.jpg')" alt="Kid Photo" class="kid-photo" (error)="onImgError($event)" />
                   </div>
                   <div class="kid-intro">
                     <span class="badge badge-program">{{ dashboardData.kid?.program_title }}</span>
@@ -138,7 +138,7 @@ import { StationaryService, StationaryItem, StationaryOrder } from '../../core/s
               <div class="card teacher-board-card" *ngIf="dashboardData.teacher_board" style="margin-top: 30px; border-left: 4px solid var(--secondary); background: white;">
                 <h3 class="card-title" style="margin-bottom: 15px;">👩‍🏫 Classroom Teacher's Board</h3>
                 <div class="teacher-info" style="display: flex; gap: 16px; align-items: start; margin-bottom: 15px;">
-                  <img [src]="dashboardData.teacher_board.photo_url ? mediaBaseUrl + dashboardData.teacher_board.photo_url : 'assets/parent_avatar2_1783324796246.png'" 
+                  <img [src]="getMediaUrl(dashboardData.teacher_board.photo_url, 'assets/images/parent_avatar2.jpg')" 
                        alt="Teacher Photo" 
                        style="width: 65px; height: 65px; border-radius: 50%; object-fit: cover; border: 2.5px solid #E2E8F0;"
                        (error)="onImgError($event)" />
@@ -3539,6 +3539,17 @@ export class ParentDashboardComponent implements OnInit, OnDestroy {
     });
   }
 
+  getMediaUrl(url: string | null | undefined, defaultUrl: string): string {
+    if (!url) return defaultUrl;
+    if (url.startsWith('http://') || url.startsWith('https://')) return url;
+    if (url.startsWith('assets/') || url.startsWith('/assets/')) {
+      return url.startsWith('/') ? url : '/' + url;
+    }
+    const base = this.mediaBaseUrl || '';
+    const separator = (base && !base.endsWith('/') && !url.startsWith('/')) ? '/' : '';
+    return base + separator + url;
+  }
+
   // --- MILESTONES ---
   loadMilestones(): void {
     this.parentService.getMilestones().subscribe({
@@ -3685,7 +3696,8 @@ export class ParentDashboardComponent implements OnInit, OnDestroy {
 
 
   onImgError(event: any): void {
-    event.target.src = 'assets/parent_avatar1_1783324784413.png';
+    event.target.onerror = null;
+    event.target.src = 'assets/images/parent_avatar1.jpg';
   }
 
   onLogout(): void {
