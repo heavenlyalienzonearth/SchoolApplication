@@ -102,6 +102,7 @@ def get_parent_dashboard(
             "id": order.id,
             "order_date": order.order_date.isoformat(),
             "status": order.status,
+            "payment_status": order.payment_status,
             "total_price": float(order.total_price),
             "items": items
         })

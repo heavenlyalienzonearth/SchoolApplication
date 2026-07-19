@@ -66,7 +66,7 @@ def get_orders(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(get_current_user)
 ):
-    if current_user.role.upper() == "ADMIN":
+    if current_user.role.upper() in ["ADMIN", "SUPERADMIN", "PRINCIPAL", "TEACHER"]:
         return db.query(models.StationaryOrder).order_by(models.StationaryOrder.order_date.desc()).all()
     else:
         return db.query(models.StationaryOrder).filter(
@@ -135,8 +135,10 @@ def update_order_status(
     order_id: int,
     request: schemas.StationaryOrderStatusUpdate,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_permission("stationary"))
+    current_user: models.User = Depends(get_current_user)
 ):
+    if current_user.role.upper() not in ["ADMIN", "SUPERADMIN", "PRINCIPAL", "TEACHER"]:
+        raise HTTPException(status_code=403, detail="Not authorized to update order status.")
         
     order = db.query(models.StationaryOrder).filter(models.StationaryOrder.id == order_id).first()
     if not order:
@@ -150,6 +152,27 @@ def update_order_status(
         )
         
     order.status = request.status
+    db.commit()
+    db.refresh(order)
+    return order
+
+@router.put("/orders/{order_id}/pay", response_model=schemas.StationaryOrderResponse)
+def pay_order(
+    order_id: int,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user)
+):
+    order = db.query(models.StationaryOrder).filter(models.StationaryOrder.id == order_id).first()
+    if not order:
+        raise HTTPException(status_code=404, detail="Order not found.")
+        
+    if order.created_by_id != current_user.id and current_user.role.upper() not in ["ADMIN", "SUPERADMIN", "PRINCIPAL", "TEACHER"]:
+        raise HTTPException(status_code=403, detail="Not authorized to pay for this order.")
+        
+    if order.status not in ["Dispatched", "Delivered"]:
+        raise HTTPException(status_code=400, detail="Order must be approved (dispatched/delivered) by a teacher or admin before payment.")
+        
+    order.payment_status = "Paid"
     db.commit()
     db.refresh(order)
     return order

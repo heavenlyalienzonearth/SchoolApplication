@@ -59,6 +59,17 @@ def startup_event():
     # 1. Automatically create all tables (if not already existing)
     Base.metadata.create_all(bind=engine)
     
+    # Check/Add payment_status column in stationary_orders table
+    from sqlalchemy import inspect, text
+    inspector = inspect(engine)
+    if inspector.has_table("stationary_orders"):
+        columns = [c['name'] for c in inspector.get_columns("stationary_orders")]
+        if "payment_status" not in columns:
+            print("[Startup] Adding column 'payment_status' to 'stationary_orders'...")
+            with engine.connect() as conn:
+                conn.execute(text("ALTER TABLE [stationary_orders] ADD [payment_status] VARCHAR(50) DEFAULT 'Unpaid' NOT NULL"))
+                conn.commit()
+    
     # 2. Seed Super Admin and default Feature Permissions
     db = SessionLocal()
     try:

@@ -337,6 +337,7 @@ class StationaryOrder(Base):
     class_name = Column(String(100), nullable=True)
     order_date = Column(DateTime, default=datetime.utcnow, nullable=False)
     status = Column(String(50), default="Pending", nullable=False)  # Pending, Dispatched, Delivered
+    payment_status = Column(String(50), default="Unpaid", nullable=False)  # Unpaid, Paid
     total_price = Column(Numeric(10, 2), nullable=False)
     created_by_id = Column(Integer, ForeignKey("users.id"), nullable=False)
 

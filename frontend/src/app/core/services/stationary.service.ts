@@ -24,6 +24,7 @@ export interface StationaryOrderItemResponse {
   quantity: number;
   unit_price: number;
   item?: StationaryItem;
+  name?: string;
 }
 
 export interface StationaryOrder {
@@ -32,6 +33,7 @@ export interface StationaryOrder {
   class_name?: string;
   order_date: string;
   status: string; // Pending, Dispatched, Delivered
+  payment_status?: string; // Unpaid, Paid
   total_price: number;
   created_by_id: number;
   created_by?: any;

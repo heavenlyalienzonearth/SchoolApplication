@@ -7,6 +7,7 @@ import { ApiService } from '../../core/services/api.service';
 import { ParentService, Bill, Milestone, MilestoneGroup, LeaveRequest } from '../../core/services/parent.service';
 import { MomentsService, StudentMoment } from '../../core/services/moments.service';
 import { ContentService } from '../../core/services/content.service';
+import { StationaryService, StationaryItem, StationaryOrder } from '../../core/services/stationary.service';
 
 @Component({
   selector: 'app-parent-dashboard',
@@ -55,6 +56,9 @@ import { ContentService } from '../../core/services/content.service';
           </button>
           <button class="tab-btn-pill" [class.active]="activeTab === 'circulars'" (click)="setTab('circulars')" *ngIf="hasPermission('circulars')">
             <span>📢</span> School Circulars
+          </button>
+          <button class="tab-btn-pill" [class.active]="activeTab === 'stationary'" (click)="setTab('stationary')" *ngIf="hasPermission('stationary')">
+            <span>✏️</span> Stationery Store
           </button>
         </div>
       </div>
@@ -1013,6 +1017,250 @@ import { ContentService } from '../../core/services/content.service';
                   <li>Locally sourced organic fruits and grains</li>
                 </ul>
               </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 8. STATIONERY STORE & SUPPLIES TAB -->
+        <div *ngIf="activeTab === 'stationary'" class="tab-content animate-fade-in">
+          <div style="border-bottom: 2px solid #E2E8F0; padding-bottom: 15px; margin-bottom: 25px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px;">
+            <div>
+              <h2 style="margin: 0; color: var(--primary);">✏️ Stationery Store &amp; Supplies</h2>
+              <p style="margin: 3px 0 0 0; color: var(--text-light); font-size: 0.9rem;">Browse available items, place orders for your child, and pay for approved orders.</p>
+            </div>
+            <button class="btn-action-primary" (click)="openOrderModal()" style="display: inline-flex; align-items: center; gap: 8px; font-weight: 700; background: var(--secondary); color: white; border: none; border-radius: 8px; padding: 10px 20px; cursor: pointer; transition: transform 0.2s;">
+              🛒 Place Stationery Order
+            </button>
+          </div>
+
+          <div style="display: grid; grid-template-columns: 2fr 1.25fr; gap: 30px; align-items: start;">
+            <!-- Left Side: Catalog / Store Items -->
+            <div class="card" style="background: white; border-radius: 12px; border: 1px solid #E2E8F0; padding: 25px; box-shadow: 0 4px 6px rgba(0,0,0,0.02);">
+              <h3 style="margin-top: 0; color: var(--primary); margin-bottom: 20px; font-size: 1.1rem; font-weight: 700; border-bottom: 1px solid #F1F5F9; padding-bottom: 10px;">
+                🎒 Available Student Supplies
+              </h3>
+
+              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                <div *ngFor="let item of stationaryItems" style="border: 1px solid #E2E8F0; border-radius: 8px; padding: 15px; background: #FAFAFA; display: flex; flex-direction: column; justify-content: space-between; min-height: 140px;">
+                  <div>
+                    <div style="display: flex; justify-content: space-between; align-items: start;">
+                      <strong style="color: #1E293B; font-size: 0.92rem;">{{ item.name }}</strong>
+                      <span style="font-size: 0.72rem; background: #F1F5F9; color: #475569; padding: 2px 6px; border-radius: 4px; font-weight: 600;">{{ item.category }}</span>
+                    </div>
+                    <p style="font-size: 0.78rem; color: #64748B; margin: 4px 0 10px 0; line-height: 1.4;">{{ item.description || 'No description available.' }}</p>
+                  </div>
+                  
+                  <div>
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                      <span style="font-weight: 800; color: var(--primary); font-size: 1.05rem;">₹{{ item.price }}</span>
+                      <span style="font-size: 0.72rem; font-weight: 600; color: #64748B;">Available: {{ item.stock }}</span>
+                    </div>
+                    
+                    <!-- Add Action -->
+                    <div style="display: flex; gap: 8px;" *ngIf="item.stock > 0">
+                      <input type="number" value="1" min="1" [max]="item.stock" #qtyInput style="width: 50px; border: 1px solid #CBD5E1; border-radius: 4px; padding: 4px; text-align: center; font-weight: 700; font-size: 0.8rem;" />
+                      <button type="button" (click)="addStationaryToCart(item, qtyInput)" style="flex: 1; background: var(--secondary); color: white; border: none; padding: 5px 10px; border-radius: 4px; font-weight: 700; font-size: 0.78rem; cursor: pointer;">
+                        🛒 Add
+                      </button>
+                    </div>
+                    <div *ngIf="item.stock === 0" style="text-align: center; color: #EF4444; font-weight: 700; font-size: 0.8rem; padding: 5px 0;">
+                      🚫 Out of Stock
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div *ngIf="stationaryItems.length === 0" style="text-align: center; color: var(--text-light); padding: 40px; font-style: italic;">
+                No student supplies available in store right now.
+              </div>
+            </div>
+
+            <!-- Right Side: Cart Summary & Orders History -->
+            <div style="display: flex; flex-direction: column; gap: 30px;">
+              
+              <!-- Cart Details -->
+              <div class="card" *ngIf="stationaryCart.length > 0" style="background: white; border-radius: 12px; border: 1px solid #E2E8F0; padding: 22px; box-shadow: 0 4px 6px rgba(0,0,0,0.02);">
+                <h3 style="margin-top: 0; color: var(--primary); margin-bottom: 15px; font-size: 1.1rem; font-weight: 700; border-bottom: 1px solid #F1F5F9; padding-bottom: 8px;">
+                  🛒 Shopping Cart
+                </h3>
+
+                <div style="display: flex; flex-direction: column; gap: 8px; max-height: 180px; overflow-y: auto; margin-bottom: 15px; padding-right: 5px;">
+                  <div *ngFor="let c of stationaryCart; let i = index" style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #F1F5F9; padding-bottom: 6px;">
+                    <div>
+                      <strong style="color: #1E293B; font-size: 0.82rem; display: block;">{{ c.item.name }}</strong>
+                      <span style="font-size: 0.78rem; color: #64748B;">₹{{ c.item.price }} × {{ c.quantity }}</span>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                      <span style="font-weight: 700; color: #1E293B; font-size: 0.85rem;">₹{{ c.item.price * c.quantity }}</span>
+                      <button type="button" (click)="removeStationaryFromCart(i)" style="background: none; border: none; color: #EF4444; font-size: 1.1rem; cursor: pointer; padding: 0;" title="Remove">×</button>
+                    </div>
+                  </div>
+                </div>
+
+                <div style="border-top: 2px solid #E2E8F0; padding-top: 10px; margin-bottom: 15px;">
+                  <div style="display: flex; justify-content: space-between; align-items: center; font-weight: 800; font-size: 1rem; color: #1E293B;">
+                    <span>Total:</span>
+                    <span style="color: var(--primary);">₹{{ getStationaryCartTotal() }}</span>
+                  </div>
+                </div>
+
+                <button type="button" (click)="openOrderModal()" style="width: 100%; padding: 10px; border-radius: 6px; border: none; background: var(--primary); color: white; font-weight: 700; font-size: 0.85rem; cursor: pointer;">
+                  📦 Confirm Order
+                </button>
+              </div>
+
+              <!-- Orders History -->
+              <div class="card" style="background: white; border-radius: 12px; border: 1px solid #E2E8F0; padding: 22px; box-shadow: 0 4px 6px rgba(0,0,0,0.02);">
+                <h3 style="margin-top: 0; color: var(--primary); margin-bottom: 15px; font-size: 1.1rem; font-weight: 700; border-bottom: 1px solid #F1F5F9; padding-bottom: 8px;">
+                  📜 Supplies Orders History
+                </h3>
+
+                <div style="overflow-y: auto; max-height: 400px; display: flex; flex-direction: column; gap: 12px; padding-right: 5px;">
+                  <div *ngFor="let order of stationaryOrders" style="border: 1px solid #E2E8F0; border-radius: 8px; padding: 12px; background: #FAFAFA; font-size: 0.82rem;">
+                    <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 6px;">
+                      <div>
+                        <strong style="color: var(--primary);">Order #{{ order.id }}</strong>
+                        <span style="color: #64748B; font-size: 0.72rem; margin-left: 6px;">{{ order.order_date | date:'dd MMM yy HH:mm' }}</span>
+                      </div>
+                      
+                      <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 3px;">
+                        <span class="badge" [style.background-color]="order.status === 'Delivered' ? '#D1FAE5' : order.status === 'Dispatched' ? '#E0F2FE' : '#FEF3C7'" [style.color]="order.status === 'Delivered' ? '#065F46' : order.status === 'Dispatched' ? '#0369A1' : '#D97706'" style="border-radius: 4px; padding: 2px 6px; font-weight: 700; font-size: 0.7rem;">
+                          {{ order.status }}
+                        </span>
+                        <span class="badge" [style.background-color]="order.payment_status === 'Paid' ? '#D1FAE5' : '#FEE2E2'" [style.color]="order.payment_status === 'Paid' ? '#065F46' : '#991B1B'" style="border-radius: 4px; padding: 2px 6px; font-weight: 700; font-size: 0.7rem;">
+                          {{ order.payment_status }}
+                        </span>
+                      </div>
+                    </div>
+
+                    <!-- Items List -->
+                    <div style="border-top: 1px solid #E2E8F0; padding-top: 6px; margin-bottom: 8px;">
+                      <div *ngFor="let item of order.items" style="display: flex; justify-content: space-between; color: #64748B; font-size: 0.78rem; margin-bottom: 3px;">
+                        <span>{{ item.item?.name || item.name || 'Supply Item' }} × {{ item.quantity }}</span>
+                        <span>₹{{ item.unit_price * item.quantity }}</span>
+                      </div>
+                      <div style="display: flex; justify-content: space-between; font-weight: 800; font-size: 0.85rem; color: #1E293B; margin-top: 5px; border-top: 1px dashed #E2E8F0; padding-top: 4px;">
+                        <span>Total Amount:</span>
+                        <span>₹{{ order.total_price }}</span>
+                      </div>
+                    </div>
+
+                    <!-- Pay Action -->
+                    <div *ngIf="order.payment_status !== 'Paid' && (order.status === 'Dispatched' || order.status === 'Delivered')" style="display: flex; justify-content: flex-end; margin-top: 6px;">
+                      <button type="button" (click)="startOrderPayment(order)" style="background: #10B981; color: white; border: none; padding: 4px 10px; border-radius: 4px; font-size: 0.75rem; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 4px;">
+                        💳 Pay ₹{{ order.total_price }} Now
+                      </button>
+                    </div>
+                    <div *ngIf="order.payment_status !== 'Paid' && order.status === 'Pending'" style="color: #64748B; font-size: 0.72rem; text-align: right; font-style: italic;">
+                      🕒 Pending approval before payment.
+                    </div>
+                  </div>
+
+                  <div *ngIf="stationaryOrders.length === 0" style="text-align: center; color: var(--text-light); padding: 20px 0; font-style: italic;">
+                    No stationery orders placed yet.
+                  </div>
+                </div>
+              </div>
+
+            </div>
+          </div>
+        </div>
+
+        <!-- STATIONERY ORDER SUBMISSION MODAL -->
+        <div class="modal-backdrop" *ngIf="showOrderModal">
+          <div class="modal-card animate-fade-in" style="max-width: 500px; border-radius: 12px; overflow: hidden; box-shadow: 0 10px 25px rgba(0,0,0,0.15); border: none; background: white;">
+            <div style="background-color: var(--primary); color: white; padding: 20px; display: flex; justify-content: space-between; align-items: center; position: relative;">
+              <h3 style="margin: 0; font-size: 1.15rem; font-weight: 700;">📦 Place Supply Order</h3>
+              <button (click)="closeOrderModal()" style="background: none; border: none; color: white; font-size: 1.6rem; cursor: pointer; padding: 0;">×</button>
+            </div>
+            
+            <div class="modal-body" style="padding: 20px;">
+              <div class="alert alert-danger" *ngIf="orderError" style="margin-bottom: 15px;">
+                ⚠️ {{ orderError }}
+              </div>
+              <div class="alert alert-success" *ngIf="orderSuccess" style="margin-bottom: 15px;">
+                🎉 {{ orderSuccess }}
+              </div>
+
+              <form (ngSubmit)="submitStationaryOrder()">
+                <div class="form-group" style="margin-bottom: 12px;">
+                  <label class="form-label" style="display: block; font-weight: 600; font-size: 0.82rem; color: #475569; margin-bottom: 4px;">Student Name</label>
+                  <input type="text" [(ngModel)]="orderStudentName" name="o_student" required class="form-control" placeholder="e.g. Child Name" style="width: 100%; border: 1px solid #CBD5E1; border-radius: 6px; padding: 8px 10px; box-sizing: border-box;" />
+                </div>
+                
+                <div class="form-group" style="margin-bottom: 15px;">
+                  <label class="form-label" style="display: block; font-weight: 600; font-size: 0.82rem; color: #475569; margin-bottom: 4px;">Class / Program Name</label>
+                  <input type="text" [(ngModel)]="orderClassName" name="o_class" required class="form-control" placeholder="e.g. Nursery A" style="width: 100%; border: 1px solid #CBD5E1; border-radius: 6px; padding: 8px 10px; box-sizing: border-box;" />
+                </div>
+
+                <div style="border-top: 1px solid #E2E8F0; padding-top: 12px; margin-bottom: 15px;">
+                  <strong style="font-size: 0.85rem; color: #475569; display: block; margin-bottom: 8px;">Order Summary:</strong>
+                  <div style="display: flex; flex-direction: column; gap: 5px; max-height: 120px; overflow-y: auto;">
+                    <div *ngFor="let c of stationaryCart" style="display: flex; justify-content: space-between; font-size: 0.8rem; color: #64748B;">
+                      <span>{{ c.item.name }} × {{ c.quantity }}</span>
+                      <span>₹{{ c.item.price * c.quantity }}</span>
+                    </div>
+                  </div>
+                  <div style="display: flex; justify-content: space-between; font-weight: 800; font-size: 0.95rem; color: #1E293B; margin-top: 10px; border-top: 1px dashed #E2E8F0; padding-top: 8px;">
+                    <span>Grand Total:</span>
+                    <span style="color: var(--primary);">₹{{ getStationaryCartTotal() }}</span>
+                  </div>
+                </div>
+
+                <div class="modal-footer" style="padding: 10px 0 0 0; display: flex; gap: 10px;">
+                  <button type="button" class="btn btn-cancel" (click)="closeOrderModal()" style="flex: 1; padding: 10px; border-radius: 6px; border: 1px solid #cbd5e1; background: none; font-weight: 700; cursor: pointer;">Cancel</button>
+                  <button type="submit" class="btn btn-primary" [disabled]="placingOrder || stationaryCart.length === 0" style="flex: 2; padding: 10px; border-radius: 6px; border: none; background-color: var(--primary); color: white; font-weight: 700; cursor: pointer;">
+                    {{ placingOrder ? 'Placing Order...' : '🚀 Submit Order' }}
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+
+        <!-- SIMULATED STATIONERY RAZORPAY CHECKOUT MODAL -->
+        <div class="modal-backdrop" *ngIf="showStationaryPayModal">
+          <div class="modal-card animate-fade-in" style="max-width: 420px; border-radius: 8px; overflow: hidden; box-shadow: 0 10px 25px rgba(0,0,0,0.15); border: none; background: white;">
+            <!-- Razorpay Blue Theme Header -->
+            <div style="background-color: #0c2b64; color: white; padding: 25px 20px; display: flex; flex-direction: column; position: relative;">
+              <button (click)="closeStationaryPayModal()" style="position: absolute; top: 15px; right: 15px; background: none; border: none; color: #94a3b8; font-size: 1.5rem; cursor: pointer; line-height: 1;">×</button>
+              <div style="display: flex; align-items: center; gap: 12px;">
+                <span style="font-size: 1.8rem; background: rgba(255,255,255,0.15); width: 45px; height: 45px; display: flex; align-items: center; justify-content: center; border-radius: 50%;">🦘</span>
+                <div>
+                  <h4 style="margin: 0; font-size: 1.1rem; font-weight: 800; letter-spacing: 0.3px;">Vidyankuram Kids School</h4>
+                  <p style="margin: 2px 0 0 0; font-size: 0.72rem; color: #3b82f6; font-weight: 700; text-transform: uppercase;">Razorpay Checkout <span style="background: #2563eb; color: white; padding: 1px 4px; border-radius: 2px; font-size: 0.6rem; margin-left: 4px;">TEST MODE</span></p>
+                </div>
+              </div>
+            </div>
+            
+            <div class="modal-body" style="padding: 20px; background-color: #f8fafc;">
+              <div class="bill-summary-box" style="background: white; border: 1px solid #e2e8f0; border-radius: 6px; padding: 15px; text-align: center; margin-bottom: 20px;">
+                <span style="font-size: 0.75rem; color: #64748b; font-weight: 700; text-transform: uppercase;">Amount to Pay</span>
+                <h2 style="font-size: 1.8rem; font-weight: 800; color: #0f172a; margin: 4px 0 0 0;">₹{{ payingOrder?.total_price }}</h2>
+                <p style="margin: 5px 0 0 0; font-size: 0.8rem; color: #475569; font-weight: 600;">Stationery Order #{{ payingOrder?.id }}</p>
+              </div>
+              
+              <div style="background: white; border: 1px solid #e2e8f0; border-radius: 6px; padding: 15px;">
+                <h5 style="margin: 0 0 10px 0; font-size: 0.75rem; font-weight: 700; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.5px;">Prefilled Contact</h5>
+                <div style="display: flex; flex-direction: column; gap: 8px; font-size: 0.82rem; color: #334155;">
+                  <div style="display: flex; justify-content: space-between;"><span style="color: #64748b;">Name:</span><strong>{{ parentName }}</strong></div>
+                  <div style="display: flex; justify-content: space-between;"><span style="color: #64748b;">Email:</span><strong>{{ authService.currentUserValue?.email || '--' }}</strong></div>
+                </div>
+              </div>
+
+              <div style="margin-top: 20px; text-align: center;">
+                <span style="font-size: 0.72rem; color: #94a3b8; font-weight: 600; display: block; margin-bottom: 8px;">💳 Simulated Test Gateway</span>
+                <p style="font-size: 0.72rem; color: #64748b; line-height: 1.4; margin: 0;">
+                  No real money will be charged. Click below to verify and complete stationery payment simulation.
+                </p>
+              </div>
+            </div>
+
+            <div class="modal-footer" style="padding: 15px 20px; background-color: white; border-top: 1px solid #f1f5f9; display: flex; gap: 10px;">
+              <button class="btn-modal btn-cancel" (click)="closeStationaryPayModal()" style="flex: 1; padding: 10px; font-weight: 700; font-size: 0.85rem; border-radius: 4px; border: 1px solid #cbd5e1; background: none; cursor: pointer;">Cancel</button>
+              <button class="btn-modal btn-confirm" (click)="confirmStationaryPayment()" [disabled]="processingStationaryPayment" style="flex: 2; padding: 10px; font-weight: 700; font-size: 0.85rem; border-radius: 4px; border: none; background-color: #2563eb; color: white; cursor: pointer;">
+                {{ processingStationaryPayment ? 'Verifying payment...' : 'Simulate Success' }}
+              </button>
             </div>
           </div>
         </div>
@@ -2916,6 +3164,20 @@ export class ParentDashboardComponent implements OnInit, OnDestroy {
   holidaysList: any[] = [];
   allCalendarEvents: any[] = [];
   calendarEventsLoading = false;
+  
+  // Stationery Orders State
+  stationaryItems: StationaryItem[] = [];
+  stationaryCart: { item: StationaryItem; quantity: number }[] = [];
+  stationaryOrders: StationaryOrder[] = [];
+  showOrderModal = false;
+  placingOrder = false;
+  orderStudentName = '';
+  orderClassName = '';
+  orderSuccess = '';
+  orderError = '';
+  payingOrder: StationaryOrder | null = null;
+  showStationaryPayModal = false;
+  processingStationaryPayment = false;
   currentMonth: number = new Date().getMonth();
   currentYear: number = new Date().getFullYear();
   calendarDays: any[] = [];
@@ -2933,7 +3195,8 @@ export class ParentDashboardComponent implements OnInit, OnDestroy {
     private parentService: ParentService,
     private router: Router,
     private momentsService: MomentsService,
-    private contentService: ContentService
+    private contentService: ContentService,
+    private stationaryService: StationaryService
   ) {}
 
   hasPermission(feature: string): boolean {
@@ -2958,6 +3221,8 @@ export class ParentDashboardComponent implements OnInit, OnDestroy {
     this.loadDashboardData();
     this.loadParentMoments();
     this.loadCalendarData();
+    this.loadStationaryOrders();
+    this.loadStationaryCatalog();
     this.loadRazorpayScript().then(() => {
       this.razorpayScriptLoaded = true;
     });
@@ -3003,7 +3268,8 @@ export class ParentDashboardComponent implements OnInit, OnDestroy {
       'meals': 'meals',
       'leaves': 'leaves',
       'calendar': 'holidays',
-      'circulars': 'circulars'
+      'circulars': 'circulars',
+      'stationary': 'stationary'
     };
     const feature = permissionKeyMap[tab];
     if (feature && !this.hasPermission(feature)) {
@@ -3028,6 +3294,9 @@ export class ParentDashboardComponent implements OnInit, OnDestroy {
       this.loadDashboardData();
     } else if (tab === 'circulars') {
       this.loadCircularsData();
+    } else if (tab === 'stationary') {
+      this.loadStationaryOrders();
+      this.loadStationaryCatalog();
     }
   }
 
@@ -3150,6 +3419,124 @@ export class ParentDashboardComponent implements OnInit, OnDestroy {
     this.showRazorpayMockModal = false;
     this.selectedBill = null;
     this.razorpayOrderData = null;
+  }
+
+  // --- STATIONERY ORDERS ---
+  loadStationaryCatalog(): void {
+    this.stationaryService.getItems().subscribe({
+      next: (items) => { this.stationaryItems = items; },
+      error: () => {}
+    });
+  }
+
+  loadStationaryOrders(): void {
+    this.stationaryService.getOrders().subscribe({
+      next: (orders) => { this.stationaryOrders = orders; },
+      error: () => {}
+    });
+  }
+
+  openOrderModal(): void {
+    this.orderStudentName = this.dashboardData?.kid?.name || '';
+    this.orderClassName = this.dashboardData?.kid?.program_title || '';
+    this.orderSuccess = '';
+    this.orderError = '';
+    this.showOrderModal = true;
+    this.loadStationaryCatalog();
+  }
+
+  closeOrderModal(): void {
+    this.showOrderModal = false;
+    this.stationaryCart = [];
+  }
+
+  addStationaryToCart(item: StationaryItem, quantityInput: HTMLInputElement): void {
+    const qty = parseInt(quantityInput.value, 10) || 1;
+    if (qty <= 0) return;
+    if (qty > item.stock) {
+      alert(`Only ${item.stock} items available in stock.`);
+      return;
+    }
+    const existing = this.stationaryCart.find(c => c.item.id === item.id);
+    if (existing) {
+      if (existing.quantity + qty > item.stock) {
+        alert(`Cannot add more. Total stock is ${item.stock}.`);
+        return;
+      }
+      existing.quantity += qty;
+    } else {
+      this.stationaryCart.push({ item, quantity: qty });
+    }
+    quantityInput.value = '1';
+  }
+
+  removeStationaryFromCart(index: number): void {
+    this.stationaryCart.splice(index, 1);
+  }
+
+  getStationaryCartTotal(): number {
+    return this.stationaryCart.reduce((acc, c) => acc + (c.item.price * c.quantity), 0);
+  }
+
+  submitStationaryOrder(): void {
+    if (this.stationaryCart.length === 0) {
+      this.orderError = 'Your cart is empty.';
+      return;
+    }
+    this.placingOrder = true;
+    this.orderError = '';
+    this.orderSuccess = '';
+    
+    const payload = {
+      student_name: this.orderStudentName,
+      class_name: this.orderClassName,
+      items: this.stationaryCart.map(c => ({ item_id: c.item.id, quantity: c.quantity }))
+    };
+
+    this.stationaryService.placeOrder(payload).subscribe({
+      next: (res) => {
+        this.placingOrder = false;
+        this.orderSuccess = 'Order placed successfully! Awaiting teacher/admin approval.';
+        this.stationaryCart = [];
+        this.loadStationaryOrders();
+        this.loadDashboardData(); // to sync overview history
+        setTimeout(() => { this.closeOrderModal(); }, 1500);
+      },
+      error: (err) => {
+        this.placingOrder = false;
+        this.orderError = err.error?.detail || 'Failed to place order.';
+      }
+    });
+  }
+
+  startOrderPayment(order: StationaryOrder): void {
+    this.payingOrder = order;
+    this.showStationaryPayModal = true;
+  }
+
+  closeStationaryPayModal(): void {
+    this.showStationaryPayModal = false;
+    this.payingOrder = null;
+  }
+
+  confirmStationaryPayment(): void {
+    if (!this.payingOrder) return;
+    this.processingStationaryPayment = true;
+    this.apiService.put<any>(`/stationary/orders/${this.payingOrder.id}/pay`, {}).subscribe({
+      next: (res) => {
+        this.processingStationaryPayment = false;
+        this.showStationaryPayModal = false;
+        this.payingOrder = null;
+        this.successMessage = 'Stationery payment completed successfully!';
+        this.loadStationaryOrders();
+        this.loadDashboardData();
+        setTimeout(() => this.successMessage = '', 4000);
+      },
+      error: (err) => {
+        this.processingStationaryPayment = false;
+        alert(err.error?.detail || 'Payment simulation failed.');
+      }
+    });
   }
 
   // --- MILESTONES ---
