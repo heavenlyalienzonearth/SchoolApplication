@@ -9,8 +9,8 @@
          [style.background-image]="'linear-gradient(rgba(0,0,0,0.4), rgba(0,0,0,0.3)), url(' + slide.image + ')'">
       <div class="container slide-content">
         <div class="text-box animate-fade-in">
-          <p class="slide-subtitle">{{ slide.subtitle }}</p>
-          <h1 class="slide-title" [class.highlighted-title]="slide.title === 'Holistic Child Development' || slide.title === 'Welcome to Vidyankuram Club'">{{ slide.title }}</h1>
+          <p class="slide-subtitle" [style.color]="slide.subtitle_color || ''">{{ slide.subtitle }}</p>
+          <h1 class="slide-title" [style.color]="slide.title_color || ''" [class.highlighted-title]="slide.title === 'Holistic Child Development' || slide.title === 'Welcome to Vidyankuram Club'">{{ slide.title }}</h1>
           <p class="hero-desc">{{ heroSection.description }}</p>
           <div class="hero-actions">
             <a [routerLink]="slide.cta_link" class="btn btn-secondary btn-lg">{{ slide.cta_text }}</a>
@@ -49,6 +49,40 @@
             <h3>{{ feat.title }}</h3>
             <p>{{ feat.desc }}</p>
           </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- SPACE SCIENTISTS SECTION -->
+<section class="section space-scientists-sec">
+  <div class="container">
+    <div class="section-header" style="text-align: center; margin-bottom: 40px; color: white;">
+      <p class="subtitle" style="color: var(--secondary); font-weight: 700; text-transform: uppercase; letter-spacing: 2px;">🌌 Inspiring Next-Gen Explorers</p>
+      <h2 style="color: white; font-size: 2.2rem; font-weight: 800; margin-top: 5px;">🚀 Space Scientists Hall of Fame</h2>
+      <p style="color: #F1F5F9 !important; max-width: 600px; margin: 10px auto 0 auto; font-size: 1.05rem; line-height: 1.6; font-weight: 500;">
+        Hover over the floating cosmic spheres to freeze orbit and explore the legendary minds who <span style="color: #FFDE4D !important; font-weight: 800; text-shadow: 0 0 10px rgba(255, 222, 77, 0.4) !important;">unlocked the mysteries of the universe</span>.
+      </p>
+    </div>
+
+    <!-- Starry Orbit Arena -->
+    <div class="cosmic-arena">
+      <div *ngFor="let sci of spaceScientists" 
+           class="scientist-cosmic-card"
+           [class]="sci.floatClass">
+        <div class="cosmic-avatar-frame">
+          <img [src]="sci.image" [alt]="sci.name" />
+        </div>
+        <div class="cosmic-info-tag">
+          <h4>{{ sci.name }}</h4>
+          <p>{{ sci.role }}</p>
+        </div>
+        
+        <!-- Glassmorphism Hover Info Overlay -->
+        <div class="cosmic-description-overlay">
+          <h5>{{ sci.name }}</h5>
+          <p>{{ sci.description }}</p>
         </div>
       </div>
     </div>

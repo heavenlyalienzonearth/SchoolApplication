@@ -510,10 +510,20 @@
               <div class="form-group">
                 <label class="form-label">Slide Main Title</label>
                 <input type="text" [(ngModel)]="slide.title" name="slide_title_{{i}}" class="form-control" />
+                <div style="display: flex; align-items: center; gap: 8px; margin-top: 8px;">
+                  <label style="font-size: 0.8rem; font-weight: 600; color: #475569;">Title Color:</label>
+                  <input type="color" [(ngModel)]="slide.title_color" name="slide_title_color_{{i}}" style="width: 40px; height: 26px; border: 1px solid #CBD5E1; border-radius: 4px; padding: 1px; cursor: pointer; background: none;" />
+                  <input type="text" [(ngModel)]="slide.title_color" name="slide_title_color_hex_{{i}}" placeholder="#ffffff" style="width: 80px; font-size: 0.78rem; padding: 4px 6px; border: 1px solid #CBD5E1; border-radius: 4px;" />
+                </div>
               </div>
               <div class="form-group">
                 <label class="form-label">Slide Subtitle</label>
                 <input type="text" [(ngModel)]="slide.subtitle" name="slide_sub_{{i}}" class="form-control" />
+                <div style="display: flex; align-items: center; gap: 8px; margin-top: 8px;">
+                  <label style="font-size: 0.8rem; font-weight: 600; color: #475569;">Subtitle Color:</label>
+                  <input type="color" [(ngModel)]="slide.subtitle_color" name="slide_sub_color_{{i}}" style="width: 40px; height: 26px; border: 1px solid #CBD5E1; border-radius: 4px; padding: 1px; cursor: pointer; background: none;" />
+                  <input type="text" [(ngModel)]="slide.subtitle_color" name="slide_sub_color_hex_{{i}}" placeholder="#FFDE4D" style="width: 80px; font-size: 0.78rem; padding: 4px 6px; border: 1px solid #CBD5E1; border-radius: 4px;" />
+                </div>
               </div>
             </div>
 

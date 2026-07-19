@@ -986,6 +986,8 @@ export class DashboardComponent implements OnInit, OnDestroy {
     this.heroSlides.push({
       title: 'New Slide Title',
       subtitle: 'New Slide Subtitle',
+      title_color: '#ffffff',
+      subtitle_color: '#FFDE4D',
       image: '/assets/images/hero_kids_learning.jpg',
       cta_text: 'Click Here',
       cta_link: '/'

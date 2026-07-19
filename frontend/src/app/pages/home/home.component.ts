@@ -9,6 +9,8 @@ import { ContentService } from '../../core/services/content.service';
 interface HeroSlide {
   title: string;
   subtitle: string;
+  title_color?: string;
+  subtitle_color?: string;
   image: string;
   cta_text: string;
   cta_link: string;
@@ -38,6 +40,38 @@ export class HomeComponent implements OnInit, OnDestroy {
 
   aboutSection: any = {};
   aboutFeatures: AboutFeature[] = [];
+
+  // Cosmic Space Scientists Section
+  spaceScientists = [
+    {
+      name: 'Dr. APJ Abdul Kalam',
+      role: "Father of India's Missile Program",
+      image: '/assets/images/rocket_classroom.png',
+      description: 'Aerospace scientist who led the development of India\'s SLV-3 launcher, ballistic missile technologies, and served as the 11th President of India.',
+      floatClass: 'float-path-1'
+    },
+    {
+      name: 'Kalpana Chawla',
+      role: 'First Indian-born Woman in Space',
+      image: '/assets/images/space_exploration.png',
+      description: 'First Indian-born woman to fly in space, serving as a mission specialist and primary robotic arm operator on Space Shuttle Columbia (STS-87/STS-107).',
+      floatClass: 'float-path-2'
+    },
+    {
+      name: 'Dr. Vikram Sarabhai',
+      role: 'Father of the Indian Space Program',
+      image: '/assets/images/telescope_galaxy.png',
+      description: 'Visionary physicist who established the Indian Space Research Organisation (ISRO) and spearheaded cosmic ray research and satellite communication in India.',
+      floatClass: 'float-path-3'
+    },
+    {
+      name: 'Wing Commander Rakesh Sharma',
+      role: 'First Indian Citizen in Space',
+      image: '/assets/images/solar_system.png',
+      description: 'Former Indian Air Force pilot who flew aboard Soyuz T-11 in 1984, spending over 7 days in space conducting research on the Salyut 7 space station.',
+      floatClass: 'float-path-4'
+    }
+  ];
 
   programsSection: any = {};
   programs: any[] = [];
