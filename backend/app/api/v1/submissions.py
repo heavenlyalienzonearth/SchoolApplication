@@ -183,3 +183,115 @@ def get_dashboard_analytics(
             "total": total_feedback
         }
     }
+
+# --- DELETE ENDPOINTS (ADMIN/SUPERADMIN ONLY) ---
+
+@router.delete("/contact/admin/{sub_id}")
+def delete_contact_submission(
+    sub_id: int,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user)
+):
+    if current_user.role.upper() not in ["ADMIN", "SUPERADMIN"]:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Only administrators are authorized to delete inquiries."
+        )
+    sub = db.query(models.ContactSubmission).filter(models.ContactSubmission.id == sub_id).first()
+    if not sub:
+        raise HTTPException(status_code=404, detail="Submission not found")
+    db.delete(sub)
+    db.commit()
+    return {"message": "Submission deleted successfully"}
+
+@router.post("/contact/admin/bulk-delete")
+def bulk_delete_contact_submissions(
+    payload: dict,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user)
+):
+    if current_user.role.upper() not in ["ADMIN", "SUPERADMIN"]:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Only administrators are authorized to delete inquiries."
+        )
+    ids = payload.get("ids", [])
+    if not ids:
+        raise HTTPException(status_code=400, detail="No IDs provided")
+    db.query(models.ContactSubmission).filter(models.ContactSubmission.id.in_(ids)).delete(synchronize_session=False)
+    db.commit()
+    return {"message": f"Successfully deleted {len(ids)} submissions"}
+
+
+@router.delete("/franchise/admin/{inq_id}")
+def delete_franchise_inquiry(
+    inq_id: int,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user)
+):
+    if current_user.role.upper() not in ["ADMIN", "SUPERADMIN"]:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Only administrators are authorized to delete inquiries."
+        )
+    inq = db.query(models.FranchiseInquiry).filter(models.FranchiseInquiry.id == inq_id).first()
+    if not inq:
+        raise HTTPException(status_code=404, detail="Inquiry not found")
+    db.delete(inq)
+    db.commit()
+    return {"message": "Inquiry deleted successfully"}
+
+@router.post("/franchise/admin/bulk-delete")
+def bulk_delete_franchise_inquiries(
+    payload: dict,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user)
+):
+    if current_user.role.upper() not in ["ADMIN", "SUPERADMIN"]:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Only administrators are authorized to delete inquiries."
+        )
+    ids = payload.get("ids", [])
+    if not ids:
+        raise HTTPException(status_code=400, detail="No IDs provided")
+    db.query(models.FranchiseInquiry).filter(models.FranchiseInquiry.id.in_(ids)).delete(synchronize_session=False)
+    db.commit()
+    return {"message": f"Successfully deleted {len(ids)} inquiries"}
+
+
+@router.delete("/careers/applications/admin/{app_id}")
+def delete_job_application(
+    app_id: int,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user)
+):
+    if current_user.role.upper() not in ["ADMIN", "SUPERADMIN"]:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Only administrators are authorized to delete inquiries."
+        )
+    app = db.query(models.JobApplication).filter(models.JobApplication.id == app_id).first()
+    if not app:
+        raise HTTPException(status_code=404, detail="Job application not found")
+    db.delete(app)
+    db.commit()
+    return {"message": "Job application deleted successfully"}
+
+@router.post("/careers/applications/admin/bulk-delete")
+def bulk_delete_job_applications(
+    payload: dict,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user)
+):
+    if current_user.role.upper() not in ["ADMIN", "SUPERADMIN"]:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Only administrators are authorized to delete inquiries."
+        )
+    ids = payload.get("ids", [])
+    if not ids:
+        raise HTTPException(status_code=400, detail="No IDs provided")
+    db.query(models.JobApplication).filter(models.JobApplication.id.in_(ids)).delete(synchronize_session=False)
+    db.commit()
+    return {"message": f"Successfully deleted {len(ids)} job applications"}

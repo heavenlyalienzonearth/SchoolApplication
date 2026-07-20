@@ -17,6 +17,7 @@ class User(Base):
     two_factor_enabled = Column(Boolean, default=False, nullable=False)
     student_id = Column(Integer, ForeignKey("students.id", ondelete="SET NULL"), nullable=True)
     photo_url = Column(String(255), nullable=True)
+    cv_url = Column(String(500), nullable=True)
     education = Column(Text, nullable=True)
     experience = Column(Text, nullable=True)
     achievements = Column(Text, nullable=True)

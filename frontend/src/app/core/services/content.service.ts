@@ -275,6 +275,30 @@ export class ContentService {
     return this.apiService.get<any[]>('/careers/applications/admin');
   }
 
+  deleteContact(id: number): Observable<any> {
+    return this.apiService.delete<any>(`/contact/admin/${id}`);
+  }
+
+  bulkDeleteContacts(ids: number[]): Observable<any> {
+    return this.apiService.post<any>('/contact/admin/bulk-delete', { ids });
+  }
+
+  deleteFranchise(id: number): Observable<any> {
+    return this.apiService.delete<any>(`/franchise/admin/${id}`);
+  }
+
+  bulkDeleteFranchises(ids: number[]): Observable<any> {
+    return this.apiService.post<any>('/franchise/admin/bulk-delete', { ids });
+  }
+
+  deleteJobApplication(id: number): Observable<any> {
+    return this.apiService.delete<any>(`/careers/applications/admin/${id}`);
+  }
+
+  bulkDeleteJobApplications(ids: number[]): Observable<any> {
+    return this.apiService.post<any>('/careers/applications/admin/bulk-delete', { ids });
+  }
+
   getAnalytics(): Observable<any> {
     return this.apiService.get<any>('/submissions/analytics');
   }
@@ -409,6 +433,14 @@ export class ContentService {
 
   emailStudentBadge(admissionId: number): Observable<any> {
     return this.apiService.post<any>(`/admissions/applications/${admissionId}/email-badge`, {});
+  }
+
+  deleteAdmissionApplication(id: number): Observable<any> {
+    return this.apiService.delete<any>(`/admissions/applications/${id}`);
+  }
+
+  bulkDeleteAdmissionApplications(ids: number[]): Observable<any> {
+    return this.apiService.post<any>('/admissions/applications/bulk-delete', { ids });
   }
 
   getHolidays(year?: number): Observable<any[]> {

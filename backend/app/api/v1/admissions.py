@@ -302,3 +302,39 @@ Kangaroo Kids Admin Portal
     print(email_body)
     
     return {"message": "Success! The ID badge request has been directly emailed to printshop@schoolcards.com."}
+
+@router.delete("/applications/{admission_id}")
+def delete_admission_application(
+    admission_id: int,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user)
+):
+    if current_user.role.upper() not in ["ADMIN", "SUPERADMIN"]:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Only administrators are authorized to delete admissions."
+        )
+    app = db.query(models.Admission).filter(models.Admission.id == admission_id).first()
+    if not app:
+        raise HTTPException(status_code=404, detail="Admission application not found")
+    db.delete(app)
+    db.commit()
+    return {"message": "Admission application deleted successfully"}
+
+@router.post("/applications/bulk-delete")
+def bulk_delete_admission_applications(
+    payload: dict,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user)
+):
+    if current_user.role.upper() not in ["ADMIN", "SUPERADMIN"]:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Only administrators are authorized to delete admissions."
+        )
+    ids = payload.get("ids", [])
+    if not ids:
+        raise HTTPException(status_code=400, detail="No IDs provided")
+    db.query(models.Admission).filter(models.Admission.id.in_(ids)).delete(synchronize_session=False)
+    db.commit()
+    return {"message": f"Successfully deleted {len(ids)} admission applications"}

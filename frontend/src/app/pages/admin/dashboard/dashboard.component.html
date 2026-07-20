@@ -704,20 +704,34 @@
 
         <!-- Contact Forms List -->
         <div class="table-card card" *ngIf="inquiryFilter === 'contact'">
+          <div *ngIf="canDeleteInquiries() && contacts.length > 0" style="padding: 12px 20px; background: #FFF5F5; border-bottom: 1px solid #FEE2E2; display: flex; align-items: center; justify-content: space-between;">
+            <span style="font-size: 0.85rem; color: #E53E3E; font-weight: 700; display: flex; align-items: center; gap: 6px;">
+              🚨 Admin Access: {{ selectedContactIds.length }} inquiry items selected
+            </span>
+            <button class="btn btn-danger btn-sm" (click)="deleteSelectedContacts()" [disabled]="selectedContactIds.length === 0" style="background: #DC2626; color: white; border: none; padding: 6px 12px; border-radius: 6px; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 4px;">
+              🗑️ Delete Selected
+            </button>
+          </div>
           <table class="dash-table">
             <thead>
               <tr>
-                <th style="width: 18%;">Applicant Name</th>
-                <th style="width: 20%;">Email / Phone</th>
+                <th style="width: 5%; text-align: center;" *ngIf="canDeleteInquiries()">
+                  <input type="checkbox" [checked]="areAllContactsSelected()" (change)="toggleAllContacts()" style="width: 16px; height: 16px; cursor: pointer;" />
+                </th>
+                <th [style.width.%]="canDeleteInquiries() ? 15 : 20">Applicant Name</th>
+                <th style="width: 18%;">Email / Phone</th>
                 <th style="width: 12%;">Subject</th>
-                <th style="width: 12%;">Message</th>
-                <th style="width: 12%;">Submitted</th>
-                <th style="width: 10%;">Status</th>
-                <th style="width: 16%;">Actions</th>
+                <th style="width: 25%;">Message</th>
+                <th style="width: 11%;">Submitted</th>
+                <th style="width: 7%;">Status</th>
+                <th style="width: 7%;">Actions</th>
               </tr>
             </thead>
             <tbody>
               <tr *ngFor="let sub of contacts" (click)="openInquiryModal(sub, 'contact')" class="clickable-row">
+                <td *ngIf="canDeleteInquiries()" (click)="$event.stopPropagation()" style="text-align: center; vertical-align: middle;">
+                  <input type="checkbox" [checked]="isContactSelected(sub.id)" (change)="toggleContactSelection(sub.id)" style="width: 16px; height: 16px; cursor: pointer;" />
+                </td>
                 <td class="font-bold">{{ sub.name }}</td>
                 <td>
                   <div>{{ sub.email }}</div>
@@ -732,9 +746,12 @@
                   </span>
                 </td>
                 <td>
-                  <div class="actions-cell">
-                    <button *ngIf="sub.status === 'NEW'" (click)="resolveContact(sub.id); $event.stopPropagation()" class="btn-table edit">✓ Resolve</button>
-                    <button *ngIf="sub.status === 'RESOLVED'" [disabled]="true" class="btn-table resolved-btn">✓ Resolved</button>
+                  <div class="actions-cell" (click)="$event.stopPropagation()" style="display: flex; gap: 6px; align-items: center;">
+                    <button *ngIf="sub.status === 'NEW'" (click)="resolveContact(sub.id)" class="btn-table edit" style="margin: 0;">✓ Resolve</button>
+                    <button *ngIf="sub.status === 'RESOLVED'" [disabled]="true" class="btn-table resolved-btn" style="margin: 0;">✓ Resolved</button>
+                    <button *ngIf="canDeleteInquiries()" (click)="deleteSingleContact(sub.id)" class="btn-table delete" style="background: #EF4444; color: white; border: none; padding: 4px 8px; border-radius: 4px; font-size: 0.75rem; cursor: pointer; display: inline-flex; align-items: center; gap: 2px;">
+                      🗑️ Delete
+                    </button>
                   </div>
                 </td>
               </tr>
@@ -744,21 +761,35 @@
 
         <!-- Franchise Forms List -->
         <div class="table-card card" *ngIf="inquiryFilter === 'franchise'">
+          <div *ngIf="canDeleteInquiries() && franchises.length > 0" style="padding: 12px 20px; background: #FFF5F5; border-bottom: 1px solid #FEE2E2; display: flex; align-items: center; justify-content: space-between;">
+            <span style="font-size: 0.85rem; color: #E53E3E; font-weight: 700; display: flex; align-items: center; gap: 6px;">
+              🚨 Admin Access: {{ selectedFranchiseIds.length }} franchise items selected
+            </span>
+            <button class="btn btn-danger btn-sm" (click)="deleteSelectedFranchises()" [disabled]="selectedFranchiseIds.length === 0" style="background: #DC2626; color: white; border: none; padding: 6px 12px; border-radius: 6px; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 4px;">
+              🗑️ Delete Selected
+            </button>
+          </div>
           <table class="dash-table">
             <thead>
               <tr>
-                <th style="width: 18%;">Applicant Name</th>
-                <th style="width: 20%;">Email / Phone</th>
+                <th style="width: 5%; text-align: center;" *ngIf="canDeleteInquiries()">
+                  <input type="checkbox" [checked]="areAllFranchisesSelected()" (change)="toggleAllFranchises()" style="width: 16px; height: 16px; cursor: pointer;" />
+                </th>
+                <th [style.width.%]="canDeleteInquiries() ? 12 : 17">Applicant Name</th>
+                <th style="width: 16%;">Email / Phone</th>
                 <th style="width: 12%;">Location</th>
                 <th style="width: 12%;">Budget Range</th>
-                <th style="width: 10%;">Inquiry Note</th>
-                <th style="width: 12%;">Submitted</th>
-                <th style="width: 8%;">Status</th>
-                <th style="width: 16%;">Actions</th>
+                <th style="width: 18%;">Inquiry Note</th>
+                <th style="width: 10%;">Submitted</th>
+                <th style="width: 7%;">Status</th>
+                <th style="width: 8%;">Actions</th>
               </tr>
             </thead>
             <tbody>
               <tr *ngFor="let inq of franchises" (click)="openInquiryModal(inq, 'franchise')" class="clickable-row">
+                <td *ngIf="canDeleteInquiries()" (click)="$event.stopPropagation()" style="text-align: center; vertical-align: middle;">
+                  <input type="checkbox" [checked]="isFranchiseSelected(inq.id)" (change)="toggleFranchiseSelection(inq.id)" style="width: 16px; height: 16px; cursor: pointer;" />
+                </td>
                 <td class="font-bold">{{ inq.name }}</td>
                 <td>
                   <div>{{ inq.email }}</div>
@@ -774,9 +805,12 @@
                   </span>
                 </td>
                 <td>
-                  <div class="actions-cell">
-                    <button *ngIf="inq.status === 'NEW'" (click)="resolveFranchise(inq.id); $event.stopPropagation()" class="btn-table edit">✓ Resolve</button>
-                    <button *ngIf="inq.status === 'RESOLVED'" [disabled]="true" class="btn-table resolved-btn">✓ Resolved</button>
+                  <div class="actions-cell" (click)="$event.stopPropagation()" style="display: flex; gap: 6px; align-items: center;">
+                    <button *ngIf="inq.status === 'NEW'" (click)="resolveFranchise(inq.id)" class="btn-table edit" style="margin: 0;">✓ Resolve</button>
+                    <button *ngIf="inq.status === 'RESOLVED'" [disabled]="true" class="btn-table resolved-btn" style="margin: 0;">✓ Resolved</button>
+                    <button *ngIf="canDeleteInquiries()" (click)="deleteSingleFranchise(inq.id)" class="btn-table delete" style="background: #EF4444; color: white; border: none; padding: 4px 8px; border-radius: 4px; font-size: 0.75rem; cursor: pointer; display: inline-flex; align-items: center; gap: 2px;">
+                      🗑️ Delete
+                    </button>
                   </div>
                 </td>
               </tr>
@@ -786,17 +820,32 @@
 
         <!-- Job Applications List -->
         <div class="table-card card" *ngIf="inquiryFilter === 'jobs'">
+          <div *ngIf="canDeleteInquiries() && applications.length > 0" style="padding: 12px 20px; background: #FFF5F5; border-bottom: 1px solid #FEE2E2; display: flex; align-items: center; justify-content: space-between;">
+            <span style="font-size: 0.85rem; color: #E53E3E; font-weight: 700; display: flex; align-items: center; gap: 6px;">
+              🚨 Admin Access: {{ selectedJobIds.length }} application items selected
+            </span>
+            <button class="btn btn-danger btn-sm" (click)="deleteSelectedJobs()" [disabled]="selectedJobIds.length === 0" style="background: #DC2626; color: white; border: none; padding: 6px 12px; border-radius: 6px; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 4px;">
+              🗑️ Delete Selected
+            </button>
+          </div>
           <table class="dash-table">
             <thead>
               <tr>
-                <th style="width: 25%;">Applicant Name</th>
-                <th style="width: 30%;">Email / Phone</th>
-                <th style="width: 25%;">Cover Note</th>
-                <th style="width: 20%;">Application Date</th>
+                <th style="width: 5%; text-align: center;" *ngIf="canDeleteInquiries()">
+                  <input type="checkbox" [checked]="areAllJobsSelected()" (change)="toggleAllJobs()" style="width: 16px; height: 16px; cursor: pointer;" />
+                </th>
+                <th [style.width.%]="canDeleteInquiries() ? 20 : 25">Applicant Name</th>
+                <th style="width: 25%;">Email / Phone</th>
+                <th [style.width.%]="canDeleteInquiries() ? 30 : 38">Cover Note</th>
+                <th style="width: 12%;">Application Date</th>
+                <th style="width: 8%;" *ngIf="canDeleteInquiries()">Actions</th>
               </tr>
             </thead>
             <tbody>
               <tr *ngFor="let app of applications" (click)="openInquiryModal(app, 'jobs')" class="clickable-row">
+                <td *ngIf="canDeleteInquiries()" (click)="$event.stopPropagation()" style="text-align: center; vertical-align: middle;">
+                  <input type="checkbox" [checked]="isJobSelected(app.id)" (change)="toggleJobSelection(app.id)" style="width: 16px; height: 16px; cursor: pointer;" />
+                </td>
                 <td class="font-bold">{{ app.applicant_name }}</td>
                 <td>
                   <div>{{ app.applicant_email }}</div>
@@ -804,6 +853,11 @@
                 </td>
                 <td class="message-cell" [title]="app.cover_letter">{{ app.cover_letter }}</td>
                 <td>{{ formatSubmissionDate(app.created_at) }}</td>
+                <td *ngIf="canDeleteInquiries()" (click)="$event.stopPropagation()" style="vertical-align: middle;">
+                  <button (click)="deleteSingleJob(app.id)" class="btn-table delete" style="background: #EF4444; color: white; border: none; padding: 4px 8px; border-radius: 4px; font-size: 0.75rem; cursor: pointer; display: inline-flex; align-items: center; gap: 2px; margin: 0;">
+                    🗑️ Delete
+                  </button>
+                </td>
               </tr>
             </tbody>
           </table>
@@ -1090,21 +1144,33 @@
 
         <!-- Applications Table -->
         <div class="table-card card">
-          <div style="padding: 15px 20px; border-bottom: 1px solid #F1F5F9;">
-            <h3 style="font-size: 1.1rem; color: var(--text-dark);">Submitted Admission Applications</h3>
+          <div style="padding: 15px 20px; border-bottom: 1px solid #F1F5F9; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+            <h3 style="font-size: 1.1rem; color: var(--text-dark); margin: 0;">Submitted Admission Applications</h3>
+            <div *ngIf="canDeleteInquiries() && admissions.length > 0" style="display: flex; align-items: center; gap: 10px;">
+              <span style="font-size: 0.8rem; color: #DC2626; font-weight: 700;">🚨 Admin: {{ selectedAdmissionIds.length }} items selected</span>
+              <button class="btn btn-danger btn-sm" (click)="deleteSelectedAdmissions()" [disabled]="selectedAdmissionIds.length === 0" style="background: #DC2626; color: white; border: none; padding: 6px 12px; border-radius: 6px; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; gap: 4px; font-size: 0.8rem; height: 32px;">
+                🗑️ Delete Selected
+              </button>
+            </div>
           </div>
           <table class="dash-table">
             <thead>
               <tr>
-                <th style="width: 25%;">Child Details</th>
+                <th style="width: 5%; text-align: center;" *ngIf="canDeleteInquiries()">
+                  <input type="checkbox" [checked]="areAllAdmissionsSelected()" (change)="toggleAllAdmissions()" style="width: 16px; height: 16px; cursor: pointer;" />
+                </th>
+                <th [style.width.%]="canDeleteInquiries() ? 20 : 25">Child Details</th>
                 <th style="width: 20%;">Parent Contacts</th>
                 <th style="width: 15%;">Food Allergies</th>
-                <th style="width: 25%;">Vaccinations & Uniforms</th>
-                <th style="width: 15%;">Status & Actions</th>
+                <th style="width: 20%;">Vaccinations & Uniforms</th>
+                <th style="width: 20%;">Status & Actions</th>
               </tr>
             </thead>
             <tbody>
               <tr *ngFor="let app of admissions">
+                <td *ngIf="canDeleteInquiries()" (click)="$event.stopPropagation()" style="text-align: center; vertical-align: middle;">
+                  <input type="checkbox" [checked]="isAdmissionSelected(app.id)" (change)="toggleAdmissionSelection(app.id)" style="width: 16px; height: 16px; cursor: pointer;" />
+                </td>
                 <td>
                   <div style="display: flex; align-items: center; gap: 12px;">
                     <img *ngIf="app.photo_url" [src]="mediaBaseUrl + app.photo_url" style="width: 50px; height: 50px; border-radius: 50%; object-fit: cover; border: 2px solid var(--primary);" alt="Child Photo" />
@@ -1177,14 +1243,19 @@
                       </button>
                     </div>
                     
-                    <button *ngIf="app.status === 'APPROVED'" (click)="openBadgeModal(app)" class="btn btn-sm btn-outline" style="border-color: var(--secondary); color: var(--secondary); padding: 4px 8px; border-radius: 4px; cursor: pointer; font-weight: 600; font-size: 0.8rem;">
-                      📇 View ID Badge
-                    </button>
+                    <div style="display: flex; gap: 5px; flex-wrap: wrap;">
+                      <button *ngIf="app.status === 'APPROVED'" (click)="openBadgeModal(app)" class="btn btn-sm btn-outline" style="border-color: var(--secondary); color: var(--secondary); padding: 4px 8px; border-radius: 4px; cursor: pointer; font-weight: 600; font-size: 0.8rem; height: 30px;">
+                        📇 View ID Badge
+                      </button>
+                      <button *ngIf="canDeleteInquiries()" (click)="deleteSingleAdmission(app.id)" class="btn btn-sm" style="background-color: #EF4444; color: white; border: none; padding: 4px 8px; border-radius: 4px; cursor: pointer; font-weight: 600; font-size: 0.8rem; height: 30px;">
+                        🗑️ Delete
+                      </button>
+                    </div>
                   </div>
                 </td>
               </tr>
               <tr *ngIf="admissions.length === 0">
-                <td colspan="5" style="text-align: center; color: var(--text-light); padding: 30px;">
+                <td [attr.colspan]="canDeleteInquiries() ? 6 : 5" style="text-align: center; color: var(--text-light); padding: 30px;">
                   No student admission applications found.
                 </td>
               </tr>
@@ -1428,6 +1499,44 @@
                   <option value="Principal">Principal</option>
                   <option value="Teacher">Teacher</option>
                 </select>
+              </div>
+
+              <!-- Teacher Specific Details -->
+              <div *ngIf="newUser.role === 'Teacher'" style="border-top: 1px dashed #CBD5E1; padding-top: 15px; margin-top: 15px; margin-bottom: 20px;">
+                <h4 style="margin: 0 0 12px 0; font-size: 0.9rem; font-weight: 700; color: var(--primary); display: flex; align-items: center; gap: 6px;">👩‍🏫 Teacher Profile Details</h4>
+                
+                <div class="form-group" style="margin-bottom: 12px;">
+                  <label class="form-label" style="display: block; font-weight: 600; font-size: 0.8rem; color: #475569; margin-bottom: 4px;">Assigned Classroom Program</label>
+                  <select [(ngModel)]="newUser.assigned_program_id" name="u_program" class="form-control" style="width: 100%; border: 1px solid #CBD5E1; border-radius: 6px; padding: 8px 12px; background: white;">
+                    <option [ngValue]="null">-- Select Program --</option>
+                    <option *ngFor="let p of programs" [value]="p.id">{{ p.title }}</option>
+                  </select>
+                </div>
+
+                <div class="form-group" style="margin-bottom: 12px;">
+                  <label class="form-label" style="display: block; font-weight: 600; font-size: 0.8rem; color: #475569; margin-bottom: 4px;">Education Credentials</label>
+                  <input type="text" [(ngModel)]="newUser.education" name="u_edu" class="form-control" placeholder="e.g. Master of Education (M.Ed.) in Early Pedagogy" style="width: 100%; border: 1px solid #CBD5E1; border-radius: 6px; padding: 8px 12px;" />
+                </div>
+
+                <div class="form-group" style="margin-bottom: 12px;">
+                  <label class="form-label" style="display: block; font-weight: 600; font-size: 0.8rem; color: #475569; margin-bottom: 4px;">Experience Summary</label>
+                  <textarea [(ngModel)]="newUser.experience" name="u_exp" class="form-control" rows="2" placeholder="e.g. 8+ years experience in preschool Montessori education..." style="width: 100%; border: 1px solid #CBD5E1; border-radius: 6px; padding: 8px 12px; font-family: inherit; resize: vertical;"></textarea>
+                </div>
+
+                <div class="form-group" style="margin-bottom: 12px;">
+                  <label class="form-label" style="display: block; font-weight: 600; font-size: 0.8rem; color: #475569; margin-bottom: 4px;">Key Achievements</label>
+                  <textarea [(ngModel)]="newUser.achievements" name="u_ach" class="form-control" rows="3" placeholder="🏆 Certified Early-Childhood Practitioner&#10;⭐ Montessori Specialist" style="width: 100%; border: 1px solid #CBD5E1; border-radius: 6px; padding: 8px 12px; font-family: inherit; resize: vertical;"></textarea>
+                </div>
+
+                <div class="form-group" style="margin-bottom: 12px;">
+                  <label class="form-label" style="display: block; font-weight: 600; font-size: 0.8rem; color: #475569; margin-bottom: 4px;">Upload Teacher's CV (Max 100 MB)</label>
+                  <input type="file" (change)="onCVFileSelected($event)" accept=".pdf,.doc,.docx,image/*" class="form-control" style="width: 100%; border: 1px solid #CBD5E1; border-radius: 6px; padding: 6px; background: white;" />
+                  <span *ngIf="uploadingCV" class="text-small text-light" style="display: block; margin-top: 5px; color: #475569; font-size: 0.75rem;">📤 Uploading CV...</span>
+                  <span *ngIf="cvUploadSuccess" class="text-small" style="color: #27AE60; display: block; margin-top: 5px; font-size: 0.75rem; font-weight: 600;">✅ CV upload complete!</span>
+                  <div *ngIf="newUser.cv_url" style="margin-top: 6px; font-size: 0.8rem;">
+                    <a [href]="getMediaUrl(newUser.cv_url)" target="_blank" style="color: var(--primary); font-weight: 600; text-decoration: underline;">📄 View Current CV File</a>
+                  </div>
+                </div>
               </div>
 
               <div style="display: flex; gap: 10px;">

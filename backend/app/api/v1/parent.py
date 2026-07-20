@@ -155,7 +155,8 @@ def get_parent_dashboard(
             "photo_url": teacher.photo_url or "assets/parent_avatar2_1783324796246.png",
             "education": teacher.education or "Credentials verification in progress",
             "experience": teacher.experience or "Experienced educator dedicated to Vidyankuram early development framework.",
-            "achievements": teacher.achievements or "Verified early-childhood instructor"
+            "achievements": teacher.achievements or "Verified early-childhood instructor",
+            "cv_url": teacher.cv_url
         }
 
     return {

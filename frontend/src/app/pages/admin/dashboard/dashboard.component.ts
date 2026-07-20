@@ -110,6 +110,12 @@ export class DashboardComponent implements OnInit, OnDestroy {
   selectedInquiryType = 'contact'; // 'contact' | 'franchise'
   inquiryModalOpen = false;
 
+  // Selection arrays for bulk delete
+  selectedContactIds: number[] = [];
+  selectedFranchiseIds: number[] = [];
+  selectedJobIds: number[] = [];
+  selectedAdmissionIds: number[] = [];
+
   // Attendance Tab State
   attendanceActiveSubTab = 'mark'; // 'mark' | 'roster' | 'stats'
   attendanceDate = new Date().toISOString().split('T')[0]; // Current YYYY-MM-DD
@@ -197,11 +203,23 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
   // User Management State
   usersList: any[] = [];
-  newUser = { full_name: '', email: '', password: '', role: 'Teacher' };
+  newUser = {
+    full_name: '',
+    email: '',
+    password: '',
+    role: 'Teacher',
+    education: '',
+    experience: '',
+    achievements: '',
+    cv_url: '',
+    assigned_program_id: null as number | null
+  };
   editingUserId: number | null = null;
   usersLoading = false;
   usersError = '';
   usersSuccess = '';
+  uploadingCV = false;
+  cvUploadSuccess = false;
 
   // Stationery Management State
   stationaryItems: StationaryItem[] = [];
@@ -1413,6 +1431,248 @@ export class DashboardComponent implements OnInit, OnDestroy {
     this.closeInquiryModal();
   }
 
+  // --- INQUIRIES & ADMISSIONS DELETE METHODS (ADMIN/SUPERADMIN ONLY) ---
+  canDeleteInquiries(): boolean {
+    const role = this.currentUser?.role?.toUpperCase();
+    return role === 'ADMIN' || role === 'SUPERADMIN';
+  }
+
+  // --- CONTACTS ---
+  toggleContactSelection(id: number): void {
+    const idx = this.selectedContactIds.indexOf(id);
+    if (idx > -1) {
+      this.selectedContactIds.splice(idx, 1);
+    } else {
+      this.selectedContactIds.push(id);
+    }
+  }
+
+  isContactSelected(id: number): boolean {
+    return this.selectedContactIds.includes(id);
+  }
+
+  toggleAllContacts(): void {
+    if (this.areAllContactsSelected()) {
+      this.selectedContactIds = [];
+    } else {
+      this.selectedContactIds = this.contacts.map(c => c.id);
+    }
+  }
+
+  areAllContactsSelected(): boolean {
+    return this.contacts.length > 0 && this.selectedContactIds.length === this.contacts.length;
+  }
+
+  deleteSingleContact(id: number): void {
+    if (!this.canDeleteInquiries()) {
+      this.showToast('You do not have permission to delete inquiries.', 'error');
+      return;
+    }
+    if (!confirm('Are you sure you want to delete this contact submission permanently?')) return;
+    this.contentService.deleteContact(id).subscribe({
+      next: (res) => {
+        this.showToast(res.message || 'Contact inquiry deleted.', 'success');
+        this.selectedContactIds = this.selectedContactIds.filter(cid => cid !== id);
+        this.loadInquiries();
+      },
+      error: (err) => this.showToast(err.error?.detail || 'Failed to delete inquiry.', 'error')
+    });
+  }
+
+  deleteSelectedContacts(): void {
+    if (!this.canDeleteInquiries()) {
+      this.showToast('You do not have permission to delete inquiries.', 'error');
+      return;
+    }
+    if (this.selectedContactIds.length === 0) return;
+    if (!confirm(`Are you sure you want to delete the ${this.selectedContactIds.length} selected contact submissions permanently?`)) return;
+    this.contentService.bulkDeleteContacts(this.selectedContactIds).subscribe({
+      next: (res) => {
+        this.showToast(res.message || 'Selected inquiries deleted.', 'success');
+        this.selectedContactIds = [];
+        this.loadInquiries();
+      },
+      error: (err) => this.showToast(err.error?.detail || 'Failed to delete inquiries.', 'error')
+    });
+  }
+
+  // --- FRANCHISES ---
+  toggleFranchiseSelection(id: number): void {
+    const idx = this.selectedFranchiseIds.indexOf(id);
+    if (idx > -1) {
+      this.selectedFranchiseIds.splice(idx, 1);
+    } else {
+      this.selectedFranchiseIds.push(id);
+    }
+  }
+
+  isFranchiseSelected(id: number): boolean {
+    return this.selectedFranchiseIds.includes(id);
+  }
+
+  toggleAllFranchises(): void {
+    if (this.areAllFranchisesSelected()) {
+      this.selectedFranchiseIds = [];
+    } else {
+      this.selectedFranchiseIds = this.franchises.map(f => f.id);
+    }
+  }
+
+  areAllFranchisesSelected(): boolean {
+    return this.franchises.length > 0 && this.selectedFranchiseIds.length === this.franchises.length;
+  }
+
+  deleteSingleFranchise(id: number): void {
+    if (!this.canDeleteInquiries()) {
+      this.showToast('You do not have permission to delete inquiries.', 'error');
+      return;
+    }
+    if (!confirm('Are you sure you want to delete this franchise inquiry permanently?')) return;
+    this.contentService.deleteFranchise(id).subscribe({
+      next: (res) => {
+        this.showToast(res.message || 'Franchise inquiry deleted.', 'success');
+        this.selectedFranchiseIds = this.selectedFranchiseIds.filter(fid => fid !== id);
+        this.loadInquiries();
+      },
+      error: (err) => this.showToast(err.error?.detail || 'Failed to delete inquiry.', 'error')
+    });
+  }
+
+  deleteSelectedFranchises(): void {
+    if (!this.canDeleteInquiries()) {
+      this.showToast('You do not have permission to delete inquiries.', 'error');
+      return;
+    }
+    if (this.selectedFranchiseIds.length === 0) return;
+    if (!confirm(`Are you sure you want to delete the ${this.selectedFranchiseIds.length} selected franchise inquiries permanently?`)) return;
+    this.contentService.bulkDeleteFranchises(this.selectedFranchiseIds).subscribe({
+      next: (res) => {
+        this.showToast(res.message || 'Selected inquiries deleted.', 'success');
+        this.selectedFranchiseIds = [];
+        this.loadInquiries();
+      },
+      error: (err) => this.showToast(err.error?.detail || 'Failed to delete inquiries.', 'error')
+    });
+  }
+
+  // --- JOBS ---
+  toggleJobSelection(id: number): void {
+    const idx = this.selectedJobIds.indexOf(id);
+    if (idx > -1) {
+      this.selectedJobIds.splice(idx, 1);
+    } else {
+      this.selectedJobIds.push(id);
+    }
+  }
+
+  isJobSelected(id: number): boolean {
+    return this.selectedJobIds.includes(id);
+  }
+
+  toggleAllJobs(): void {
+    if (this.areAllJobsSelected()) {
+      this.selectedJobIds = [];
+    } else {
+      this.selectedJobIds = this.applications.map(a => a.id);
+    }
+  }
+
+  areAllJobsSelected(): boolean {
+    return this.applications.length > 0 && this.selectedJobIds.length === this.applications.length;
+  }
+
+  deleteSingleJob(id: number): void {
+    if (!this.canDeleteInquiries()) {
+      this.showToast('You do not have permission to delete inquiries.', 'error');
+      return;
+    }
+    if (!confirm('Are you sure you want to delete this job application permanently?')) return;
+    this.contentService.deleteJobApplication(id).subscribe({
+      next: (res) => {
+        this.showToast(res.message || 'Job application deleted.', 'success');
+        this.selectedJobIds = this.selectedJobIds.filter(jid => jid !== id);
+        this.loadInquiries();
+      },
+      error: (err) => this.showToast(err.error?.detail || 'Failed to delete application.', 'error')
+    });
+  }
+
+  deleteSelectedJobs(): void {
+    if (!this.canDeleteInquiries()) {
+      this.showToast('You do not have permission to delete inquiries.', 'error');
+      return;
+    }
+    if (this.selectedJobIds.length === 0) return;
+    if (!confirm(`Are you sure you want to delete the ${this.selectedJobIds.length} selected job applications permanently?`)) return;
+    this.contentService.bulkDeleteJobApplications(this.selectedJobIds).subscribe({
+      next: (res) => {
+        this.showToast(res.message || 'Selected job applications deleted.', 'success');
+        this.selectedJobIds = [];
+        this.loadInquiries();
+      },
+      error: (err) => this.showToast(err.error?.detail || 'Failed to delete applications.', 'error')
+    });
+  }
+
+  // --- ADMISSIONS ---
+  toggleAdmissionSelection(id: number): void {
+    const idx = this.selectedAdmissionIds.indexOf(id);
+    if (idx > -1) {
+      this.selectedAdmissionIds.splice(idx, 1);
+    } else {
+      this.selectedAdmissionIds.push(id);
+    }
+  }
+
+  isAdmissionSelected(id: number): boolean {
+    return this.selectedAdmissionIds.includes(id);
+  }
+
+  toggleAllAdmissions(): void {
+    if (this.areAllAdmissionsSelected()) {
+      this.selectedAdmissionIds = [];
+    } else {
+      this.selectedAdmissionIds = this.admissions.map(a => a.id);
+    }
+  }
+
+  areAllAdmissionsSelected(): boolean {
+    return this.admissions.length > 0 && this.selectedAdmissionIds.length === this.admissions.length;
+  }
+
+  deleteSingleAdmission(id: number): void {
+    if (!this.canDeleteInquiries()) {
+      this.showToast('You do not have permission to delete admissions.', 'error');
+      return;
+    }
+    if (!confirm('Are you sure you want to delete this admission application permanently?')) return;
+    this.contentService.deleteAdmissionApplication(id).subscribe({
+      next: (res) => {
+        this.showToast(res.message || 'Admission application deleted.', 'success');
+        this.selectedAdmissionIds = this.selectedAdmissionIds.filter(aid => aid !== id);
+        this.loadAdmissions();
+      },
+      error: (err) => this.showToast(err.error?.detail || 'Failed to delete admission.', 'error')
+    });
+  }
+
+  deleteSelectedAdmissions(): void {
+    if (!this.canDeleteInquiries()) {
+      this.showToast('You do not have permission to delete admissions.', 'error');
+      return;
+    }
+    if (this.selectedAdmissionIds.length === 0) return;
+    if (!confirm(`Are you sure you want to delete the ${this.selectedAdmissionIds.length} selected admission applications permanently?`)) return;
+    this.contentService.bulkDeleteAdmissionApplications(this.selectedAdmissionIds).subscribe({
+      next: (res) => {
+        this.showToast(res.message || 'Selected admissions deleted.', 'success');
+        this.selectedAdmissionIds = [];
+        this.loadAdmissions();
+      },
+      error: (err) => this.showToast(err.error?.detail || 'Failed to delete admissions.', 'error')
+    });
+  }
+
   formatSubmissionDate(dateStr: any): string {
     if (!dateStr) return '';
     const date = new Date(dateStr);
@@ -2308,7 +2568,12 @@ export class DashboardComponent implements OnInit, OnDestroy {
       const updateData: any = {
         full_name: this.newUser.full_name,
         email: this.newUser.email,
-        role: this.newUser.role
+        role: this.newUser.role,
+        education: this.newUser.education,
+        experience: this.newUser.experience,
+        achievements: this.newUser.achievements,
+        cv_url: this.newUser.cv_url,
+        assigned_program_id: this.newUser.assigned_program_id
       };
       if (this.newUser.password) {
         updateData.password = this.newUser.password;
@@ -2341,13 +2606,38 @@ export class DashboardComponent implements OnInit, OnDestroy {
     }
   }
 
+  onCVFileSelected(event: any): void {
+    const file: File = event.target.files[0];
+    if (file && this.newUser) {
+      this.uploadingCV = true;
+      this.cvUploadSuccess = false;
+      this.usersError = '';
+      this.authService.uploadCV(file).subscribe({
+        next: (res) => {
+          this.newUser.cv_url = res.cv_url;
+          this.uploadingCV = false;
+          this.cvUploadSuccess = true;
+        },
+        error: (err) => {
+          this.uploadingCV = false;
+          this.usersError = 'CV Upload failed: ' + (err.error?.detail || err.message);
+        }
+      });
+    }
+  }
+
   editUser(user: any): void {
     this.editingUserId = user.id;
     this.newUser = {
       full_name: user.full_name,
       email: user.email,
       password: '',
-      role: user.role
+      role: user.role,
+      education: user.education || '',
+      experience: user.experience || '',
+      achievements: user.achievements || '',
+      cv_url: user.cv_url || '',
+      assigned_program_id: user.assigned_program_id || null
     };
     this.usersError = '';
     this.usersSuccess = '';
@@ -2390,7 +2680,19 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
   resetUserForm(): void {
     this.editingUserId = null;
-    this.newUser = { full_name: '', email: '', password: '', role: 'Teacher' };
+    this.newUser = {
+      full_name: '',
+      email: '',
+      password: '',
+      role: 'Teacher',
+      education: '',
+      experience: '',
+      achievements: '',
+      cv_url: '',
+      assigned_program_id: null
+    };
+    this.cvUploadSuccess = false;
+    this.uploadingCV = false;
   }
 
   // --- STATIONERY CENTER ---

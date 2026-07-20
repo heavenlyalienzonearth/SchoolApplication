@@ -1,11 +1,12 @@
 from datetime import datetime, timedelta, timezone
 import random
 import uuid
+import os
 from typing import Dict, Tuple, List
 import pyotp
 import urllib.parse
 from jose import jwt
-from fastapi import APIRouter, Depends, HTTPException, status, Response
+from fastapi import APIRouter, Depends, HTTPException, status, Response, File, UploadFile
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from sqlalchemy.orm import Session
 from app.core.database import get_db
@@ -482,7 +483,7 @@ def get_users(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Only administrators have authority to view users."
         )
-    return db.query(models.User).order_by(models.User.created_at.desc()).all()
+    return db.query(models.User).filter(models.User.role != "PARENT").order_by(models.User.created_at.desc()).all()
 
 @router.post("/users", response_model=schemas.UserResponse)
 def create_user(
@@ -523,7 +524,12 @@ def create_user(
         role=matched_role,
         is_active=True,
         two_factor_enabled=True,
-        two_factor_secret=pyotp.random_base32()
+        two_factor_secret=pyotp.random_base32(),
+        cv_url=request.cv_url,
+        education=request.education,
+        experience=request.experience,
+        achievements=request.achievements,
+        assigned_program_id=request.assigned_program_id
     )
     db.add(new_user)
     db.commit()
@@ -592,6 +598,17 @@ def update_user(
         
     if request.password is not None and request.password.strip() != "":
         target_user.hashed_password = security.get_password_hash(request.password)
+
+    if request.cv_url is not None:
+        target_user.cv_url = request.cv_url
+    if request.education is not None:
+        target_user.education = request.education
+    if request.experience is not None:
+        target_user.experience = request.experience
+    if request.achievements is not None:
+        target_user.achievements = request.achievements
+    if request.assigned_program_id is not None:
+        target_user.assigned_program_id = request.assigned_program_id
         
     db.commit()
     db.refresh(target_user)
@@ -679,3 +696,50 @@ def reset_password(request: schemas.ResetPasswordRequest, db: Session = Depends(
     db.commit()
     
     return {"message": "Your password has been successfully reset. You may now log in."}
+
+@router.post("/upload-cv", status_code=status.HTTP_200_OK)
+async def upload_teacher_cv(
+    file: UploadFile = File(...),
+    current_user: models.User = Depends(get_current_user)
+):
+    if current_user.role.upper() not in ["ADMIN", "SUPERADMIN"]:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Only administrators have authority to upload CVs."
+        )
+        
+    filename = file.filename.lower()
+    if not filename.endswith(('.pdf', '.doc', '.docx', '.jpg', '.jpeg', '.png')):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Only PDF, Word Document (.doc, .docx), or Image files are allowed."
+        )
+        
+    MAX_SIZE = 100 * 1024 * 1024 # 100 MB
+    
+    try:
+        content = await file.read()
+        if len(content) > MAX_SIZE:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="File size exceeds the maximum limit of 100 MB."
+            )
+            
+        import uuid
+        ext = os.path.splitext(filename)[1]
+        unique_filename = f"cv_{uuid.uuid4().hex}{ext}"
+        
+        static_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "..", "static"))
+        cvs_dir = os.path.join(static_dir, "cvs")
+        os.makedirs(cvs_dir, exist_ok=True)
+        
+        file_path = os.path.join(cvs_dir, unique_filename)
+        with open(file_path, "wb") as f:
+            f.write(content)
+            
+        cv_url = f"/static/cvs/{unique_filename}"
+        return {"cv_url": cv_url}
+    except HTTPException as he:
+        raise he
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to save CV file: {str(e)}")

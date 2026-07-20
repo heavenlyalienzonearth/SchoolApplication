@@ -161,6 +161,12 @@ import { StationaryService, StationaryItem, StationaryOrder } from '../../core/s
                     <strong style="color: #475569; display: block; margin-bottom: 2px;">🌟 Achievements & Awards:</strong>
                     <span style="color: #334155; white-space: pre-line;">{{ dashboardData.teacher_board.achievements }}</span>
                   </div>
+                  <div *ngIf="dashboardData.teacher_board.cv_url" style="border-top: 1px dashed #E2E8F0; padding-top: 10px; margin-top: 5px;">
+                    <strong style="color: #475569; display: block; margin-bottom: 4px;">📄 Professional Credentials:</strong>
+                    <a [href]="getMediaUrl(dashboardData.teacher_board.cv_url, '')" target="_blank" style="color: var(--secondary); font-weight: 700; text-decoration: underline; display: inline-flex; align-items: center; gap: 4px;">
+                      📥 View Teacher's Professional CV / Resume
+                    </a>
+                  </div>
                 </div>
               </div>
 

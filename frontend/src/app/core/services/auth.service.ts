@@ -207,6 +207,12 @@ export class AuthService {
     return this.apiService.delete<any>(`/auth/users/${userId}`);
   }
 
+  uploadCV(file: File): Observable<any> {
+    const formData = new FormData();
+    formData.append('file', file);
+    return this.apiService.post<any>('/auth/upload-cv', formData);
+  }
+
   getUser2faSetup(userId: number): Observable<TwoFactorSetupResponse> {
     return this.apiService.get<TwoFactorSetupResponse>(`/auth/users/${userId}/2fa/setup`);
   }

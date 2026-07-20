@@ -8,6 +8,12 @@ class UserBase(BaseModel):
     email: EmailStr
     full_name: Optional[str] = None
     role: str = "ADMIN"
+    photo_url: Optional[str] = None
+    cv_url: Optional[str] = None
+    education: Optional[str] = None
+    experience: Optional[str] = None
+    achievements: Optional[str] = None
+    assigned_program_id: Optional[int] = None
 
 class UserCreate(UserBase):
     password: str
@@ -68,6 +74,12 @@ class UserUpdate(BaseModel):
     role: Optional[str] = None
     is_active: Optional[bool] = None
     password: Optional[str] = None
+    photo_url: Optional[str] = None
+    cv_url: Optional[str] = None
+    education: Optional[str] = None
+    experience: Optional[str] = None
+    achievements: Optional[str] = None
+    assigned_program_id: Optional[int] = None
 
 class ForgotPasswordRequest(BaseModel):
     email: EmailStr
