@@ -971,7 +971,14 @@ export class DashboardComponent implements OnInit, OnDestroy {
           this.heroSection = hero;
           if (hero.content_json) {
             try {
-              this.heroSlides = JSON.parse(hero.content_json);
+              const slides = JSON.parse(hero.content_json);
+              this.heroSlides = slides.map((s: any) => ({
+                ...s,
+                original_title_color: s.title_color || '#ffffff',
+                original_subtitle_color: s.subtitle_color || '#FFDE4D',
+                title_color: s.title_color || '#ffffff',
+                subtitle_color: s.subtitle_color || '#FFDE4D'
+              }));
             } catch (e) {
               this.heroSlides = [];
             }
@@ -988,6 +995,8 @@ export class DashboardComponent implements OnInit, OnDestroy {
       subtitle: 'New Slide Subtitle',
       title_color: '#ffffff',
       subtitle_color: '#FFDE4D',
+      original_title_color: '#ffffff',
+      original_subtitle_color: '#FFDE4D',
       image: '/assets/images/hero_kids_learning.jpg',
       cta_text: 'Click Here',
       cta_link: '/'
@@ -996,6 +1005,14 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
   removeHeroSlide(index: number): void {
     this.heroSlides.splice(index, 1);
+  }
+
+  resetSlideColors(index: number): void {
+    const slide = this.heroSlides[index];
+    if (slide) {
+      slide.title_color = slide.original_title_color || '#ffffff';
+      slide.subtitle_color = slide.original_subtitle_color || '#FFDE4D';
+    }
   }
 
   saveHero(): void {
@@ -1015,6 +1032,11 @@ export class DashboardComponent implements OnInit, OnDestroy {
     this.contentService.updatePageSection('home', 'hero', updateData).subscribe({
       next: () => {
         this.heroSuccess = true;
+        // Update baselines
+        this.heroSlides.forEach(s => {
+          s.original_title_color = s.title_color;
+          s.original_subtitle_color = s.subtitle_color;
+        });
         this.showToast('Banner settings saved successfully!');
       },
       error: () => {

@@ -519,10 +519,15 @@
               <div class="form-group">
                 <label class="form-label">Slide Subtitle</label>
                 <input type="text" [(ngModel)]="slide.subtitle" name="slide_sub_{{i}}" class="form-control" />
-                <div style="display: flex; align-items: center; gap: 8px; margin-top: 8px;">
-                  <label style="font-size: 0.8rem; font-weight: 600; color: #475569;">Subtitle Color:</label>
-                  <input type="color" [(ngModel)]="slide.subtitle_color" name="slide_sub_color_{{i}}" style="width: 40px; height: 26px; border: 1px solid #CBD5E1; border-radius: 4px; padding: 1px; cursor: pointer; background: none;" />
-                  <input type="text" [(ngModel)]="slide.subtitle_color" name="slide_sub_color_hex_{{i}}" placeholder="#FFDE4D" style="width: 80px; font-size: 0.78rem; padding: 4px 6px; border: 1px solid #CBD5E1; border-radius: 4px;" />
+                <div style="display: flex; align-items: center; gap: 8px; margin-top: 8px; justify-content: space-between; flex-wrap: wrap;">
+                  <div style="display: flex; align-items: center; gap: 8px;">
+                    <label style="font-size: 0.8rem; font-weight: 600; color: #475569;">Subtitle Color:</label>
+                    <input type="color" [(ngModel)]="slide.subtitle_color" name="slide_sub_color_{{i}}" style="width: 40px; height: 26px; border: 1px solid #CBD5E1; border-radius: 4px; padding: 1px; cursor: pointer; background: none;" />
+                    <input type="text" [(ngModel)]="slide.subtitle_color" name="slide_sub_color_hex_{{i}}" placeholder="#FFDE4D" style="width: 80px; font-size: 0.78rem; padding: 4px 6px; border: 1px solid #CBD5E1; border-radius: 4px;" />
+                  </div>
+                  <button type="button" (click)="resetSlideColors(i)" style="padding: 4px 10px; font-size: 0.72rem; line-height: 1.2; height: 28px; font-weight: 700; background: #F1F5F9; color: #475569; border: 1px solid #CBD5E1; border-radius: 4px; cursor: pointer; display: inline-flex; align-items: center; gap: 4px; transition: all 0.2s;" onmouseover="this.style.background='#E2E8F0'" onmouseout="this.style.background='#F1F5F9'">
+                    🔄 Reset Colors
+                  </button>
                 </div>
               </div>
             </div>
