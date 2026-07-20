@@ -26,6 +26,7 @@
   transition: opacity 1s ease-in-out, visibility 1s ease-in-out;
   display: flex;
   align-items: center;
+  justify-content: center;
 }
 
 .hero-slide.active {
@@ -36,7 +37,13 @@
 
 .slide-content {
   color: var(--white);
-  max-width: 800px;
+  max-width: 900px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
 }
 
 .slide-subtitle {
@@ -48,14 +55,17 @@
   letter-spacing: 2px;
   margin-bottom: 12px;
   text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+  text-align: center;
 }
 
 .slide-title {
-  font-size: 3.8rem;
+  font-size: clamp(1.5rem, 4.5vw, 3.8rem) !important;
   font-weight: 800;
   margin-bottom: 20px;
   text-shadow: 0 3px 6px rgba(0,0,0,0.5);
   line-height: 1.15;
+  white-space: nowrap !important;
+  text-align: center;
 }
 
 .highlighted-title {
@@ -64,16 +74,18 @@
 
 .hero-desc {
   font-size: 1.2rem;
-  margin-bottom: 35px;
+  margin: 0 auto 35px auto;
   text-shadow: 0 2px 4px rgba(0,0,0,0.5);
   max-width: 600px;
   opacity: 0.9;
+  text-align: center;
 }
 
 .hero-actions {
   display: flex;
   gap: 16px;
   flex-wrap: wrap;
+  justify-content: center;
 }
 
 .btn-lg {
