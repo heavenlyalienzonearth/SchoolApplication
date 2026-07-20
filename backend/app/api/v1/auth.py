@@ -730,14 +730,14 @@ async def upload_teacher_cv(
         unique_filename = f"cv_{uuid.uuid4().hex}{ext}"
         
         static_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "..", "static"))
-        cvs_dir = os.path.join(static_dir, "cvs")
-        os.makedirs(cvs_dir, exist_ok=True)
+        photos_dir = os.path.join(static_dir, "photos")
+        os.makedirs(photos_dir, exist_ok=True)
         
-        file_path = os.path.join(cvs_dir, unique_filename)
+        file_path = os.path.join(photos_dir, unique_filename)
         with open(file_path, "wb") as f:
             f.write(content)
             
-        cv_url = f"/static/cvs/{unique_filename}"
+        cv_url = f"/static/photos/{unique_filename}"
         return {"cv_url": cv_url}
     except HTTPException as he:
         raise he
