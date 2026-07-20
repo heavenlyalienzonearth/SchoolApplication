@@ -211,8 +211,8 @@
            (mouseleave)="startGalleryTimer()">
         <div class="gallery-item-card" 
              *ngFor="let item of getFilteredGallery()" 
-             (click)="openLightbox(item.media_url)">
-          <img [src]="item.media_url" [alt]="item.title" class="gallery-img" />
+             (click)="openLightbox(getMediaUrl(item.media_url))">
+          <img [src]="getMediaUrl(item.media_url)" [alt]="item.title" class="gallery-img" />
           <div class="gallery-overlay">
             <span class="zoom-icon">🔍</span>
             <p class="gallery-title">{{ item.title }}</p>

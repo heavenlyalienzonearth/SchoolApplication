@@ -94,8 +94,8 @@ export class HomeComponent implements OnInit, OnDestroy {
   gallerySection: any = {};
   galleryItems: any[] = [];
   categories: string[] = ['All'];
-  selectedCategory = 'All';
   lightboxImage: string | null = null;
+  mediaBaseUrl = window.location.hostname === 'localhost' ? 'http://localhost:8000' : '';
 
   testimonialsSection: any = {};
   testimonials: any[] = [];
@@ -407,6 +407,23 @@ export class HomeComponent implements OnInit, OnDestroy {
 
   closeLightbox(): void {
     this.lightboxImage = null;
+  }
+
+  getMediaUrl(url: string): string {
+    if (!url) return '';
+    let cleaned = url;
+    if (cleaned.includes('localhost:8000')) {
+      cleaned = cleaned.replace(/^https?:\/\/localhost:8000/, '');
+    } else if (cleaned.includes('127.0.0.1:8000')) {
+      cleaned = cleaned.replace(/^https?:\/\/127.0.0.1:8000/, '');
+    }
+    
+    // If it is a backend upload (starts with photos/ or gallery/ or doesn't start with /assets)
+    if (!cleaned.startsWith('/assets') && !cleaned.startsWith('assets') && !cleaned.startsWith('http')) {
+      return (this.mediaBaseUrl || '') + (cleaned.startsWith('/') ? cleaned : '/' + cleaned);
+    }
+    
+    return cleaned;
   }
 
   // --- CONTACT SUBMISSION ---
