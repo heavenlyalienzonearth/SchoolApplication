@@ -508,5 +508,5 @@ def upload_image(
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to save file: {str(e)}")
             
-    return {"url": f"/photos/{unique_filename}"}
+    return {"url": f"/static/photos/{unique_filename}"}
 

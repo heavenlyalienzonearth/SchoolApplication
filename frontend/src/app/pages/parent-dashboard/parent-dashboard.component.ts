@@ -3541,13 +3541,27 @@ export class ParentDashboardComponent implements OnInit, OnDestroy {
 
   getMediaUrl(url: string | null | undefined, defaultUrl: string): string {
     if (!url) return defaultUrl;
-    if (url.startsWith('http://') || url.startsWith('https://')) return url;
-    if (url.startsWith('assets/') || url.startsWith('/assets/')) {
-      return url.startsWith('/') ? url : '/' + url;
+    let cleaned = url;
+    if (cleaned.includes('localhost:8000')) {
+      cleaned = cleaned.replace(/^https?:\/\/localhost:8000/, '');
+    } else if (cleaned.includes('127.0.0.1:8000')) {
+      cleaned = cleaned.replace(/^https?:\/\/127.0.0.1:8000/, '');
+    }
+    
+    // Rewrite legacy /photos/ prefix to /static/photos/ for Nginx compatibility
+    if (cleaned.startsWith('/photos/')) {
+      cleaned = '/static' + cleaned;
+    } else if (cleaned.startsWith('photos/')) {
+      cleaned = '/static/' + cleaned;
+    }
+
+    if (cleaned.startsWith('http://') || cleaned.startsWith('https://')) return cleaned;
+    if (cleaned.startsWith('assets/') || cleaned.startsWith('/assets/')) {
+      return cleaned.startsWith('/') ? cleaned : '/' + cleaned;
     }
     const base = this.mediaBaseUrl || '';
-    const separator = (base && !base.endsWith('/') && !url.startsWith('/')) ? '/' : '';
-    return base + separator + url;
+    const separator = (base && !base.endsWith('/') && !cleaned.startsWith('/')) ? '/' : '';
+    return base + separator + cleaned;
   }
 
   // --- MILESTONES ---
