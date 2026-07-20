@@ -304,11 +304,30 @@ export class DashboardComponent implements OnInit, OnDestroy {
   invoiceGeneration = { term_name: 'Term 1 - 2026', program_id: 0, due_date: '' };
   genInvoiceModalOpen = false;
   selectedInvoice: any = null;
+  invoiceEditModalOpen = false;
+  editingInvoiceId: number | null = null;
+  deleteConfirmModalOpen = false;
+  invoiceToDeleteId: number | null = null;
+  invoiceToDeleteTitle = '';
+  invoiceToDeleteStudent = '';
+  deleteFeeConfirmModalOpen = false;
+  feeToDeleteId: number | null = null;
+  feeToDeleteName = '';
+  feeToDeleteCategory = '';
+  editInvoiceForm = { title: '', amount: 0, waiver_amount: 0, due_date: '', status: 'Unpaid', notes: '', payment_method: '', receipt_no: '' };
   paymentModalOpen = false;
   paymentMethod = 'Cash';
+  paymentReceiptNo = '';
+  paymentDate = '';
   waiverModalOpen = false;
   waiverAmount = 0;
   waiverReason = '';
+  waiverDate = '';
+  waiverApprovedBy = 'Principal';
+  waiverFileUrl = '';
+  uploadingWaiverFile = false;
+  waiverFileUploadSuccess = false;
+  waiverError = '';
 
   // Daily Moments State
   momentsList: StudentMoment[] = [];
@@ -614,11 +633,20 @@ export class DashboardComponent implements OnInit, OnDestroy {
     return colors[category] || { bg: '#F3F4F6', text: '#374151' };
   }
 
-  deleteFeeStructure(id: number): void {
-    if (!confirm('Are you sure you want to delete this fee structure?')) return;
-    this.contentService.deleteFeeStructure(id).subscribe({
+  confirmDeleteFeeStructure(fee: any): void {
+    this.feeToDeleteId = fee.id;
+    this.feeToDeleteName = fee.name;
+    this.feeToDeleteCategory = fee.category;
+    this.deleteFeeConfirmModalOpen = true;
+  }
+
+  executeDeleteFeeStructure(): void {
+    if (!this.feeToDeleteId) return;
+    this.contentService.deleteFeeStructure(this.feeToDeleteId).subscribe({
       next: () => {
         this.showToast('Fee structure deleted successfully.', 'success');
+        this.deleteFeeConfirmModalOpen = false;
+        this.feeToDeleteId = null;
         this.loadFeeStructures();
       },
       error: (err) => {
@@ -682,12 +710,26 @@ export class DashboardComponent implements OnInit, OnDestroy {
   openRecordPaymentModal(invoice: any): void {
     this.selectedInvoice = invoice;
     this.paymentMethod = 'Cash';
+    this.paymentReceiptNo = '';
+    
+    // Set default paid date to today in local timezone YYYY-MM-DD
+    const today = new Date();
+    const yyyy = today.getFullYear();
+    const mm = String(today.getMonth() + 1).padStart(2, '0');
+    const dd = String(today.getDate()).padStart(2, '0');
+    this.paymentDate = `${yyyy}-${mm}-${dd}`;
+    
     this.paymentModalOpen = true;
   }
 
   recordInvoicePayment(): void {
     if (!this.selectedInvoice) return;
-    this.contentService.recordInvoicePayment(this.selectedInvoice.id, { payment_method: this.paymentMethod }).subscribe({
+    const payload = {
+      payment_method: this.paymentMethod,
+      receipt_no: this.paymentReceiptNo.trim() || undefined,
+      paid_date: this.paymentDate || undefined
+    };
+    this.contentService.recordInvoicePayment(this.selectedInvoice.id, payload).subscribe({
       next: (res) => {
         this.showToast(res.message || 'Payment recorded successfully.', 'success');
         this.paymentModalOpen = false;
@@ -700,11 +742,115 @@ export class DashboardComponent implements OnInit, OnDestroy {
     });
   }
 
+  openEditInvoiceModal(invoice: any): void {
+    this.editingInvoiceId = invoice.id;
+    this.editInvoiceForm = {
+      title: invoice.title,
+      amount: invoice.amount,
+      waiver_amount: invoice.waiver_amount || 0,
+      due_date: invoice.due_date,
+      status: invoice.status,
+      notes: invoice.notes || '',
+      payment_method: invoice.payment_method || '',
+      receipt_no: invoice.receipt_no || ''
+    };
+    this.invoiceEditModalOpen = true;
+  }
+
+  updateInvoice(): void {
+    if (!this.editingInvoiceId) return;
+    if (!this.editInvoiceForm.title.trim()) {
+      this.showToast('Please enter an invoice item title.', 'error');
+      return;
+    }
+    if (this.editInvoiceForm.amount < 0) {
+      this.showToast('Amount cannot be negative.', 'error');
+      return;
+    }
+    const payload = {
+      title: this.editInvoiceForm.title.trim(),
+      amount: Number(this.editInvoiceForm.amount),
+      waiver_amount: Number(this.editInvoiceForm.waiver_amount),
+      due_date: this.editInvoiceForm.due_date,
+      status: this.editInvoiceForm.status,
+      notes: this.editInvoiceForm.notes ? this.editInvoiceForm.notes.trim() : null,
+      payment_method: this.editInvoiceForm.payment_method ? this.editInvoiceForm.payment_method.trim() : null,
+      receipt_no: this.editInvoiceForm.receipt_no ? this.editInvoiceForm.receipt_no.trim() : null
+    };
+
+    this.contentService.updateInvoice(this.editingInvoiceId, payload).subscribe({
+      next: (res) => {
+        this.showToast(res.message || 'Invoice updated successfully.', 'success');
+        this.invoiceEditModalOpen = false;
+        this.editingInvoiceId = null;
+        this.loadInvoices();
+      },
+      error: (err) => {
+        this.showToast(err.error?.detail || 'Failed to update invoice.', 'error');
+      }
+    });
+  }
+
+  confirmDeleteInvoice(invoice: any): void {
+    this.invoiceToDeleteId = invoice.id;
+    this.invoiceToDeleteTitle = invoice.title;
+    this.invoiceToDeleteStudent = invoice.student_name;
+    this.deleteConfirmModalOpen = true;
+  }
+
+  executeDeleteInvoice(): void {
+    if (!this.invoiceToDeleteId) return;
+    this.contentService.deleteInvoice(this.invoiceToDeleteId).subscribe({
+      next: (res) => {
+        this.showToast(res.message || 'Invoice deleted successfully.', 'success');
+        this.deleteConfirmModalOpen = false;
+        this.invoiceToDeleteId = null;
+        this.loadInvoices();
+      },
+      error: (err) => {
+        this.showToast(err.error?.detail || 'Failed to delete invoice.', 'error');
+      }
+    });
+  }
+
   openWaiverModal(invoice: any): void {
     this.selectedInvoice = invoice;
     this.waiverAmount = 0;
     this.waiverReason = '';
+    this.waiverApprovedBy = 'Principal';
+    this.waiverFileUrl = '';
+    this.waiverFileUploadSuccess = false;
+    this.uploadingWaiverFile = false;
+    this.waiverError = '';
+
+    // Set default waiver date to today
+    const today = new Date();
+    const yyyy = today.getFullYear();
+    const mm = String(today.getMonth() + 1).padStart(2, '0');
+    const dd = String(today.getDate()).padStart(2, '0');
+    this.waiverDate = `${yyyy}-${mm}-${dd}`;
+
     this.waiverModalOpen = true;
+  }
+
+  onWaiverFileSelected(event: any): void {
+    const file: File = event.target.files[0];
+    if (file) {
+      this.uploadingWaiverFile = true;
+      this.waiverFileUploadSuccess = false;
+      this.waiverError = '';
+      this.authService.uploadCV(file).subscribe({
+        next: (res) => {
+          this.waiverFileUrl = res.cv_url;
+          this.uploadingWaiverFile = false;
+          this.waiverFileUploadSuccess = true;
+        },
+        error: (err) => {
+          this.uploadingWaiverFile = false;
+          this.waiverError = 'File upload failed: ' + (err.error?.detail || err.message);
+        }
+      });
+    }
   }
 
   issueInvoiceWaiver(): void {
@@ -717,7 +863,24 @@ export class DashboardComponent implements OnInit, OnDestroy {
       this.showToast('Please state a reason for issuing the waiver.', 'error');
       return;
     }
-    this.contentService.issueInvoiceWaiver(this.selectedInvoice.id, { waiver_amount: this.waiverAmount, reason: this.waiverReason }).subscribe({
+    if (!this.waiverDate) {
+      this.showToast('Please select the waiver approval date.', 'error');
+      return;
+    }
+    if (!this.waiverApprovedBy) {
+      this.showToast('Please specify who approved this waiver.', 'error');
+      return;
+    }
+
+    const payload = {
+      waiver_amount: Number(this.waiverAmount),
+      reason: this.waiverReason.trim(),
+      waiver_approved_by: this.waiverApprovedBy,
+      waiver_date: this.waiverDate,
+      waiver_file_url: this.waiverFileUrl || null
+    };
+
+    this.contentService.issueInvoiceWaiver(this.selectedInvoice.id, payload).subscribe({
       next: (res) => {
         this.showToast(res.message || 'Waiver recorded.', 'success');
         this.waiverModalOpen = false;

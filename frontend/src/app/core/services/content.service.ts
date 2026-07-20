@@ -410,6 +410,14 @@ export class ContentService {
     return this.apiService.post<any>('/finance/invoices/remind-all', {});
   }
 
+  updateInvoice(invoiceId: number, data: any): Observable<any> {
+    return this.apiService.put<any>(`/finance/invoices/${invoiceId}`, data);
+  }
+
+  deleteInvoice(invoiceId: number): Observable<any> {
+    return this.apiService.delete<any>(`/finance/invoices/${invoiceId}`);
+  }
+
   // --- STUDENT ADMISSIONS ---
   getVaccinations(): Observable<any[]> {
     return this.apiService.get<any[]>('/admissions/vaccinations');

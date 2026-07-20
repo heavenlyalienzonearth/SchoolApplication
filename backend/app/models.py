@@ -370,6 +370,9 @@ class ParentBill(Base):
     payment_method = Column(String(50), nullable=True)
     receipt_no = Column(String(100), nullable=True)
     waiver_amount = Column(Numeric(10, 2), default=0.00, nullable=False)
+    waiver_approved_by = Column(String(100), nullable=True)
+    waiver_date = Column(String(50), nullable=True)
+    waiver_file_url = Column(String(255), nullable=True)
     notes = Column(String(500), nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
 

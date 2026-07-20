@@ -25,10 +25,25 @@ class InvoicesGenerate(BaseModel):
 
 class ManualPayment(BaseModel):
     payment_method: str
+    receipt_no: Optional[str] = None
+    paid_date: Optional[str] = None
 
 class WaiverIssue(BaseModel):
     waiver_amount: float
     reason: str
+    waiver_approved_by: str
+    waiver_date: str
+    waiver_file_url: Optional[str] = None
+
+class InvoiceUpdate(BaseModel):
+    title: str
+    amount: float
+    waiver_amount: float
+    due_date: str
+    status: str
+    notes: Optional[str] = None
+    payment_method: Optional[str] = None
+    receipt_no: Optional[str] = None
 
 # --- ROUTE HANDLERS ---
 
@@ -142,6 +157,9 @@ def get_invoices(
             "paid_date": b.paid_date.isoformat() if b.paid_date else None,
             "payment_method": b.payment_method,
             "receipt_no": b.receipt_no,
+            "waiver_approved_by": b.waiver_approved_by,
+            "waiver_date": b.waiver_date,
+            "waiver_file_url": b.waiver_file_url,
             "notes": b.notes,
             "created_at": b.created_at.isoformat()
         })
@@ -213,10 +231,25 @@ def record_manual_payment(
         raise HTTPException(status_code=400, detail="Invoice is already paid.")
         
     bill.status = "Paid"
-    bill.paid_date = datetime.utcnow()
-    bill.payment_method = data.payment_method
-    bill.receipt_no = f"REC-MAN-{invoice_id}-{random.randint(1000, 9999)}"
     
+    if data.paid_date:
+        try:
+            if "T" in data.paid_date:
+                bill.paid_date = datetime.fromisoformat(data.paid_date)
+            else:
+                bill.paid_date = datetime.strptime(data.paid_date, "%Y-%m-%d")
+        except Exception:
+            bill.paid_date = datetime.utcnow()
+    else:
+        bill.paid_date = datetime.utcnow()
+        
+    bill.payment_method = data.payment_method
+    
+    if data.receipt_no and data.receipt_no.strip():
+        bill.receipt_no = data.receipt_no.strip()
+    else:
+        bill.receipt_no = f"REC-MAN-{invoice_id}-{random.randint(1000, 9999)}"
+        
     db.commit()
     return {"message": "Payment recorded successfully.", "receipt_no": bill.receipt_no}
 
@@ -240,7 +273,11 @@ def issue_waiver(
     bill.waiver_amount = float(bill.waiver_amount) + data.waiver_amount
     bill.amount = float(bill.amount) - data.waiver_amount
     
-    waiver_note = f"Waiver of {data.waiver_amount:.2f} issued: {data.reason}. "
+    bill.waiver_approved_by = data.waiver_approved_by
+    bill.waiver_date = data.waiver_date
+    bill.waiver_file_url = data.waiver_file_url
+    
+    waiver_note = f"Waiver of {data.waiver_amount:.2f} approved by {data.waiver_approved_by} on {data.waiver_date}: {data.reason}. "
     bill.notes = waiver_note + (bill.notes or "")
     
     if float(bill.amount) <= 0:
@@ -315,3 +352,45 @@ def send_bulk_payment_reminders(
         reminded_count += 1
         
     return {"message": f"Sent {reminded_count} bulk email reminders to parents."}
+
+@router.put("/finance/invoices/{invoice_id}")
+def update_invoice(
+    invoice_id: int,
+    data: InvoiceUpdate,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_permission("finance-ledger"))
+):
+    bill = db.query(models.ParentBill).filter(models.ParentBill.id == invoice_id).first()
+    if not bill:
+        raise HTTPException(status_code=404, detail="Invoice not found.")
+        
+    bill.title = data.title
+    bill.amount = data.amount
+    bill.waiver_amount = data.waiver_amount
+    bill.due_date = data.due_date
+    bill.status = data.status
+    bill.notes = data.notes
+    bill.payment_method = data.payment_method
+    bill.receipt_no = data.receipt_no
+    
+    if data.status == "Paid" and not bill.paid_date:
+        bill.paid_date = datetime.utcnow()
+    elif data.status == "Unpaid":
+        bill.paid_date = None
+        
+    db.commit()
+    return {"message": "Invoice updated successfully."}
+
+@router.delete("/finance/invoices/{invoice_id}")
+def delete_invoice(
+    invoice_id: int,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_permission("finance-ledger"))
+):
+    bill = db.query(models.ParentBill).filter(models.ParentBill.id == invoice_id).first()
+    if not bill:
+        raise HTTPException(status_code=404, detail="Invoice not found.")
+        
+    db.delete(bill)
+    db.commit()
+    return {"message": "Invoice deleted successfully."}
