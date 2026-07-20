@@ -70,6 +70,20 @@ export class HomeComponent implements OnInit, OnDestroy {
       image: '/assets/images/solar_system.png',
       description: 'Former Indian Air Force pilot who flew aboard Soyuz T-11 in 1984, spending over 7 days in space conducting research on the Salyut 7 space station.',
       floatClass: 'float-path-4'
+    },
+    {
+      name: 'Dr. Satish Dhawan',
+      role: 'Pioneer of Indian Space Technology',
+      image: '/assets/images/space_exploration.png',
+      description: 'Longest-serving ISRO Chairman who pioneered fluid dynamics research and established India\'s primary satellite launch facilities at Sriharikota.',
+      floatClass: 'float-path-5'
+    },
+    {
+      name: 'Dr. Udupi Ramachandra Rao',
+      role: 'Father of Indian Satellite Tech',
+      image: '/assets/images/solar_system.png',
+      description: 'Space scientist and former ISRO Chairman who led the development of India\'s first satellite Aryabhata in 1975 and pioneered satellite systems.',
+      floatClass: 'float-path-6'
     }
   ];
 
