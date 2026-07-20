@@ -489,30 +489,24 @@ def upload_image(
     if not file.content_type.startswith("image/"):
         raise HTTPException(status_code=400, detail="Only image files are allowed")
         
-    orig_filename = file.filename
+    filename = file.filename.lower()
     import re
-    name, ext = os.path.splitext(orig_filename)
+    import uuid
+    name, ext = os.path.splitext(filename)
     sanitized_name = re.sub(r'[^a-zA-Z0-9_\-]', '_', name)
-    safe_filename = f"{sanitized_name}{ext}"
+    unique_filename = f"gallery_{sanitized_name}_{uuid.uuid4().hex[:8]}{ext}"
     
-    src_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "..", "..", "frontend", "public", "assets", "images"))
-    dist_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "..", "..", "frontend", "dist", "frontend", "browser", "assets", "images"))
+    static_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "..", "static"))
+    photos_dir = os.path.join(static_dir, "photos")
+    os.makedirs(photos_dir, exist_ok=True)
     
-    os.makedirs(src_dir, exist_ok=True)
-    src_path = os.path.join(src_dir, safe_filename)
+    file_path = os.path.join(photos_dir, unique_filename)
     
     try:
-        with open(src_path, "wb") as buffer:
+        with open(file_path, "wb") as buffer:
             shutil.copyfileobj(file.file, buffer)
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to save file: {str(e)}")
-        
-    if os.path.exists(dist_dir):
-        dist_path = os.path.join(dist_dir, safe_filename)
-        try:
-            shutil.copyfile(src_path, dist_path)
-        except:
-            pass
             
-    return {"url": f"http://localhost:8000/assets/images/{safe_filename}"}
+    return {"url": f"/photos/{unique_filename}"}
 

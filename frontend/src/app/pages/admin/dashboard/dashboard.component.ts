@@ -1256,6 +1256,23 @@ export class DashboardComponent implements OnInit, OnDestroy {
     });
   }
 
+  getMediaUrl(url: string): string {
+    if (!url) return '';
+    let cleaned = url;
+    if (cleaned.includes('localhost:8000')) {
+      cleaned = cleaned.replace(/^https?:\/\/localhost:8000/, '');
+    } else if (cleaned.includes('127.0.0.1:8000')) {
+      cleaned = cleaned.replace(/^https?:\/\/127.0.0.1:8000/, '');
+    }
+    
+    // If it is a backend upload (starts with photos/ or gallery/ or doesn't start with /assets)
+    if (!cleaned.startsWith('/assets') && !cleaned.startsWith('assets') && !cleaned.startsWith('http')) {
+      return (this.mediaBaseUrl || '') + (cleaned.startsWith('/') ? cleaned : '/' + cleaned);
+    }
+    
+    return (cleaned.startsWith('/') || cleaned.startsWith('http')) ? cleaned : '/' + cleaned;
+  }
+
   openGalleryModal(item: any = null): void {
     this.gallerySuccess = false;
     this.uploadSuccess = false;
