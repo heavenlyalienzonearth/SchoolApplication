@@ -1530,7 +1530,7 @@
 
                 <div class="form-group" style="margin-bottom: 12px;">
                   <label class="form-label" style="display: block; font-weight: 600; font-size: 0.8rem; color: #475569; margin-bottom: 4px;">Upload Teacher's CV (Max 100 MB)</label>
-                  <input type="file" (change)="onCVFileSelected($event)" accept=".pdf,.doc,.docx,image/*" class="form-control" style="width: 100%; border: 1px solid #CBD5E1; border-radius: 6px; padding: 6px; background: white;" />
+                  <input type="file" id="cvFileInput" (change)="onCVFileSelected($event)" accept=".pdf,.doc,.docx,image/*" class="form-control" style="width: 100%; border: 1px solid #CBD5E1; border-radius: 6px; padding: 6px; background: white;" />
                   <span *ngIf="uploadingCV" class="text-small text-light" style="display: block; margin-top: 5px; color: #475569; font-size: 0.75rem;">📤 Uploading CV...</span>
                   <span *ngIf="cvUploadSuccess" class="text-small" style="color: #27AE60; display: block; margin-top: 5px; font-size: 0.75rem; font-weight: 600;">✅ CV upload complete!</span>
                   <div *ngIf="newUser.cv_url" style="margin-top: 6px; font-size: 0.8rem;">

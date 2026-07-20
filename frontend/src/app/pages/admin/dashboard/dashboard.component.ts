@@ -2641,6 +2641,9 @@ export class DashboardComponent implements OnInit, OnDestroy {
     };
     this.usersError = '';
     this.usersSuccess = '';
+    this.cvUploadSuccess = false;
+    this.uploadingCV = false;
+    this.clearCVFileInput();
   }
 
   toggleUserStatus(user: any): void {
@@ -2678,6 +2681,13 @@ export class DashboardComponent implements OnInit, OnDestroy {
     });
   }
 
+  clearCVFileInput(): void {
+    const fileInput = document.getElementById('cvFileInput') as HTMLInputElement;
+    if (fileInput) {
+      fileInput.value = '';
+    }
+  }
+
   resetUserForm(): void {
     this.editingUserId = null;
     this.newUser = {
@@ -2693,6 +2703,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
     };
     this.cvUploadSuccess = false;
     this.uploadingCV = false;
+    this.clearCVFileInput();
   }
 
   // --- STATIONERY CENTER ---
