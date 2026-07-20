@@ -2842,10 +2842,10 @@
           <p>Define standard fees such as Tuition, Transport, and Uniforms. These will be used to automatically generate invoices.</p>
         </div>
 
-        <div class="row-flex" style="display: grid; grid-template-columns: 1fr 2fr; gap: 30px; margin-top: 20px;">
+        <div class="row-flex" style="display: grid; grid-template-columns: 1fr 2.2fr; gap: 30px; margin-top: 20px;">
           <!-- Left side: Define Structure -->
           <div class="dash-card">
-            <h3>Define Fee Structure</h3>
+            <h3>{{ editingFeeStructureId ? '✏️ Edit Fee Structure' : '➕ Define Fee Structure' }}</h3>
             <div class="form-group" style="margin-top: 15px;">
               <label>Fee Name</label>
               <input type="text" [(ngModel)]="newFeeStructure.name" class="form-control" placeholder="e.g. Tuition Fee (Term 1)" />
@@ -2884,50 +2884,59 @@
             </div>
 
             <button type="button" (click)="createFeeStructure()" class="btn btn-primary" style="margin-top: 20px; width: 100%; border: none; font-weight: 700; color: white; background-color: var(--secondary);">
-              ➕ Define Fee Template
+              {{ editingFeeStructureId ? '💾 Save Changes' : '➕ Define Fee Template' }}
+            </button>
+            
+            <button type="button" *ngIf="editingFeeStructureId" (click)="resetFeeStructureForm()" class="btn btn-secondary" style="margin-top: 10px; width: 100%; font-weight: 700; color: #475569; background-color: #E2E8F0; border: none; border-radius: 6px; padding: 10px; cursor: pointer;">
+              ❌ Cancel Edit
             </button>
           </div>
 
           <!-- Right side: Structures List -->
-          <div class="dash-card">
-            <h3>Configured Fee Templates</h3>
-            <div style="margin-top: 15px; overflow-x: auto;">
-              <table class="table">
-                <thead>
-                  <tr>
-                    <th>Fee Template</th>
-                    <th>Category</th>
-                    <th>Class Scope</th>
-                    <th>Amount</th>
-                    <th>Frequency</th>
-                    <th style="text-align: right;">Action</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr *ngFor="let fee of feeStructures">
-                    <td><strong>{{ fee.name }}</strong></td>
-                    <td>
-                      <span class="badge" [style.background-color]="fee.category === 'Tuition' ? '#EFF6FF' : fee.category === 'Transport' ? '#FEF3C7' : fee.category === 'Uniforms' ? '#ECFDF5' : '#F3F4F6'" [style.color]="fee.category === 'Tuition' ? '#1E40AF' : fee.category === 'Transport' ? '#B45309' : fee.category === 'Uniforms' ? '#065F46' : '#374151'" style="font-weight: 700; padding: 4px 8px; border-radius: 4px;">
-                        {{ fee.category }}
-                      </span>
-                    </td>
-                    <td>{{ fee.program_title }}</td>
-                    <td><strong>₹{{ fee.amount | number:'1.2-2' }}</strong></td>
-                    <td>{{ fee.frequency }}</td>
-                    <td style="text-align: right;">
-                      <button type="button" (click)="deleteFeeStructure(fee.id)" class="btn btn-sm btn-outline" style="border-color: #EF4444; color: #EF4444; background: none; font-weight: 700; border-radius: 4px;">
-                        Delete
-                      </button>
-                    </td>
-                  </tr>
-                  <tr *ngIf="feeStructures.length === 0">
-                    <td colspan="6" style="text-align: center; color: #94a3b8; font-style: italic; padding: 40px;">
-                      No fee structures configured. Add one on the left panel!
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
+          <div class="table-card card">
+            <div style="padding: 15px 20px; border-bottom: 1px solid #F1F5F9;">
+              <h3 style="font-size: 1.1rem; color: var(--text-dark); margin: 0;">Configured Fee Templates</h3>
             </div>
+            <table class="dash-table">
+              <thead>
+                <tr>
+                  <th style="width: 25%;">Fee Template</th>
+                  <th style="width: 15%;">Category</th>
+                  <th style="width: 20%;">Class Scope</th>
+                  <th style="width: 15%;">Amount</th>
+                  <th style="width: 10%;">Frequency</th>
+                  <th style="width: 15%; text-align: right; padding-right: 24px;">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let fee of feeStructures" [style.background-color]="editingFeeStructureId === fee.id ? '#EFF6FF' : 'transparent'">
+                  <td><strong>{{ fee.name }}</strong></td>
+                  <td>
+                    <span class="badge" [style.background-color]="fee.category === 'Tuition' ? '#EFF6FF' : fee.category === 'Transport' ? '#FEF3C7' : fee.category === 'Uniforms' ? '#ECFDF5' : '#F3F4F6'" [style.color]="fee.category === 'Tuition' ? '#1E40AF' : fee.category === 'Transport' ? '#B45309' : fee.category === 'Uniforms' ? '#065F46' : '#374151'" style="font-weight: 700; padding: 4px 8px; border-radius: 4px;">
+                      {{ fee.category }}
+                    </span>
+                  </td>
+                  <td>{{ fee.program_title }}</td>
+                  <td><strong>₹{{ fee.amount | number:'1.2-2' }}</strong></td>
+                  <td>{{ fee.frequency }}</td>
+                  <td style="padding-right: 24px;">
+                    <div style="display: flex; gap: 8px; justify-content: flex-end; align-items: center;">
+                      <button type="button" (click)="editFeeStructure(fee)" class="btn-table edit" style="margin: 0; padding: 6px 12px; font-size: 0.8rem; font-weight: 700; display: inline-flex; align-items: center; gap: 4px; height: 32px; border-radius: 6px; border: 1px solid #CBD5E1;">
+                        ✏️ Edit
+                      </button>
+                      <button type="button" (click)="deleteFeeStructure(fee.id)" class="btn-table delete" style="margin: 0; padding: 0; font-size: 1rem; background: #FEE2E2; color: #DC2626; border: 1px solid #FCA5A5; border-radius: 6px; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; width: 32px; height: 32px; transition: all 0.2s;" onmouseover="this.style.background='#EF4444'; this.style.color='white';" onmouseout="this.style.background='#FEE2E2'; this.style.color='#DC2626';" title="Delete Template">
+                        🗑️
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+                <tr *ngIf="feeStructures.length === 0">
+                  <td colspan="6" style="text-align: center; color: #94a3b8; font-style: italic; padding: 40px;">
+                    No fee structures configured. Add one on the left panel!
+                  </td>
+                </tr>
+              </tbody>
+            </table>
           </div>
         </div>
       </section>

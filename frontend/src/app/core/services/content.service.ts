@@ -372,6 +372,10 @@ export class ContentService {
     return this.apiService.post<any>('/finance/fee-structures', data);
   }
 
+  updateFeeStructure(id: number, data: any): Observable<any> {
+    return this.apiService.put<any>(`/finance/fee-structures/${id}`, data);
+  }
+
   deleteFeeStructure(id: number): Observable<any> {
     return this.apiService.delete<any>(`/finance/fee-structures/${id}`);
   }

@@ -67,6 +67,24 @@ def create_fee_structure(
     db.commit()
     return {"message": "Fee structure defined successfully."}
 
+@router.put("/finance/fee-structures/{structure_id}")
+def update_fee_structure(
+    structure_id: int,
+    data: FeeStructureCreate,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_permission("finance-structures"))
+):
+    structure = db.query(models.FeeStructure).filter(models.FeeStructure.id == structure_id).first()
+    if not structure:
+        raise HTTPException(status_code=404, detail="Structure not found.")
+    structure.name = data.name
+    structure.category = data.category
+    structure.amount = data.amount
+    structure.frequency = data.frequency
+    structure.program_id = data.program_id
+    db.commit()
+    return {"message": "Fee structure updated successfully."}
+
 @router.delete("/finance/fee-structures/{structure_id}")
 def delete_fee_structure(
     structure_id: int,

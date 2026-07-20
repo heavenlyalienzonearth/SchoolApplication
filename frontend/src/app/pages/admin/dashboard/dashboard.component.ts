@@ -299,6 +299,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
   financeLoading = false;
   invoiceFilters = { status: '', program_id: 0, search: '' };
   newFeeStructure = { name: '', category: 'Tuition', amount: 0, frequency: 'Termly', program_id: 0 };
+  editingFeeStructureId: number | null = null;
   invoiceGeneration = { term_name: 'Term 1 - 2026', program_id: 0, due_date: '' };
   genInvoiceModalOpen = false;
   selectedInvoice: any = null;
@@ -490,17 +491,52 @@ export class DashboardComponent implements OnInit, OnDestroy {
       frequency: this.newFeeStructure.frequency,
       program_id: this.newFeeStructure.program_id ? Number(this.newFeeStructure.program_id) : null
     };
-    this.contentService.createFeeStructure(payload).subscribe({
-      next: () => {
-        this.showToast('Fee structure defined successfully.', 'success');
-        this.newFeeStructure.name = '';
-        this.newFeeStructure.amount = 0;
-        this.loadFeeStructures();
-      },
-      error: (err) => {
-        this.showToast(err.error?.detail || 'Failed to create fee structure.', 'error');
-      }
-    });
+
+    if (this.editingFeeStructureId) {
+      this.contentService.updateFeeStructure(this.editingFeeStructureId, payload).subscribe({
+        next: () => {
+          this.showToast('Fee structure updated successfully.', 'success');
+          this.resetFeeStructureForm();
+          this.loadFeeStructures();
+        },
+        error: (err) => {
+          this.showToast(err.error?.detail || 'Failed to update fee structure.', 'error');
+        }
+      });
+    } else {
+      this.contentService.createFeeStructure(payload).subscribe({
+        next: () => {
+          this.showToast('Fee structure defined successfully.', 'success');
+          this.resetFeeStructureForm();
+          this.loadFeeStructures();
+        },
+        error: (err) => {
+          this.showToast(err.error?.detail || 'Failed to create fee structure.', 'error');
+        }
+      });
+    }
+  }
+
+  editFeeStructure(fee: any): void {
+    this.editingFeeStructureId = fee.id;
+    this.newFeeStructure = {
+      name: fee.name,
+      category: fee.category,
+      amount: fee.amount,
+      frequency: fee.frequency,
+      program_id: fee.program_id || 0
+    };
+  }
+
+  resetFeeStructureForm(): void {
+    this.editingFeeStructureId = null;
+    this.newFeeStructure = {
+      name: '',
+      category: 'Tuition',
+      amount: 0,
+      frequency: 'Termly',
+      program_id: this.programs.length > 0 ? this.programs[0].id : 0
+    };
   }
 
   deleteFeeStructure(id: number): void {
