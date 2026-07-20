@@ -300,6 +300,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
   invoiceFilters = { status: '', program_id: 0, search: '' };
   newFeeStructure = { name: '', category: 'Tuition', amount: 0, frequency: 'Termly', program_id: 0 };
   editingFeeStructureId: number | null = null;
+  transportPreset: string = '';
   invoiceGeneration = { term_name: 'Term 1 - 2026', program_id: 0, due_date: '' };
   genInvoiceModalOpen = false;
   selectedInvoice: any = null;
@@ -528,8 +529,25 @@ export class DashboardComponent implements OnInit, OnDestroy {
     };
   }
 
+  applyTransportPreset(): void {
+    if (this.transportPreset === '5') {
+      this.newFeeStructure.name = 'Transport Fee (Upto 5km)';
+      this.newFeeStructure.amount = 1000;
+      this.newFeeStructure.frequency = 'Monthly';
+    } else if (this.transportPreset === '15') {
+      this.newFeeStructure.name = 'Transport Fee (5km to 15km)';
+      this.newFeeStructure.amount = 3500;
+      this.newFeeStructure.frequency = 'Monthly';
+    } else if (this.transportPreset === '30') {
+      this.newFeeStructure.name = 'Transport Fee (15km to 30km)';
+      this.newFeeStructure.amount = 4500;
+      this.newFeeStructure.frequency = 'Monthly';
+    }
+  }
+
   resetFeeStructureForm(): void {
     this.editingFeeStructureId = null;
+    this.transportPreset = '';
     this.newFeeStructure = {
       name: '',
       category: 'Tuition',
@@ -537,6 +555,63 @@ export class DashboardComponent implements OnInit, OnDestroy {
       frequency: 'Termly',
       program_id: this.programs.length > 0 ? this.programs[0].id : 0
     };
+  }
+
+  getGroupedFeeStructures(): any[] {
+    const groups: { [key: string]: any } = {};
+    
+    // Initialize group for General/All Programs
+    groups['General / All Programs'] = {
+      title: '🌍 General / All Programs',
+      fees: []
+    };
+
+    // Initialize groups for each active program
+    this.programs.forEach(prog => {
+      groups[prog.title] = {
+        title: `🏫 Class: ${prog.title}`,
+        fees: []
+      };
+    });
+
+    // Populate fees into their respective program groups
+    this.feeStructures.forEach(fee => {
+      const groupName = fee.program_title || 'General / All Programs';
+      if (!groups[groupName]) {
+        groups[groupName] = {
+          title: `🏫 Class: ${groupName}`,
+          fees: []
+        };
+      }
+      groups[groupName].fees.push(fee);
+    });
+
+    // Return as array, filtering out empty groups
+    return Object.values(groups).filter((g: any) => g.fees.length > 0);
+  }
+
+  getCategoryLabel(category: string): string {
+    const labels: { [key: string]: string } = {
+      'Tuition': 'Tuition Fee',
+      'Books': 'Book Charges',
+      'Uniforms': 'Dress / Uniform',
+      'ExtraCurricular': 'Extra-Curricular',
+      'Transport': 'Transportation',
+      'Other': 'Other Fee'
+    };
+    return labels[category] || category;
+  }
+
+  getCategoryColor(category: string): { bg: string; text: string } {
+    const colors: { [key: string]: { bg: string; text: string } } = {
+      'Tuition': { bg: '#EFF6FF', text: '#1E40AF' },         // Blue
+      'Books': { bg: '#F5F3FF', text: '#5B21B6' },           // Purple
+      'Uniforms': { bg: '#ECFDF5', text: '#065F46' },        // Green
+      'ExtraCurricular': { bg: '#FDF2F8', text: '#9D174D' }, // Pink
+      'Transport': { bg: '#FEF3C7', text: '#B45309' },       // Amber
+      'Other': { bg: '#F3F4F6', text: '#374151' }            // Gray
+    };
+    return colors[category] || { bg: '#F3F4F6', text: '#374151' };
   }
 
   deleteFeeStructure(id: number): void {
@@ -1126,6 +1201,10 @@ export class DashboardComponent implements OnInit, OnDestroy {
       },
       error: () => {}
     });
+  }
+
+  getActivePrograms(): any[] {
+    return this.programs ? this.programs.filter(p => p.is_active) : [];
   }
 
   openProgramModal(prog: any = null): void {
