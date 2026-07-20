@@ -235,7 +235,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
   toastType: 'success' | 'error' = 'success';
   toastVisible = false;
 
-  mediaBaseUrl = window.location.hostname === 'localhost' ? 'http://localhost:8000' : '';
+  mediaBaseUrl = (typeof window !== 'undefined' && window.location.hostname === 'localhost') ? 'http://localhost:8000' : '';
   adminLeaves: any[] = [];
   adminLeavesLoading = false;
   leaveComments: { [key: number]: string } = {};

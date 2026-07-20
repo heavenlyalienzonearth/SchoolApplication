@@ -2939,7 +2939,7 @@ import { StationaryService, StationaryItem, StationaryOrder } from '../../core/s
   `]
 })
 export class ParentDashboardComponent implements OnInit, OnDestroy {
-  mediaBaseUrl = window.location.hostname === 'localhost' ? 'http://localhost:8000' : '';
+  mediaBaseUrl = (typeof window !== 'undefined' && window.location.hostname === 'localhost') ? 'http://localhost:8000' : '';
   parentName = '';
   loginTime = '';
   clockInterval: any;

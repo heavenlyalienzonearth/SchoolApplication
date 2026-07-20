@@ -94,8 +94,9 @@ export class HomeComponent implements OnInit, OnDestroy {
   gallerySection: any = {};
   galleryItems: any[] = [];
   categories: string[] = ['All'];
+  selectedCategory = 'All';
   lightboxImage: string | null = null;
-  mediaBaseUrl = window.location.hostname === 'localhost' ? 'http://localhost:8000' : '';
+  mediaBaseUrl = (typeof window !== 'undefined' && window.location.hostname === 'localhost') ? 'http://localhost:8000' : '';
 
   testimonialsSection: any = {};
   testimonials: any[] = [];
