@@ -293,3 +293,22 @@ def clear_all_logs(
     deleted = db.query(models.VisitorLog).delete()
     db.commit()
     return {"message": f"Successfully cleared all {deleted} traffic log records."}
+
+@router.get("/public-count")
+def get_public_visitor_count(db: Session = Depends(get_db)):
+    """Publicly accessible count of total page hits and unique IP visitors."""
+    total_hits = db.query(func.count(models.VisitorLog.id)).scalar()
+    unique_ips = db.query(func.count(func.distinct(models.VisitorLog.ip_address))).scalar()
+    
+    # Exclude localhost/internal developer addresses from the public view if desired
+    # so we show a realistic number
+    exclude_ips = ["127.0.0.1", "::1", "localhost", "unknown"]
+    unique_public_ips = db.query(func.count(func.distinct(models.VisitorLog.ip_address))).filter(
+        ~models.VisitorLog.ip_address.in_(exclude_ips)
+    ).scalar()
+    
+    return {
+        "total_hits": total_hits or 0,
+        "unique_ips": unique_ips or 0,
+        "unique_public_ips": unique_public_ips or 0
+    }

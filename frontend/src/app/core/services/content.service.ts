@@ -21,6 +21,10 @@ export class ContentService {
     return this.apiService.put<any>('/settings', updates);
   }
 
+  getPublicVisitorCount(): Observable<any> {
+    return this.apiService.get<any>('/traffic/public-count');
+  }
+
   // --- PAGE SECTIONS ---
   getPageSections(pageCode: string): Observable<any[]> {
     return this.apiService.get<any[]>(`/pages/${pageCode}`);

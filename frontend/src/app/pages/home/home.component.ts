@@ -90,6 +90,7 @@ export class HomeComponent implements OnInit, OnDestroy {
   programsSection: any = {};
   programs: any[] = [];
   activeScheduleProgramId: number | null = null;
+  visitorStats: any = null;
 
   gallerySection: any = {};
   galleryItems: any[] = [];
@@ -151,6 +152,7 @@ export class HomeComponent implements OnInit, OnDestroy {
     this.loadBlogs();
     this.startHeroTimer();
     this.startGalleryTimer();
+    this.loadVisitorCount();
     this.contentService.getVaccinations().subscribe({
       next: (data) => {
         this.allVaccinations = data;
@@ -162,6 +164,15 @@ export class HomeComponent implements OnInit, OnDestroy {
     this.contentService.getSettings().subscribe({
       next: (data) => {
         this.settings = data;
+      },
+      error: () => {}
+    });
+  }
+
+  loadVisitorCount(): void {
+    this.contentService.getPublicVisitorCount().subscribe({
+      next: (data) => {
+        this.visitorStats = data;
       },
       error: () => {}
     });

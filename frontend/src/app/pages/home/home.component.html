@@ -595,4 +595,35 @@
   </div>
 </div>
 
+<!-- Visitor Counter Section -->
+<div *ngIf="visitorStats" style="background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%); border-top: 1px solid #e2e8f0; border-bottom: 1px solid #e2e8f0; padding: 25px 0;">
+  <div class="container" style="max-width: 1200px; margin: 0 auto; padding: 0 20px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 20px;">
+    <div style="display: flex; align-items: center; gap: 12px;">
+      <span style="font-size: 2.2rem; filter: drop-shadow(0 4px 6px rgba(0,0,0,0.05));">📡</span>
+      <div>
+        <h4 style="margin: 0; font-size: 1.05rem; font-weight: 800; color: #1e293b;">Live Traffic Insights</h4>
+        <p style="margin: 2px 0 0 0; font-size: 0.8rem; color: #64748b; font-weight: 600;">Real-time visitor telemetry monitoring enabled.</p>
+      </div>
+    </div>
+    
+    <div style="display: flex; gap: 30px; flex-wrap: wrap;">
+      <div style="background: white; border: 1px solid #e2e8f0; padding: 12px 24px; border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.02); display: flex; align-items: center; gap: 15px;">
+        <span style="font-size: 1.6rem;">👥</span>
+        <div>
+          <div style="font-size: 1.4rem; font-weight: 900; color: var(--primary); line-height: 1.1;">{{ visitorStats.unique_public_ips | number }}</div>
+          <div style="font-size: 0.72rem; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px; margin-top: 2px;">Unique Visitors</div>
+        </div>
+      </div>
+
+      <div style="background: white; border: 1px solid #e2e8f0; padding: 12px 24px; border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.02); display: flex; align-items: center; gap: 15px;">
+        <span style="font-size: 1.6rem;">📈</span>
+        <div>
+          <div style="font-size: 1.4rem; font-weight: 900; color: var(--secondary); line-height: 1.1;">{{ visitorStats.total_hits | number }}</div>
+          <div style="font-size: 0.72rem; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px; margin-top: 2px;">Total Page Views</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
 <app-footer></app-footer>
