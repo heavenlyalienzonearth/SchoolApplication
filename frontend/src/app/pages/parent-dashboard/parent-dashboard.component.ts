@@ -1171,7 +1171,7 @@ import { AssignmentService, ClassAssignment } from '../../core/services/assignme
                       <!-- Trash/Delete Button (Only for Pending Unpaid orders) -->
                       <button *ngIf="order.status.toUpperCase() === 'PENDING' && order.payment_status !== 'Paid'"
                               type="button"
-                              (click)="deleteParentOrder(order.id)"
+                              (click)="openDeleteConfirmModal(order.id)"
                               style="background: #fee2e2; color: #dc2626; border: 1px solid #fca5a5; border-radius: 4px; padding: 4px 10px; font-size: 0.75rem; font-weight: 700; cursor: pointer; transition: all 0.2s; display: inline-flex; align-items: center; gap: 4px;"
                               onmouseover="this.style.background='#ef4444'; this.style.color='white';"
                               onmouseout="this.style.background='#fee2e2'; this.style.color='#dc2626';">
@@ -1342,6 +1342,65 @@ import { AssignmentService, ClassAssignment } from '../../core/services/assignme
             <button class="btn-modal btn-cancel" (click)="closeRazorpayMockModal()" style="flex: 1; padding: 10px; font-weight: 700; font-size: 0.85rem; border-radius: 4px; border: 1px solid #cbd5e1; background: none; cursor: pointer;">Cancel</button>
             <button class="btn-modal btn-confirm" (click)="confirmRazorpayMockPayment()" [disabled]="processingPayment" style="flex: 2; padding: 10px; font-weight: 700; font-size: 0.85rem; border-radius: 4px; border: none; background-color: #2563eb; color: white; cursor: pointer;">
               {{ processingPayment ? 'Verifying payment...' : 'Simulate Success' }}
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- CUSTOM DELETE CONFIRMATION MODAL -->
+      <div *ngIf="showDeleteConfirmModal"
+           style="position: fixed; inset: 0; background: rgba(15,23,42,0.55); backdrop-filter: blur(4px); z-index: 9999; display: flex; align-items: center; justify-content: center; padding: 20px; animation: fadeIn 0.2s ease;"
+           (click)="cancelDeleteOrder()">
+        <div (click)="$event.stopPropagation()"
+             style="background: white; border-radius: 20px; box-shadow: 0 25px 60px rgba(0,0,0,0.2); max-width: 420px; width: 100%; overflow: hidden; animation: slideUp 0.25s ease;">
+
+          <!-- Modal Header -->
+          <div style="background: linear-gradient(135deg, #fff1f2, #fef2f2); padding: 32px 28px 20px; text-align: center; border-bottom: 1px solid #fee2e2;">
+            <!-- Animated Warning Icon -->
+            <div style="width: 72px; height: 72px; background: linear-gradient(135deg, #ef4444, #dc2626); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 16px; box-shadow: 0 8px 24px rgba(220,38,38,0.3); animation: pulse 2s infinite;">
+              <span style="font-size: 2rem; line-height: 1;">🗑️</span>
+            </div>
+            <h3 style="margin: 0 0 6px; font-size: 1.3rem; font-weight: 800; color: #0f172a;">Cancel This Order?</h3>
+            <p style="margin: 0; font-size: 0.88rem; color: #64748b; line-height: 1.5;">This action will permanently remove your stationery order and cannot be undone.</p>
+          </div>
+
+          <!-- Order Info Box -->
+          <div style="padding: 20px 28px;">
+            <div style="background: #fafafa; border: 1px solid #f1f5f9; border-radius: 10px; padding: 14px 18px; display: flex; align-items: center; gap: 12px;">
+              <span style="font-size: 1.4rem;">📦</span>
+              <div>
+                <div style="font-size: 0.75rem; font-weight: 700; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.5px;">Order Reference</div>
+                <div style="font-size: 1rem; font-weight: 800; color: #0f172a;">#{{ deleteConfirmOrderId }}</div>
+                <div style="font-size: 0.75rem; color: #64748b; margin-top: 2px;">Status: <span style="color: #d97706; font-weight: 700;">Pending Approval</span></div>
+              </div>
+            </div>
+
+            <p style="margin: 16px 0 0; font-size: 0.82rem; color: #94a3b8; text-align: center;">
+              ⚠️ Only pending &amp; unpaid orders can be cancelled by parents.
+            </p>
+          </div>
+
+          <!-- Action Buttons -->
+          <div style="padding: 0 28px 28px; display: flex; gap: 12px;">
+            <button type="button"
+                    (click)="cancelDeleteOrder()"
+                    [disabled]="deletingOrder"
+                    style="flex: 1; padding: 12px 16px; border-radius: 10px; border: 2px solid #e2e8f0; background: white; color: #475569; font-weight: 700; font-size: 0.9rem; cursor: pointer; transition: all 0.2s;"
+                    onmouseover="this.style.borderColor='#94a3b8'; this.style.background='#f8fafc';"
+                    onmouseout="this.style.borderColor='#e2e8f0'; this.style.background='white';">
+              Keep Order
+            </button>
+            <button type="button"
+                    (click)="confirmDeleteOrder()"
+                    [disabled]="deletingOrder"
+                    style="flex: 2; padding: 12px 16px; border-radius: 10px; border: none; background: linear-gradient(135deg, #ef4444, #dc2626); color: white; font-weight: 800; font-size: 0.9rem; cursor: pointer; transition: all 0.2s; box-shadow: 0 4px 12px rgba(220,38,38,0.3); display: flex; align-items: center; justify-content: center; gap: 8px;"
+                    onmouseover="this.style.transform='translateY(-1px)'; this.style.boxShadow='0 6px 18px rgba(220,38,38,0.4)';"
+                    onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 12px rgba(220,38,38,0.3)';">
+              <span *ngIf="!deletingOrder">🗑️ Yes, Cancel Order</span>
+              <span *ngIf="deletingOrder" style="display:flex; align-items:center; gap:8px;">
+                <span style="width:16px; height:16px; border:2px solid white; border-top-color:transparent; border-radius:50%; display:inline-block; animation:spin 0.7s linear infinite;"></span>
+                Deleting...
+              </span>
             </button>
           </div>
         </div>
@@ -2424,6 +2483,20 @@ import { AssignmentService, ClassAssignment } from '../../core/services/assignme
       to { opacity: 1; transform: translateY(0); }
     }
 
+    @keyframes slideUp {
+      from { opacity: 0; transform: translateY(30px) scale(0.97); }
+      to { opacity: 1; transform: translateY(0) scale(1); }
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    @keyframes pulse {
+      0%, 100% { box-shadow: 0 8px 24px rgba(220,38,38,0.3); }
+      50% { box-shadow: 0 8px 32px rgba(220,38,38,0.55); }
+    }
+
     .calendar-tab-wrapper {
       position: relative;
       background: linear-gradient(135deg, #FFFDF5 0%, #F0F9FF 100%);
@@ -3216,6 +3289,10 @@ export class ParentDashboardComponent implements OnInit, OnDestroy {
   payingOrder: StationaryOrder | null = null;
   showStationaryPayModal = false;
   processingStationaryPayment = false;
+  // --- Delete Confirmation Modal ---
+  showDeleteConfirmModal = false;
+  deleteConfirmOrderId: number | null = null;
+  deletingOrder = false;
   currentMonth: number = new Date().getMonth();
   currentYear: number = new Date().getFullYear();
   calendarDays: any[] = [];
@@ -3554,18 +3631,42 @@ export class ParentDashboardComponent implements OnInit, OnDestroy {
     this.showStationaryPayModal = true;
   }
 
-  deleteParentOrder(orderId: number): void {
-    if (!confirm('Are you sure you want to delete this stationery order? It will be removed from your history.')) return;
-    this.stationaryService.deleteOrder(orderId).subscribe({
+  openDeleteConfirmModal(orderId: number): void {
+    this.deleteConfirmOrderId = orderId;
+    this.showDeleteConfirmModal = true;
+  }
+
+  cancelDeleteOrder(): void {
+    this.showDeleteConfirmModal = false;
+    this.deleteConfirmOrderId = null;
+    this.deletingOrder = false;
+  }
+
+  confirmDeleteOrder(): void {
+    if (!this.deleteConfirmOrderId) return;
+    this.deletingOrder = true;
+    this.stationaryService.deleteOrder(this.deleteConfirmOrderId).subscribe({
       next: (res) => {
-        alert(res.message || 'Order deleted successfully.');
+        this.deletingOrder = false;
+        this.showDeleteConfirmModal = false;
+        this.deleteConfirmOrderId = null;
+        this.successMessage = res.message || 'Order cancelled and removed successfully.';
         this.loadStationaryOrders();
         this.loadDashboardData();
+        setTimeout(() => this.successMessage = '', 4000);
       },
       error: (err) => {
-        alert(err.error?.detail || 'Failed to delete order.');
+        this.deletingOrder = false;
+        this.showDeleteConfirmModal = false;
+        this.deleteConfirmOrderId = null;
+        alert(err.error?.detail || 'Failed to delete order. Please try again.');
       }
     });
+  }
+
+  // Legacy alias kept for any older references
+  deleteParentOrder(orderId: number): void {
+    this.openDeleteConfirmModal(orderId);
   }
 
   closeStationaryPayModal(): void {
