@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.core.config import settings
-from app.api.v1 import auth, settings as api_settings, content, submissions, chatbot, attendance, admissions, holidays, stationary, parent, finance, moments, circulars, library, meals, traffic, permissions
+from app.api.v1 import auth, settings as api_settings, content, submissions, chatbot, attendance, admissions, holidays, stationary, parent, finance, moments, circulars, library, meals, traffic, permissions, assignments
 from app.middleware.traffic import TrafficLoggingMiddleware
 from app.middleware.security import SecurityHeadersMiddleware
 
@@ -47,6 +47,7 @@ app.include_router(moments.router, prefix="/api/v1")
 app.include_router(meals.router, prefix="/api/v1")
 app.include_router(traffic.router, prefix="/api/v1")
 app.include_router(permissions.router, prefix="/api/v1")
+app.include_router(assignments.router, prefix="/api/v1")
 
 
 @app.on_event("startup")

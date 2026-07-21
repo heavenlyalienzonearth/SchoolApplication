@@ -7,6 +7,7 @@ import { ApiService } from '../../../core/services/api.service';
 import { ContentService } from '../../../core/services/content.service';
 import { StationaryService, StationaryItem, StationaryOrder } from '../../../core/services/stationary.service';
 import { MomentsService, StudentMoment } from '../../../core/services/moments.service';
+import { AssignmentService } from '../../../core/services/assignment.service';
 
 @Component({
   selector: 'app-admin-dashboard',
@@ -342,6 +343,16 @@ export class DashboardComponent implements OnInit, OnDestroy {
   momentsList: StudentMoment[] = [];
   momentsLoading = false;
   momentsUploading = false;
+
+  // Daily Class Assignments State
+  assignmentsList: any[] = [];
+  assignmentsLoading = false;
+  assignmentsUploading = false;
+  assignmentsError = '';
+  assignmentsSuccess = '';
+  newAssignment = { program_id: 0, title: '', description: '', date: new Date().toISOString().split('T')[0] };
+  assignmentFilesToUpload: File[] = [];
+  assignmentFileNames: string[] = [];
   momentSelectedStudentId: number | null = null;
   momentSelectedProgramId = 0;
   momentDescription = '';
@@ -356,7 +367,8 @@ export class DashboardComponent implements OnInit, OnDestroy {
     private contentService: ContentService,
     private router: Router,
     private stationaryService: StationaryService,
-    private momentsService: MomentsService
+    private momentsService: MomentsService,
+    private assignmentService: AssignmentService
   ) {}
 
   ngOnInit(): void {
@@ -458,6 +470,8 @@ export class DashboardComponent implements OnInit, OnDestroy {
       this.loadTrafficLogs();
     } else if (tab === 'permissions') {
       this.loadPermissions();
+    } else if (tab === 'assignments') {
+      this.loadAssignments();
     }
   }
 
@@ -3718,6 +3732,115 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
   hasPermission(feature: string): boolean {
     return this.authService.hasPermission(feature);
+  }
+
+  // --- DAILY ASSIGNMENTS ---
+  loadAssignments(): void {
+    this.assignmentsLoading = true;
+    this.assignmentsError = '';
+    
+    // Auto prefill program if empty
+    if (this.programs.length > 0 && !this.newAssignment.program_id) {
+      this.newAssignment.program_id = this.programs[0].id;
+    }
+
+    this.assignmentService.getTeacherAssignments().subscribe({
+      next: (list) => {
+        this.assignmentsList = list;
+        this.assignmentsLoading = false;
+      },
+      error: (err) => {
+        this.assignmentsLoading = false;
+        this.assignmentsError = err.error?.detail || 'Failed to load assignments.';
+      }
+    });
+  }
+
+  onAssignmentFileSelected(event: any): void {
+    const files = event.target.files;
+    if (files && files.length > 0) {
+      this.assignmentFilesToUpload = Array.from(files);
+      this.assignmentFileNames = this.assignmentFilesToUpload.map(f => f.name);
+    }
+  }
+
+  uploadAssignment(): void {
+    if (!this.newAssignment.title.trim()) {
+      this.showToast('Assignment title is required.', 'error');
+      return;
+    }
+    if (this.assignmentFilesToUpload.length === 0) {
+      this.showToast('Please select at least one assignment file to upload.', 'error');
+      return;
+    }
+
+    this.assignmentsUploading = true;
+    this.assignmentsError = '';
+    this.assignmentsSuccess = '';
+
+    const formData = new FormData();
+    formData.append('program_id', this.newAssignment.program_id.toString());
+    formData.append('title', this.newAssignment.title);
+    formData.append('description', this.newAssignment.description || '');
+    formData.append('date', this.newAssignment.date);
+    
+    for (let file of this.assignmentFilesToUpload) {
+      formData.append('files', file, file.name);
+    }
+
+    this.assignmentService.uploadAssignment(formData).subscribe({
+      next: (res) => {
+        this.assignmentsUploading = false;
+        this.showToast(res.message || 'Assignment uploaded successfully.', 'success');
+        this.resetAssignmentForm();
+        this.loadAssignments();
+      },
+      error: (err) => {
+        this.assignmentsUploading = false;
+        this.showToast(err.error?.detail || 'Failed to upload assignment.', 'error');
+      }
+    });
+  }
+
+  deleteAssignment(id: number): void {
+    if (!confirm('Are you sure you want to permanently delete this assignment and its files?')) return;
+    this.assignmentService.deleteAssignment(id).subscribe({
+      next: (res) => {
+        this.showToast(res.message || 'Assignment deleted successfully.', 'success');
+        this.loadAssignments();
+      },
+      error: (err) => {
+        this.showToast(err.error?.detail || 'Failed to delete assignment.', 'error');
+      }
+    });
+  }
+
+  resetAssignmentForm(): void {
+    this.newAssignment = {
+      program_id: this.programs.length > 0 ? this.programs[0].id : 0,
+      title: '',
+      description: '',
+      date: new Date().toISOString().split('T')[0]
+    };
+    this.assignmentFilesToUpload = [];
+    this.assignmentFileNames = [];
+    // Clear the file input element on the DOM
+    const fileInput = document.getElementById('assignmentFiles') as HTMLInputElement;
+    if (fileInput) fileInput.value = '';
+  }
+
+  // Parse files json string safely
+  parseFilesList(filesJson: string): string[] {
+    try {
+      return JSON.parse(filesJson);
+    } catch {
+      return [];
+    }
+  }
+
+  // Get file name from URL path
+  getFileNameFromUrl(url: string): string {
+    return url.substring(url.lastIndexOf('/') + 1);
   }
 
   ngOnDestroy(): void {

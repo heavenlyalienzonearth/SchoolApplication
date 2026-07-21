@@ -8,6 +8,7 @@ import { ParentService, Bill, Milestone, MilestoneGroup, LeaveRequest } from '..
 import { MomentsService, StudentMoment } from '../../core/services/moments.service';
 import { ContentService } from '../../core/services/content.service';
 import { StationaryService, StationaryItem, StationaryOrder } from '../../core/services/stationary.service';
+import { AssignmentService, ClassAssignment } from '../../core/services/assignment.service';
 
 @Component({
   selector: 'app-parent-dashboard',
@@ -266,6 +267,52 @@ import { StationaryService, StationaryItem, StationaryOrder } from '../../core/s
                 </div>
               </div>
 
+              <!-- 📚 Class Assignments Card -->
+              <div class="card assignments-card" style="margin-bottom: 30px; border: 2.5px solid var(--primary); background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);">
+                <h3 class="card-title" style="display: flex; align-items: center; justify-content: space-between; font-size: 1.15rem; font-weight: 800; color: #1e293b; margin: 0 0 8px 0;">
+                  <span>📚 Class Assignments</span>
+                </h3>
+                <p class="subtitle" style="margin: 0 0 20px 0; font-size: 0.85rem; color: #64748B; font-weight: 600;">
+                  Daily class assignments, homework activities, and templates shared by teachers. Files expire after 3 days.
+                </p>
+
+                <div *ngIf="parentAssignmentsLoading" style="text-align: center; padding: 20px; color: #64748b; font-weight: 600;">
+                  <p>Loading assignments...</p>
+                </div>
+
+                <div *ngIf="!parentAssignmentsLoading">
+                  <!-- Grid of Assignments -->
+                  <div style="display: flex; flex-direction: column; gap: 16px;" *ngIf="parentAssignments.length > 0">
+                    <div *ngFor="let assign of parentAssignments" style="border: 1px solid #e2e8f0; border-radius: 8px; padding: 14px; background: #f8fafc; display: flex; flex-direction: column; gap: 8px;">
+                      <div>
+                        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 6px;">
+                          <span style="font-size: 0.9rem; font-weight: 800; color: #1e293b;">{{ assign.title }}</span>
+                          <span style="font-size: 0.68rem; background: #e0f2fe; color: #0369a1; padding: 3px 8px; border-radius: 12px; font-weight: 700;">📅 {{ assign.date }}</span>
+                        </div>
+                        <p *ngIf="assign.description" style="margin: 6px 0 0 0; font-size: 0.8rem; color: #475569; line-height: 1.45; font-weight: 500;">
+                          {{ assign.description }}
+                        </p>
+                      </div>
+
+                      <div style="border-top: 1px dashed #cbd5e1; padding-top: 10px; margin-top: 4px;">
+                        <span style="font-size: 0.72rem; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px; display: block; margin-bottom: 8px;">📎 Assignment Attachments</span>
+                        <div style="display: flex; flex-direction: column; gap: 6px;">
+                          <div *ngFor="let file of parseFilesList(assign.files_json)">
+                            <a [href]="mediaBaseUrl + file" target="_blank" [download]="getFileNameFromUrl(file)" style="display: inline-flex; align-items: center; gap: 6px; font-size: 0.76rem; font-weight: 700; color: var(--primary); text-decoration: none; padding: 6px 12px; background: white; border: 1.5px solid var(--primary); border-radius: 6px; transition: all 0.2s;" onmouseover="this.style.background='var(--primary)'; this.style.color='white'" onmouseout="this.style.background='white'; this.style.color='var(--primary)'">
+                              📥 {{ getFileNameFromUrl(file) | slice:0:30 }}
+                            </a>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div *ngIf="parentAssignments.length === 0" style="text-align: center; color: #94a3b8; font-style: italic; padding: 30px; border: 2px dashed #e2e8f0; border-radius: 8px; background: #fafafa; font-size: 0.88rem;">
+                     No active assignments shared for your child's class in the last 3 days.
+                  </div>
+                </div>
+              </div>
+
               <!-- Timetable & Breakfast Menu Card -->
               <div class="card timetable-card">
                 <h3 class="card-title">🍳 Daily Timetable & Breakfast Menu</h3>
@@ -367,6 +414,41 @@ import { StationaryService, StationaryItem, StationaryOrder } from '../../core/s
                       <div class="order-footer">
                         <span class="order-date">{{ order.order_date | date:'short' }}</span>
                         <span class="order-total">Total: ₹{{ order.total_price }}</span>
+                      </div>
+
+                      <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 8px; border-top: 1px dashed #e2e8f0; padding-top: 8px; gap: 8px; flex-wrap: wrap;">
+                        <div>
+                          <span *ngIf="order.payment_status !== 'Paid' && order.status.toUpperCase() === 'PENDING'" style="color: #d97706; font-size: 0.72rem; font-weight: 700; display: inline-flex; align-items: center; gap: 4px;">
+                            🕒 Pending Teacher Approval
+                          </span>
+                          <span *ngIf="order.payment_status !== 'Paid' && order.status.toUpperCase() !== 'PENDING'" style="color: #10b981; font-size: 0.72rem; font-weight: 700; display: inline-flex; align-items: center; gap: 4px;">
+                            ✅ Approved - Pay Online
+                          </span>
+                          <span *ngIf="order.payment_status === 'Paid'" style="color: #059669; font-size: 0.72rem; font-weight: 700; display: inline-flex; align-items: center; gap: 4px;">
+                            💳 Paid & Completed
+                          </span>
+                        </div>
+                        
+                        <div style="display: flex; gap: 8px;">
+                          <!-- Trash button (Only for Pending Unpaid orders) -->
+                          <button *ngIf="order.status.toUpperCase() === 'PENDING' && order.payment_status !== 'Paid'" 
+                                  type="button" 
+                                  (click)="deleteParentOrder(order.id)" 
+                                  style="background: #fee2e2; color: #dc2626; border: 1px solid #fca5a5; border-radius: 4px; padding: 4px 8px; font-size: 0.72rem; font-weight: 700; cursor: pointer; transition: all 0.2s; display: inline-flex; align-items: center; gap: 2px;"
+                                  onmouseover="this.style.background='#ef4444'; this.style.color='white';"
+                                  onmouseout="this.style.background='#fee2e2'; this.style.color='#dc2626';"
+                                  title="Cancel Order">
+                            🗑️ Delete
+                          </button>
+                          
+                          <!-- Pay Button (Approved & Unpaid) -->
+                          <button *ngIf="order.payment_status !== 'Paid' && order.status.toUpperCase() !== 'PENDING'" 
+                                  type="button" 
+                                  (click)="startOrderPayment(order)" 
+                                  style="background: #10B981; color: white; border: none; border-radius: 4px; padding: 4px 8px; font-size: 0.72rem; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 4px;">
+                            💳 Pay ₹{{ order.total_price }}
+                          </button>
+                        </div>
                       </div>
                     </div>
 
@@ -1151,13 +1233,26 @@ import { StationaryService, StationaryItem, StationaryOrder } from '../../core/s
                       </div>
                     </div>
 
-                    <!-- Pay Action -->
-                    <div *ngIf="order.payment_status !== 'Paid' && (order.status === 'Dispatched' || order.status === 'Delivered')" style="display: flex; justify-content: flex-end; margin-top: 6px;">
-                      <button type="button" (click)="startOrderPayment(order)" style="background: #10B981; color: white; border: none; padding: 4px 10px; border-radius: 4px; font-size: 0.75rem; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 4px;">
+                    <!-- Pay & Delete Actions -->
+                    <div style="display: flex; justify-content: flex-end; gap: 8px; margin-top: 6px;">
+                      <!-- Trash/Delete Button (Only for Pending Unpaid orders) -->
+                      <button *ngIf="order.status.toUpperCase() === 'PENDING' && order.payment_status !== 'Paid'" 
+                              type="button" 
+                              (click)="deleteParentOrder(order.id)" 
+                              style="background: #fee2e2; color: #dc2626; border: 1px solid #fca5a5; border-radius: 4px; padding: 4px 10px; font-size: 0.75rem; font-weight: 700; cursor: pointer; transition: all 0.2s; display: inline-flex; align-items: center; gap: 4px;"
+                              onmouseover="this.style.background='#ef4444'; this.style.color='white';"
+                              onmouseout="this.style.background='#fee2e2'; this.style.color='#dc2626';">
+                        🗑️ Delete Order
+                      </button>
+
+                      <button *ngIf="order.payment_status !== 'Paid' && (order.status === 'Dispatched' || order.status === 'Delivered')" 
+                              type="button" 
+                              (click)="startOrderPayment(order)" 
+                              style="background: #10B981; color: white; border: none; padding: 4px 10px; border-radius: 4px; font-size: 0.75rem; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 4px;">
                         💳 Pay ₹{{ order.total_price }} Now
                       </button>
                     </div>
-                    <div *ngIf="order.payment_status !== 'Paid' && order.status === 'Pending'" style="color: #64748B; font-size: 0.72rem; text-align: right; font-style: italic;">
+                    <div *ngIf="order.payment_status !== 'Paid' && order.status === 'Pending'" style="color: #64748B; font-size: 0.72rem; text-align: right; font-style: italic; margin-top: 4px;">
                       🕒 Pending approval before payment.
                     </div>
                   </div>
@@ -3165,6 +3260,11 @@ export class ParentDashboardComponent implements OnInit, OnDestroy {
   parentMoments: StudentMoment[] = [];
   parentMomentsLoading = false;
 
+  // Parent Class Assignments State
+  parentAssignments: ClassAssignment[] = [];
+  parentAssignmentsLoading = false;
+  parentAssignmentsError = '';
+
   // Calendar & Events State
   eventsList: any[] = [];
   holidaysList: any[] = [];
@@ -3202,7 +3302,8 @@ export class ParentDashboardComponent implements OnInit, OnDestroy {
     private router: Router,
     private momentsService: MomentsService,
     private contentService: ContentService,
-    private stationaryService: StationaryService
+    private stationaryService: StationaryService,
+    private assignmentService: AssignmentService
   ) {}
 
   hasPermission(feature: string): boolean {
@@ -3226,6 +3327,7 @@ export class ParentDashboardComponent implements OnInit, OnDestroy {
     this.parentName = user.full_name || 'Parent';
     this.loadDashboardData();
     this.loadParentMoments();
+    this.loadParentAssignments();
     this.loadCalendarData();
     this.loadStationaryOrders();
     this.loadStationaryCatalog();
@@ -3518,6 +3620,20 @@ export class ParentDashboardComponent implements OnInit, OnDestroy {
   startOrderPayment(order: StationaryOrder): void {
     this.payingOrder = order;
     this.showStationaryPayModal = true;
+  }
+
+  deleteParentOrder(orderId: number): void {
+    if (!confirm('Are you sure you want to delete this stationery order? It will be removed from your history.')) return;
+    this.stationaryService.deleteOrder(orderId).subscribe({
+      next: (res) => {
+        alert(res.message || 'Order deleted successfully.');
+        this.loadStationaryOrders();
+        this.loadDashboardData();
+      },
+      error: (err) => {
+        alert(err.error?.detail || 'Failed to delete order.');
+      }
+    });
   }
 
   closeStationaryPayModal(): void {
@@ -3987,6 +4103,39 @@ export class ParentDashboardComponent implements OnInit, OnDestroy {
     if (parts.length !== 3) return dateStr;
     const date = new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]));
     return date.toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' });
+  }
+
+  // --- PARENT DAILY CLASS ASSIGNMENTS ---
+  loadParentAssignments(): void {
+    const studentId = this.authService.currentUserValue?.student_id;
+    if (!studentId) return;
+
+    this.parentAssignmentsLoading = true;
+    this.parentAssignmentsError = '';
+    this.assignmentService.getParentAssignments(studentId).subscribe({
+      next: (data) => {
+        this.parentAssignments = data;
+        this.parentAssignmentsLoading = false;
+      },
+      error: (err) => {
+        this.parentAssignmentsLoading = false;
+        this.parentAssignmentsError = err.error?.detail || 'Failed to load daily class assignments.';
+      }
+    });
+  }
+
+  // Parse files json string safely
+  parseFilesList(filesJson: string): string[] {
+    try {
+      return JSON.parse(filesJson);
+    } catch {
+      return [];
+    }
+  }
+
+  // Get file name from URL path
+  getFileNameFromUrl(url: string): string {
+    return url.substring(url.lastIndexOf('/') + 1);
   }
 
   ngOnDestroy(): void {

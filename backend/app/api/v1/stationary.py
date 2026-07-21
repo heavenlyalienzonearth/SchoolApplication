@@ -425,13 +425,22 @@ def delete_stationary_order(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(get_current_user)
 ):
-    if current_user.role.upper() not in ["ADMIN", "SUPERADMIN", "PRINCIPAL"]:
-        raise HTTPException(status_code=403, detail="Not authorized to delete stationery orders.")
-        
     order = db.query(models.StationaryOrder).filter(models.StationaryOrder.id == order_id).first()
     if not order:
         raise HTTPException(status_code=404, detail="Order not found.")
         
+    is_authorized = current_user.role.upper() in ["ADMIN", "SUPERADMIN", "PRINCIPAL"] or (
+        current_user.role.upper() == "PARENT" and order.created_by_id == current_user.id
+    )
+    if not is_authorized:
+        raise HTTPException(status_code=403, detail="Not authorized to delete this stationery order.")
+        
+    # Restore stock when deleted
+    for item in order.items:
+        db_item = db.query(models.StationaryItem).filter(models.StationaryItem.id == item.item_id).first()
+        if db_item:
+            db_item.stock += item.quantity
+            
     db.delete(order)
     db.commit()
     return {"message": "Stationery order deleted successfully."}

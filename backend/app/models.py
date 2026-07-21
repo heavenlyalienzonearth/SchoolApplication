@@ -512,4 +512,20 @@ class FeaturePermission(Base):
     is_enabled = Column(Boolean, default=True, nullable=False)
 
 
+class ClassAssignment(Base):
+    __tablename__ = "class_assignments"
+
+    id = Column(Integer, primary_key=True, index=True)
+    program_id = Column(Integer, ForeignKey("programs.id", ondelete="CASCADE"), nullable=False)
+    teacher_id = Column(Integer, ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
+    title = Column(String(255), nullable=False)
+    description = Column(Text, nullable=True)
+    files_json = Column(Text, nullable=False)  # JSON list of relative file paths
+    date = Column(String(50), nullable=False)   # YYYY-MM-DD
+    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+
+    program = relationship("Program")
+    teacher = relationship("User")
+
+
 

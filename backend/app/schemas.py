@@ -638,3 +638,26 @@ class FeaturePermissionUpdate(BaseModel):
     is_enabled: bool
 
 
+# --- CLASS ASSIGNMENT SCHEMAS ---
+
+class ClassAssignmentBase(BaseModel):
+    program_id: int
+    title: str
+    description: Optional[str] = None
+    date: str
+
+class ClassAssignmentCreate(ClassAssignmentBase):
+    pass
+
+class ClassAssignmentResponse(ClassAssignmentBase):
+    id: int
+    teacher_id: Optional[int] = None
+    files_json: str
+    created_at: datetime
+    program: Optional[ProgramResponse] = None
+    teacher: Optional[UserResponse] = None
+
+    class Config:
+        from_attributes = True
+
+

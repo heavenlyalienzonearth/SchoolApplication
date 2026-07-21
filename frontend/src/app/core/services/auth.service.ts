@@ -13,6 +13,8 @@ export interface User {
   created_at: string;
   two_factor_enabled?: boolean;
   permissions?: string[];
+  student_id?: number;
+  assigned_program_id?: number;
 }
 
 export interface AuthResponse {
