@@ -6,6 +6,7 @@ from sqlalchemy.orm import Session
 from pydantic import BaseModel
 from app.core.database import get_db
 from app.api.v1.auth import get_current_user, require_permission
+from app.core.config import settings
 from app import models
 
 router = APIRouter(tags=["Finance"])
@@ -44,6 +45,12 @@ class InvoiceUpdate(BaseModel):
     notes: Optional[str] = None
     payment_method: Optional[str] = None
     receipt_no: Optional[str] = None
+
+class RazorpayVerifySchema(BaseModel):
+    razorpay_order_id: Optional[str] = None
+    razorpay_payment_id: Optional[str] = None
+    razorpay_signature: Optional[str] = None
+    is_mock: bool = False
 
 # --- ROUTE HANDLERS ---
 
@@ -394,3 +401,103 @@ def delete_invoice(
     db.delete(bill)
     db.commit()
     return {"message": "Invoice deleted successfully."}
+
+@router.post("/finance/invoices/{invoice_id}/razorpay-order")
+def create_invoice_razorpay_order(
+    invoice_id: int,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_permission("finance-ledger"))
+):
+    bill = db.query(models.ParentBill).filter(models.ParentBill.id == invoice_id).first()
+    if not bill:
+        raise HTTPException(status_code=404, detail="Invoice not found.")
+        
+    if bill.status == "Paid":
+        raise HTTPException(status_code=400, detail="Invoice is already paid.")
+        
+    # Check if credentials exist
+    if not settings.RAZORPAY_KEY_ID or not settings.RAZORPAY_KEY_SECRET:
+        # Fall back to secure mock mode
+        return {
+            "is_mock": True,
+            "amount": float(bill.amount) * 100,  # in paise
+            "currency": "INR",
+            "bill_id": invoice_id,
+            "title": bill.title
+        }
+        
+    try:
+        import razorpay
+        client = razorpay.Client(auth=(settings.RAZORPAY_KEY_ID, settings.RAZORPAY_KEY_SECRET))
+        order_payload = {
+            "amount": int(float(bill.amount) * 100),  # amount in paise
+            "currency": "INR",
+            "receipt": f"RCPT_{invoice_id}",
+            "payment_capture": 1
+        }
+        
+        # Add random salt to receipt to prevent collision on retry
+        import time
+        order_payload["receipt"] = f"RCPT_{invoice_id}_{int(time.time())}"
+        
+        order = client.order.create(data=order_payload)
+        return {
+            "is_mock": False,
+            "order_id": order["id"],
+            "amount": order["amount"],
+            "currency": order["currency"],
+            "key_id": settings.RAZORPAY_KEY_ID,
+            "title": bill.title
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Razorpay order generation failed: {str(e)}")
+
+@router.post("/finance/invoices/{invoice_id}/razorpay-verify")
+def verify_invoice_razorpay_payment(
+    invoice_id: int,
+    data: RazorpayVerifySchema,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_permission("finance-ledger"))
+):
+    bill = db.query(models.ParentBill).filter(models.ParentBill.id == invoice_id).first()
+    if not bill:
+        raise HTTPException(status_code=404, detail="Invoice not found.")
+        
+    if bill.status == "Paid":
+        raise HTTPException(status_code=400, detail="Invoice is already paid.")
+        
+    from datetime import datetime
+    import time
+    if data.is_mock:
+        # Mock payment verification
+        bill.status = "Paid"
+        bill.paid_date = datetime.utcnow()
+        bill.payment_method = "Razorpay (Simulated)"
+        bill.receipt_no = f"REC-MOCK-PAY-{invoice_id}-{int(time.time())}"
+        db.commit()
+        return {"status": "success", "message": "Simulated payment captured successfully."}
+        
+    # Real signature verification
+    if not settings.RAZORPAY_KEY_ID or not settings.RAZORPAY_KEY_SECRET:
+        raise HTTPException(status_code=400, detail="Razorpay credentials not configured.")
+        
+    try:
+        import razorpay
+        client = razorpay.Client(auth=(settings.RAZORPAY_KEY_ID, settings.RAZORPAY_KEY_SECRET))
+        # Verify payment signature
+        params_dict = {
+            'razorpay_order_id': data.razorpay_order_id,
+            'razorpay_payment_id': data.razorpay_payment_id,
+            'razorpay_signature': data.razorpay_signature
+        }
+        client.utility.verify_payment_signature(params_dict)
+        
+        # Payment is verified
+        bill.status = "Paid"
+        bill.paid_date = datetime.utcnow()
+        bill.payment_method = "Razorpay"
+        bill.receipt_no = f"REC-RZP-{data.razorpay_payment_id}"
+        db.commit()
+        return {"status": "success", "message": "Razorpay payment verified and processed successfully."}
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"Signature verification failed: {str(e)}")

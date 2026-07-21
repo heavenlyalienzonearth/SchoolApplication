@@ -418,6 +418,14 @@ export class ContentService {
     return this.apiService.delete<any>(`/finance/invoices/${invoiceId}`);
   }
 
+  createInvoiceRazorpayOrder(invoiceId: number): Observable<any> {
+    return this.apiService.post<any>(`/finance/invoices/${invoiceId}/razorpay-order`, {});
+  }
+
+  verifyInvoiceRazorpayPayment(invoiceId: number, payload: any): Observable<any> {
+    return this.apiService.post<any>(`/finance/invoices/${invoiceId}/razorpay-verify`, payload);
+  }
+
   // --- STUDENT ADMISSIONS ---
   getVaccinations(): Observable<any[]> {
     return this.apiService.get<any[]>('/admissions/vaccinations');

@@ -319,6 +319,9 @@ export class DashboardComponent implements OnInit, OnDestroy {
   paymentMethod = 'Cash';
   paymentReceiptNo = '';
   paymentDate = '';
+  showRazorpayMockModal = false;
+  razorpayOrderData: any = null;
+  processingPayment = false;
   waiverModalOpen = false;
   waiverAmount = 0;
   waiverReason = '';
@@ -724,6 +727,10 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
   recordInvoicePayment(): void {
     if (!this.selectedInvoice) return;
+    if (this.paymentMethod === 'Online Pay') {
+      this.initiateOnlinePay();
+      return;
+    }
     const payload = {
       payment_method: this.paymentMethod,
       receipt_no: this.paymentReceiptNo.trim() || undefined,
@@ -740,6 +747,89 @@ export class DashboardComponent implements OnInit, OnDestroy {
         this.showToast(err.error?.detail || 'Failed to record payment.', 'error');
       }
     });
+  }
+
+  initiateOnlinePay(): void {
+    if (!this.selectedInvoice) return;
+    this.processingPayment = true;
+    const invId = this.selectedInvoice.id;
+    this.paymentModalOpen = false; // Close Record Payment modal
+    
+    this.contentService.createInvoiceRazorpayOrder(invId).subscribe({
+      next: (data) => {
+        this.processingPayment = false;
+        if (data.is_mock) {
+          // Open simulated Razorpay modal
+          this.razorpayOrderData = data;
+          this.showRazorpayMockModal = true;
+        } else {
+          // Load native Razorpay Checkout window
+          const options = {
+            key: data.key_id,
+            amount: data.amount,
+            currency: data.currency,
+            name: "Vidyankuram Kids School",
+            description: data.title,
+            order_id: data.order_id,
+            handler: (response: any) => {
+              this.verifyOnlinePayment(invId, {
+                razorpay_order_id: response.razorpay_order_id,
+                razorpay_payment_id: response.razorpay_payment_id,
+                razorpay_signature: response.razorpay_signature,
+                is_mock: false
+              });
+            },
+            prefill: {
+              name: this.selectedInvoice.student_name,
+              email: this.selectedInvoice.parent_email || ''
+            },
+            theme: {
+              color: "#2563eb"
+            }
+          };
+          const rzp = new (window as any).Razorpay(options);
+          rzp.open();
+        }
+      },
+      error: (err) => {
+        this.processingPayment = false;
+        this.showToast(err.error?.detail || 'Failed to initialize payment gateway checkout.', 'error');
+      }
+    });
+  }
+
+  verifyOnlinePayment(invoiceId: number, payload: any): void {
+    this.processingPayment = true;
+    this.contentService.verifyInvoiceRazorpayPayment(invoiceId, payload).subscribe({
+      next: (res) => {
+        this.processingPayment = false;
+        this.showRazorpayMockModal = false;
+        this.selectedInvoice = null;
+        this.razorpayOrderData = null;
+        this.showToast(res.message || 'Payment processed successfully!', 'success');
+        this.loadInvoices();
+      },
+      error: (err) => {
+        this.processingPayment = false;
+        this.showRazorpayMockModal = false;
+        this.selectedInvoice = null;
+        this.razorpayOrderData = null;
+        this.showToast(err.error?.detail || 'Razorpay payment verification failed.', 'error');
+      }
+    });
+  }
+
+  confirmRazorpayMockPayment(): void {
+    if (!this.razorpayOrderData) return;
+    this.verifyOnlinePayment(this.razorpayOrderData.bill_id, {
+      is_mock: true
+    });
+  }
+
+  closeRazorpayMockModal(): void {
+    this.showRazorpayMockModal = false;
+    this.selectedInvoice = null;
+    this.razorpayOrderData = null;
   }
 
   openEditInvoiceModal(invoice: any): void {

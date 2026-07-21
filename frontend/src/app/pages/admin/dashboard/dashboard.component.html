@@ -4355,15 +4355,16 @@
             <option value="Bank Transfer">🏛️ Bank Transfer</option>
             <option value="Card">💳 Credit / Debit Card</option>
             <option value="Cheque">✍️ Cheque</option>
+            <option value="Online Pay">💳 Online Pay (Razorpay)</option>
           </select>
         </div>
 
-        <div class="form-group" style="margin-top: 15px;">
+        <div class="form-group" style="margin-top: 15px;" *ngIf="paymentMethod !== 'Online Pay'">
           <label>Receipt Number (Optional)</label>
           <input type="text" [(ngModel)]="paymentReceiptNo" class="form-control" placeholder="e.g. REC-12345 (Leave blank to auto-generate)" />
         </div>
 
-        <div class="form-group" style="margin-top: 15px;">
+        <div class="form-group" style="margin-top: 15px;" *ngIf="paymentMethod !== 'Online Pay'">
           <label>Payment Date</label>
           <input type="date" [(ngModel)]="paymentDate" class="form-control" />
         </div>
@@ -4371,8 +4372,8 @@
     </div>
     <div class="modal-footer" style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px; border-top: 1px solid #f1f5f9; padding-top: 15px;">
       <button type="button" (click)="paymentModalOpen = false; selectedInvoice = null" class="btn btn-outline btn-sm">❌ Cancel</button>
-      <button type="button" (click)="recordInvoicePayment()" class="btn btn-primary btn-sm" style="background-color: #10b981; border: none; color: white; font-weight: 700;">
-        ✅ Confirm & Paid
+      <button type="button" (click)="recordInvoicePayment()" class="btn btn-primary btn-sm" [style.background-color]="paymentMethod === 'Online Pay' ? '#2563eb' : '#10b981'" style="border: none; color: white; font-weight: 700;">
+        {{ paymentMethod === 'Online Pay' ? '💳 Pay with Razorpay' : '✅ Confirm & Paid' }}
       </button>
     </div>
   </div>
@@ -4505,6 +4506,53 @@
       <button type="button" (click)="waiverModalOpen = false; selectedInvoice = null" class="btn btn-outline btn-sm">❌ Cancel</button>
       <button type="button" (click)="issueInvoiceWaiver()" class="btn btn-primary btn-sm" style="background-color: #3b82f6; border: none; color: white; font-weight: 700;">
         ✂️ Record Waiver
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- SIMULATED RAZORPAY CHECKOUT MODAL -->
+<div class="dash-modal" *ngIf="showRazorpayMockModal" style="display: flex; align-items: center; justify-content: center;">
+  <div class="modal-content" style="max-width: 420px; border-radius: 12px; overflow: hidden; box-shadow: 0 10px 25px rgba(0,0,0,0.15); border: none; padding: 0;">
+    <!-- Razorpay Blue Theme Header -->
+    <div style="background-color: #0c2b64; color: white; padding: 25px 20px; display: flex; flex-direction: column; position: relative;">
+      <button type="button" (click)="closeRazorpayMockModal()" style="position: absolute; top: 15px; right: 15px; background: none; border: none; color: #94a3b8; font-size: 1.5rem; cursor: pointer; line-height: 1;">×</button>
+      <div style="display: flex; align-items: center; gap: 12px;">
+        <span style="font-size: 1.8rem; background: rgba(255,255,255,0.15); width: 45px; height: 45px; display: flex; align-items: center; justify-content: center; border-radius: 50%;">🦘</span>
+        <div>
+          <h4 style="margin: 0; font-size: 1.1rem; font-weight: 800; letter-spacing: 0.3px; color: white;">Vidyankuram Kids School</h4>
+          <p style="margin: 2px 0 0 0; font-size: 0.72rem; color: #3b82f6; font-weight: 700; text-transform: uppercase;">Razorpay Checkout <span style="background: #2563eb; color: white; padding: 1px 4px; border-radius: 2px; font-size: 0.6rem; margin-left: 4px;">TEST MODE</span></p>
+        </div>
+      </div>
+    </div>
+    
+    <div style="padding: 20px; background-color: #f8fafc;">
+      <div style="background: white; border: 1px solid #e2e8f0; border-radius: 6px; padding: 15px; text-align: center; margin-bottom: 20px;">
+        <span style="font-size: 0.75rem; color: #64748b; font-weight: 700; text-transform: uppercase; display: block;">Amount to Pay</span>
+        <h2 style="font-size: 1.8rem; font-weight: 800; color: #0f172a; margin: 4px 0 0 0;">₹{{ (razorpayOrderData?.amount / 100) | number:'1.2-2' }}</h2>
+        <p style="margin: 5px 0 0 0; font-size: 0.8rem; color: #475569; font-weight: 600;">{{ razorpayOrderData?.title }}</p>
+      </div>
+      
+      <div style="background: white; border: 1px solid #e2e8f0; border-radius: 6px; padding: 15px;">
+        <h5 style="margin: 0 0 10px 0; font-size: 0.75rem; font-weight: 700; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.5px;">Prefilled Contact</h5>
+        <div style="display: flex; flex-direction: column; gap: 8px; font-size: 0.82rem; color: #334155;">
+          <div style="display: flex; justify-content: space-between;"><span style="color: #64748b;">Invoice ID:</span><strong>#{{ razorpayOrderData?.bill_id }}</strong></div>
+          <div style="display: flex; justify-content: space-between;"><span style="color: #64748b;">Currency:</span><strong>{{ razorpayOrderData?.currency }}</strong></div>
+        </div>
+      </div>
+
+      <div style="margin-top: 20px; text-align: center;">
+        <span style="font-size: 0.72rem; color: #94a3b8; font-weight: 600; display: block; margin-bottom: 8px;">💳 Simulated Test Gateway</span>
+        <p style="font-size: 0.72rem; color: #64748b; line-height: 1.4; margin: 0;">
+          No real money will be charged. Click below to verify and complete order signature simulation.
+        </p>
+      </div>
+    </div>
+
+    <div class="modal-footer" style="padding: 15px 20px; background-color: white; border-top: 1px solid #f1f5f9; display: flex; gap: 10px; margin: 0;">
+      <button type="button" class="btn btn-outline" (click)="closeRazorpayMockModal()" style="flex: 1; padding: 10px; font-weight: 700; font-size: 0.85rem; border-radius: 6px; border: 1px solid #cbd5e1; background: none; cursor: pointer; height: 40px; margin: 0; line-height: 1;">Cancel</button>
+      <button type="button" class="btn btn-primary" (click)="confirmRazorpayMockPayment()" [disabled]="processingPayment" style="flex: 2; padding: 10px; font-weight: 700; font-size: 0.85rem; border-radius: 6px; border: none; background-color: #2563eb; color: white; cursor: pointer; height: 40px; margin: 0; line-height: 1;">
+        {{ processingPayment ? 'Verifying...' : 'Simulate Success' }}
       </button>
     </div>
   </div>
