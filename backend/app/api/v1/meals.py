@@ -64,7 +64,7 @@ def delete_meal_plan(
 @router.get("/suspensions")
 def list_meal_suspensions(
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_permission("meals"))
+    current_user: models.User = Depends(require_permission("leaves"))
 ):
         
     suspensions = db.query(models.MealSuspensionRequest).join(
@@ -90,7 +90,7 @@ def list_meal_suspensions(
 def acknowledge_meal_suspension(
     suspension_id: int,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_permission("meals"))
+    current_user: models.User = Depends(require_permission("leaves"))
 ):
         
     suspension = db.query(models.MealSuspensionRequest).filter(

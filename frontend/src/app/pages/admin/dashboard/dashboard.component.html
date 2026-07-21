@@ -134,22 +134,17 @@
           </li>
         </ng-container>
 
-        <!-- Daily Updates Group -->
-        <li class="sidebar-header" (click)="toggleDailyUpdates()" *ngIf="hasPermission('moments') || hasPermission('leaves')" style="cursor: pointer; display: flex; justify-content: space-between; align-items: center; width: 100%; box-sizing: border-box;">
-          <span>📸 Daily Updates</span>
+        <!-- Parent Requests Group -->
+        <li class="sidebar-header" (click)="toggleDailyUpdates()" *ngIf="hasPermission('leaves')" style="cursor: pointer; display: flex; justify-content: space-between; align-items: center; width: 100%; box-sizing: border-box;">
+          <span>📅 Parent Requests</span>
           <span style="font-size: 0.7rem; color: #94a3b8; font-weight: 800; margin-left: auto;">{{ dailyUpdatesExpanded ? '▼' : '▶' }}</span>
         </li>
         <ng-container *ngIf="dailyUpdatesExpanded">
-          <li [class.active]="activeTab === 'moments'" (click)="setTab('moments')" class="submenu-item" *ngIf="hasPermission('moments')">
-            <span class="icon">📸</span> Daily Moments
-          </li>
           <li [class.active]="activeTab === 'leaves'" (click)="setTab('leaves')" class="submenu-item" *ngIf="hasPermission('leaves')">
-            <span class="icon">📅</span> Parent Requests
-          </li>
-          <li [class.active]="activeTab === 'assignments'" (click)="setTab('assignments')" class="submenu-item">
-            <span class="icon">📚</span> Daily Assignments
+            <span class="icon">📋</span> Parent Requests
           </li>
         </ng-container>
+
       </ul>
     </aside>
 
@@ -174,10 +169,9 @@
           <option value="circulars" *ngIf="hasPermission('circulars')">📢 Circulars</option>
           <option value="library" *ngIf="hasPermission('library')">📚 Library</option>
           <option value="stationary" *ngIf="hasPermission('stationary')">✏️ Stationery Center</option>
-          <option value="moments" *ngIf="hasPermission('moments')">📸 Daily Moments</option>
           <option value="milestones" *ngIf="hasPermission('milestones')">🎯 SetUp Milestones</option>
           <option value="leaves" *ngIf="hasPermission('leaves')">📅 Parent Requests</option>
-          <option value="assignments">📚 Daily Assignments</option>
+
           <option value="finance-structures" *ngIf="hasPermission('finance-structures')">⚙️ Fee Structures</option>
           <option value="finance-ledger" *ngIf="hasPermission('finance-ledger')">📊 Invoices & Ledger</option>
           <option value="traffic" *ngIf="hasPermission('traffic')">📡 Traffic Analytics</option>

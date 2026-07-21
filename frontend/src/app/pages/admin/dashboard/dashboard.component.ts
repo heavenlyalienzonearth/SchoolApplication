@@ -1215,10 +1215,16 @@ export class DashboardComponent implements OnInit, OnDestroy {
       },
       error: (err) => {
         this.adminMealSuspensionsLoading = false;
-        this.showToast(err.error?.detail || 'Failed to load meal instruction list.', 'error');
+        // 403 = Teacher doesn't have meals permission in DB yet — silently show empty list
+        if (err.status === 403) {
+          this.adminMealSuspensions = [];
+        } else {
+          this.showToast(err.error?.detail || 'Failed to load meal instruction list.', 'error');
+        }
       }
     });
   }
+
 
   acknowledgeSuspension(suspensionId: number): void {
     this.apiService.post<any>(`/meals/suspensions/${suspensionId}/acknowledge`, {}).subscribe({
