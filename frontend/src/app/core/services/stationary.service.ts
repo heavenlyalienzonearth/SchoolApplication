@@ -94,4 +94,8 @@ export class StationaryService {
   rejectReimbursement(orderId: number): Observable<any> {
     return this.apiService.post<any>(`/stationary/orders/${orderId}/reimburse-reject`, {});
   }
+
+  deleteOrder(orderId: number): Observable<any> {
+    return this.apiService.delete<any>(`/stationary/orders/${orderId}`);
+  }
 }

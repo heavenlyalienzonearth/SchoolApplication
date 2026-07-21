@@ -418,3 +418,20 @@ def reject_reimbursement(
     db.commit()
     db.refresh(order)
     return {"message": "Reimbursement request rejected.", "order": order}
+
+@router.delete("/orders/{order_id}")
+def delete_stationary_order(
+    order_id: int,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user)
+):
+    if current_user.role.upper() not in ["ADMIN", "SUPERADMIN", "PRINCIPAL"]:
+        raise HTTPException(status_code=403, detail="Not authorized to delete stationery orders.")
+        
+    order = db.query(models.StationaryOrder).filter(models.StationaryOrder.id == order_id).first()
+    if not order:
+        raise HTTPException(status_code=404, detail="Order not found.")
+        
+    db.delete(order)
+    db.commit()
+    return {"message": "Stationery order deleted successfully."}

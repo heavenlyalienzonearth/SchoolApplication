@@ -314,6 +314,10 @@ export class DashboardComponent implements OnInit, OnDestroy {
   feeToDeleteId: number | null = null;
   feeToDeleteName = '';
   feeToDeleteCategory = '';
+  deleteStationaryOrderConfirmModalOpen = false;
+  stationaryOrderToDeleteId: number | null = null;
+  stationaryOrderToDeleteTitle = '';
+  stationaryOrderToDeleteStudent = '';
   editInvoiceForm = { title: '', amount: 0, waiver_amount: 0, due_date: '', status: 'Unpaid', notes: '', payment_method: '', receipt_no: '' };
   paymentModalOpen = false;
   paymentMethod = 'Cash';
@@ -1011,6 +1015,28 @@ export class DashboardComponent implements OnInit, OnDestroy {
       },
       error: (err) => {
         this.showToast(err.error?.detail || 'Failed to delete invoice.', 'error');
+      }
+    });
+  }
+
+  confirmDeleteStationaryOrder(order: any): void {
+    this.stationaryOrderToDeleteId = order.id;
+    this.stationaryOrderToDeleteTitle = `Order #${order.id} (₹${order.total_price})`;
+    this.stationaryOrderToDeleteStudent = order.student_name || order.created_by?.full_name || 'Staff';
+    this.deleteStationaryOrderConfirmModalOpen = true;
+  }
+
+  executeDeleteStationaryOrder(): void {
+    if (!this.stationaryOrderToDeleteId) return;
+    this.stationaryService.deleteOrder(this.stationaryOrderToDeleteId).subscribe({
+      next: (res) => {
+        this.showToast(res.message || 'Stationery order deleted successfully.', 'success');
+        this.deleteStationaryOrderConfirmModalOpen = false;
+        this.stationaryOrderToDeleteId = null;
+        this.loadStationary();
+      },
+      error: (err) => {
+        this.showToast(err.error?.detail || 'Failed to delete stationery order.', 'error');
       }
     });
   }

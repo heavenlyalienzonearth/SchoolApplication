@@ -2107,7 +2107,8 @@
                     </button>
                     
                     <!-- Admin Reimbursement Actions -->
-                    <ng-container *ngIf="(currentUser?.role?.toUpperCase() === 'ADMIN' || currentUser?.role?.toUpperCase() === 'PRINCIPAL') && order.reimbursement_status === 'Pending'">
+                    <!-- Admin Reimbursement Actions -->
+                    <ng-container *ngIf="(currentUser?.role?.toUpperCase() === 'ADMIN' || currentUser?.role?.toUpperCase() === 'PRINCIPAL' || currentUser?.role?.toUpperCase() === 'SUPERADMIN') && order.reimbursement_status === 'Pending'">
                       <button type="button" (click)="approveReimbursement(order.id)" style="background: #10B981; color: white; border: none; padding: 4px 10px; border-radius: 4px; font-size: 0.75rem; font-weight: 700; cursor: pointer; transition: background 0.2s;" onmouseover="this.style.background='#059669'" onmouseout="this.style.background='#10B981'">
                         ✅ Approve Reimburse
                       </button>
@@ -2117,7 +2118,7 @@
                     </ng-container>
 
                     <!-- Dispatch/Deliver status updates -->
-                    <ng-container *ngIf="currentUser?.role?.toUpperCase() === 'ADMIN' && order.status !== 'Delivered'">
+                    <ng-container *ngIf="(currentUser?.role?.toUpperCase() === 'ADMIN' || currentUser?.role?.toUpperCase() === 'SUPERADMIN') && order.status !== 'Delivered'">
                       <button type="button" *ngIf="order.status === 'Pending'" (click)="updateOrderStatus(order.id, 'Dispatched')" style="background: #0284C7; color: white; border: none; padding: 4px 10px; border-radius: 4px; font-size: 0.75rem; font-weight: 600; cursor: pointer;">
                         🚚 Dispatch
                       </button>
@@ -2125,6 +2126,11 @@
                         ✅ Deliver
                       </button>
                     </ng-container>
+
+                    <!-- Trash Order Action -->
+                    <button type="button" *ngIf="currentUser?.role?.toUpperCase() === 'ADMIN' || currentUser?.role?.toUpperCase() === 'PRINCIPAL' || currentUser?.role?.toUpperCase() === 'SUPERADMIN'" (click)="confirmDeleteStationaryOrder(order)" style="background: #FEE2E2; color: #DC2626; border: 1px solid #FCA5A5; padding: 4px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: 700; cursor: pointer; transition: all 0.2s;" onmouseover="this.style.background='#EF4444'; this.style.color='white';" onmouseout="this.style.background='#FEE2E2'; this.style.color='#DC2626';" title="Delete Order">
+                      🗑️
+                    </button>
                   </div>
                 </div>
 
@@ -4662,6 +4668,36 @@
   </div>
 </div>
 
+<!-- DELETE STATIONERY ORDER CONFIRMATION MODAL -->
+<div class="dash-modal" *ngIf="deleteStationaryOrderConfirmModalOpen">
+  <div class="modal-content" style="max-width: 420px; border-top: 4px solid #EF4444; border-radius: 12px; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -2px rgba(0,0,0,0.05);">
+    <div class="modal-header" style="border-bottom: 1px solid #F1F5F9; padding-bottom: 12px;">
+      <h3 style="color: #DC2626; display: flex; align-items: center; gap: 8px; margin: 0; font-size: 1.15rem; font-weight: 800;">
+        🚨 Delete Confirmation
+      </h3>
+      <button type="button" (click)="deleteStationaryOrderConfirmModalOpen = false; stationaryOrderToDeleteId = null" class="btn-close" style="font-size: 1.5rem; color: #94A3B8; background: none; border: none; cursor: pointer; line-height: 1;">×</button>
+    </div>
+    <div class="modal-body" style="padding: 20px 0 10px 0;">
+      <p style="font-size: 0.92rem; line-height: 1.5; color: #334155; margin: 0;">
+        Are you sure you want to permanently delete stationery <strong>"{{ stationaryOrderToDeleteTitle }}"</strong> placed by/for student <strong>"{{ stationaryOrderToDeleteStudent }}"</strong>?
+      </p>
+      <div style="background-color: #FEF2F2; border: 1px solid #FEE2E2; border-radius: 8px; padding: 12px; margin-top: 15px; display: flex; gap: 10px; align-items: flex-start;">
+        <span style="font-size: 1.2rem; line-height: 1; margin-top: 2px;">⚠️</span>
+        <span style="font-size: 0.78rem; color: #991B1B; font-weight: 600; line-height: 1.45;">
+          Warning: This action is permanent and cannot be undone. All database records associated with this supply order will be removed.
+        </span>
+      </div>
+    </div>
+    <div class="modal-footer" style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px; border-top: 1px solid #F1F5F9; padding-top: 15px;">
+      <button type="button" (click)="deleteStationaryOrderConfirmModalOpen = false; stationaryOrderToDeleteId = null" class="btn btn-outline btn-sm" style="font-weight: 700; color: #475569; background-color: #F1F5F9; border: none; border-radius: 6px; padding: 8px 16px; cursor: pointer; transition: background 0.2s;" onmouseover="this.style.background='#E2E8F0'" onmouseout="this.style.background='#F1F5F9'">
+        ❌ Cancel
+      </button>
+      <button type="button" (click)="executeDeleteStationaryOrder()" class="btn btn-danger btn-sm" style="background-color: #DC2626; border: none; color: white; font-weight: 700; display: inline-flex; align-items: center; gap: 6px; padding: 8px 16px; border-radius: 6px; cursor: pointer; transition: background 0.2s;" onmouseover="this.style.background='#B91C1C'" onmouseout="this.style.background='#DC2626'">
+        🗑️ Delete Permanently
+      </button>
+    </div>
+  </div>
+</div>
 
 <!-- CUSTOM TOAST NOTIFICATION -->
 <div class="custom-toast" [class.show]="toastVisible" [class.success]="toastType === 'success'" [class.error]="toastType === 'error'">
