@@ -5,9 +5,21 @@
       <img src="/assets/images/logo.png" alt="Logo" class="logo" />
       <h2>Vidyankuram Club Control Panel</h2>
     </div>
-    <div class="header-actions">
+    <div class="header-actions" style="display: flex; align-items: center; gap: 15px;">
       <a routerLink="/" class="btn btn-secondary btn-sm">🌐 Visit Site</a>
-      <button (click)="logout()" class="btn btn-outline btn-sm">🚪 Log Out</button>
+      <div style="display: flex; align-items: center; gap: 10px;">
+        <img 
+          *ngIf="currentUser?.role?.toUpperCase() === 'TEACHER'" 
+          [src]="getTeacherPhotoUrl(teacherProfile?.photo_url)" 
+          alt="Avatar" 
+          style="width: 38px; height: 38px; border-radius: 50%; object-fit: cover; border: 2.5px solid var(--primary); box-shadow: 0 2px 4px rgba(0,0,0,0.08);" />
+        <img 
+          *ngIf="currentUser?.role?.toUpperCase() !== 'TEACHER'" 
+          src="assets/images/teacher_avatar_ai.png" 
+          alt="Avatar" 
+          style="width: 38px; height: 38px; border-radius: 50%; object-fit: cover; border: 2.5px solid #CBD5E1; box-shadow: 0 2px 4px rgba(0,0,0,0.04);" />
+        <button (click)="logout()" class="btn btn-outline btn-sm">🚪 Log Out</button>
+      </div>
     </div>
   </header>
 
@@ -15,6 +27,9 @@
     <!-- Sidebar -->
     <aside class="dash-sidebar">
       <ul class="sidebar-menu">
+        <li [class.active]="activeTab === 'teacher-home'" (click)="setTab('teacher-home')" *ngIf="currentUser?.role?.toUpperCase() === 'TEACHER'">
+          <span class="icon">👩‍🏫</span> Teacher Console
+        </li>
         <li [class.active]="activeTab === 'analytics'" (click)="setTab('analytics')" *ngIf="hasPermission('analytics')">
           <span class="icon">📊</span> Rolewise CPanel
         </li>
@@ -144,6 +159,7 @@
       <div class="mobile-tab-nav">
         <label class="form-label" for="mobileTabSelect">Dashboard Navigation:</label>
         <select id="mobileTabSelect" [ngModel]="activeTab" (ngModelChange)="setTab($event)" class="form-control select-tab">
+          <option value="teacher-home" *ngIf="currentUser?.role?.toUpperCase() === 'TEACHER'">👩‍🏫 Teacher Console</option>
           <option value="analytics" *ngIf="hasPermission('analytics')">📊 Rolewise CPanel</option>
           <option value="settings" *ngIf="hasPermission('settings')">⚙️ Public Settings</option>
           <option value="hero" *ngIf="hasPermission('hero')">🖼️ Modify Banner</option>
@@ -170,6 +186,354 @@
       </div>
       
       
+      <!-- TEACHER HOME PORTAL -->
+      <section *ngIf="activeTab === 'teacher-home'" class="tab-section animate-fade-in" style="font-family: 'Quicksand', 'Inter', sans-serif;">
+        <!-- Banner Section -->
+        <div class="welcome-banner" style="display: flex; flex-direction: column; gap: 20px; padding: 28px 32px; background: linear-gradient(135deg, #fef2f2, #f5f3ff); border: 1.5px solid #ddd6fe; border-left: 8px solid #a78bfa; border-radius: 16px; margin-bottom: 28px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.03);">
+          <div style="display: flex; justify-content: space-between; align-items: flex-start; width: 100%; flex-wrap: wrap; gap: 15px;">
+            <div style="flex: 1; min-width: 300px;">
+              <h2 style="margin: 0; font-size: 1.75rem; font-weight: 900; background: linear-gradient(135deg, #EC4899, #8B5CF6); -webkit-background-clip: text; -webkit-text-fill-color: transparent; filter: drop-shadow(0px 2px 4px rgba(139, 92, 246, 0.1)); display: inline-block;">Welcome back, {{ currentUser?.full_name }}! 👋</h2>
+              <p style="margin: 6px 0 0 0; color: #475569; font-size: 0.9rem;">Manage your classroom, track pupil requests, approve stationery orders, and upload your professional credentials.</p>
+            </div>
+            
+            <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 6px; text-align: right;">
+              <span style="background: #e0f2fe; color: #0369a1; border: 1px solid #bae6fd; padding: 4px 14px; border-radius: 9999px; font-size: 0.72rem; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; display: inline-block;">
+                👩‍🏫 Teacher Portal
+              </span>
+              <span style="font-size: 0.75rem; color: #475569; font-family: monospace; font-weight: 700; background: white; border: 1px solid #e2e8f0; padding: 3px 8px; border-radius: 6px; box-shadow: 0 1px 2px rgba(0,0,0,0.02);">
+                🕒 Clock: {{ loginTime }}
+              </span>
+            </div>
+          </div>
+
+          <!-- Professional Teacher Bio/Description Card Block -->
+          <div class="teacher-profile-card-block" *ngIf="teacherProfile" style="background: rgba(255, 255, 255, 0.8); border: 1px solid rgba(226, 232, 240, 0.8); border-radius: 12px; padding: 18px; backdrop-filter: blur(8px); display: flex; flex-direction: column; gap: 10px; width: 100%; box-sizing: border-box; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.02);">
+            <div style="display: flex; gap: 8px; align-items: center; border-bottom: 1.5px dashed #cbd5e1; padding-bottom: 6px; margin-bottom: 4px;">
+              <span style="font-size: 1.1rem;">💼</span>
+              <h4 style="margin: 0; font-size: 0.82rem; font-weight: 800; text-transform: uppercase; color: #334155; letter-spacing: 0.5px;">Professional Credentials Profile</h4>
+            </div>
+            <div style="display: grid; grid-template-columns: 1fr 1.6fr; gap: 20px;">
+              <div>
+                <div style="font-size: 0.68rem; font-weight: 800; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px;">Education & Certifications</div>
+                <div style="font-size: 0.8rem; font-weight: 700; color: #1e293b; margin-top: 3px; line-height: 1.4;">{{ teacherProfile.education || 'Master of Early Childhood Education & Pedagogy' }}</div>
+              </div>
+              <div style="border-left: 1.5px solid #e2e8f0; padding-left: 20px;">
+                <div style="font-size: 0.68rem; font-weight: 800; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px;">Pedagogical Experience & Expertise</div>
+                <div style="font-size: 0.8rem; font-weight: 600; color: #475569; margin-top: 3px; line-height: 1.4;">{{ teacherProfile.experience || '10+ years specializing in developmental progression and Montessori sensory learning.' }}</div>
+              </div>
+            </div>
+            <div *ngIf="teacherProfile.achievements_summary" style="border-top: 1.5px dashed #cbd5e1; padding-top: 8px; margin-top: 4px;">
+              <div style="font-size: 0.68rem; font-weight: 800; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 3px;">Awards & Distinctions Summary</div>
+              <div style="font-size: 0.78rem; font-weight: 700; color: var(--primary); line-height: 1.4;">{{ teacherProfile.achievements_summary }}</div>
+            </div>
+          </div>
+          
+          <!-- Key Indicators -->
+          <div class="metrics-grid" style="width: 100%; display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px;">
+            <div class="metric-card pink" style="background: white; border-radius: 12px; border: 1.5px solid #fecdd3; padding: 20px; text-align: center; border-bottom: 4px solid #fb7185; box-shadow: 0 4px 6px rgba(0,0,0,0.02);">
+              <span class="stat-num" style="display: block; font-size: 2.2rem; font-weight: 900; color: #e11d48; margin-bottom: 4px;">{{ teacherStats.students_count }}</span>
+              <span class="stat-label" style="font-size: 0.8rem; font-weight: 800; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px;">👥 Pupils</span>
+            </div>
+            <div class="metric-card blue" style="background: white; border-radius: 12px; border: 1.5px solid #bae6fd; padding: 20px; text-align: center; border-bottom: 4px solid #38bdf8; box-shadow: 0 4px 6px rgba(0,0,0,0.02);">
+              <span class="stat-num" style="display: block; font-size: 2.2rem; font-weight: 900; color: #0284c7; margin-bottom: 4px;">{{ teacherStats.moments_count }}</span>
+              <span class="stat-label" style="font-size: 0.8rem; font-weight: 800; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px;">📸 Moments</span>
+            </div>
+            <div class="metric-card green" style="background: white; border-radius: 12px; border: 1.5px solid #bbf7d0; padding: 20px; text-align: center; border-bottom: 4px solid #4ade80; box-shadow: 0 4px 6px rgba(0,0,0,0.02);">
+              <span class="stat-num" style="display: block; font-size: 2.2rem; font-weight: 900; color: #16a34a; margin-bottom: 4px;">{{ teacherStats.assignments_count }}</span>
+              <span class="stat-label" style="font-size: 0.8rem; font-weight: 800; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px;">📚 Assignments</span>
+            </div>
+            <div class="metric-card purple" style="background: white; border-radius: 12px; border: 1.5px solid #e9d5ff; padding: 20px; text-align: center; border-bottom: 4px solid #c084fc; box-shadow: 0 4px 6px rgba(0,0,0,0.02);">
+              <span class="stat-num" style="display: block; font-size: 2.2rem; font-weight: 900; color: #7c3aed; margin-bottom: 4px;">{{ teacherStats.achievements_count }}</span>
+              <span class="stat-label" style="font-size: 0.8rem; font-weight: 800; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px;">🏆 Awards</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Console Tab Selector -->
+        <div style="display: flex; gap: 10px; margin-bottom: 24px; border-bottom: 2px solid #e2e8f0; padding-bottom: 12px;">
+          <button (click)="switchTeacherSubTab('orders')" [style.background]="teacherActiveSubTab === 'orders' ? 'var(--primary)' : '#f1f5f9'" [style.color]="teacherActiveSubTab === 'orders' ? 'white' : '#475569'" style="border: none; padding: 10px 20px; font-weight: 700; border-radius: 8px; cursor: pointer; font-size: 0.85rem; display: flex; align-items: center; gap: 6px;">
+            📋 Student Orders
+          </button>
+          <button (click)="switchTeacherSubTab('achievements')" [style.background]="teacherActiveSubTab === 'achievements' ? 'var(--primary)' : '#f1f5f9'" [style.color]="teacherActiveSubTab === 'achievements' ? 'white' : '#475569'" style="border: none; padding: 10px 20px; font-weight: 700; border-radius: 8px; cursor: pointer; font-size: 0.85rem; display: flex; align-items: center; gap: 6px;">
+            🏆 Achievements Portfolio
+          </button>
+          <button (click)="switchTeacherSubTab('assignments')" [style.background]="teacherActiveSubTab === 'assignments' ? 'var(--primary)' : '#f1f5f9'" [style.color]="teacherActiveSubTab === 'assignments' ? 'white' : '#475569'" style="border: none; padding: 10px 20px; font-weight: 700; border-radius: 8px; cursor: pointer; font-size: 0.85rem; display: flex; align-items: center; gap: 6px;">
+            📚 Daily Assignments
+          </button>
+          <button (click)="switchTeacherSubTab('moments')" [style.background]="teacherActiveSubTab === 'moments' ? 'var(--primary)' : '#f1f5f9'" [style.color]="teacherActiveSubTab === 'moments' ? 'white' : '#475569'" style="border: none; padding: 10px 20px; font-weight: 700; border-radius: 8px; cursor: pointer; font-size: 0.85rem; display: flex; align-items: center; gap: 6px;">
+            📸 Daily Moments
+          </button>
+        </div>
+
+        <!-- 1. STUDENT STATIONERY ORDERS TAB -->
+        <div *ngIf="teacherActiveSubTab === 'orders'" class="tab-content">
+          <div class="card" style="background: white; border-radius: 12px; border: 1px solid #E2E8F0; padding: 25px; box-shadow: 0 4px 6px rgba(0,0,0,0.02);">
+            <h3 style="margin-top:0; color:#1e293b; margin-bottom:12px; font-size:1.1rem; font-weight:800;">📋 Class Student Stationery Orders</h3>
+            <p style="color:#64748b; font-size:0.85rem; margin-bottom:20px;">Review and approve school stationery order submissions from parents in your class.</p>
+            
+            <div *ngIf="teacherOrdersLoading" style="text-align: center; padding: 30px; color: #64748b;">Loading student orders...</div>
+
+            <div *ngIf="!teacherOrdersLoading && teacherOrdersList.length > 0" style="overflow-x: auto;">
+              <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 0.85rem;">
+                <thead>
+                  <tr style="background: #f8fafc; border-bottom: 2px solid #e2e8f0; color: #475569; font-weight: 700;">
+                    <th style="padding: 12px 16px;">Order Date</th>
+                    <th style="padding: 12px 16px;">Pupil Name</th>
+                    <th style="padding: 12px 16px;">Stationery Items</th>
+                    <th style="padding: 12px 16px;">Total Price</th>
+                    <th style="padding: 12px 16px;">Payment</th>
+                    <th style="padding: 12px 16px;">Approval</th>
+                    <th style="padding: 12px 16px; text-align: center;">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr *ngFor="let order of teacherOrdersList" style="border-bottom: 1px solid #e2e8f0;" [style.background]="order.status === 'Rejected' ? '#fcf8f8' : 'white'">
+                    <td style="padding: 12px 16px; font-weight: 700; color: #334155;">{{ order.order_date | date:'short' }}</td>
+                    <td style="padding: 12px 16px; font-weight: 700; color: var(--secondary);">{{ order.student_name }}</td>
+                    <td style="padding: 12px 16px;">
+                      <div *ngFor="let item of order.items" style="font-size: 0.8rem; color: #475569; margin-bottom: 4px;">
+                        ✏️ {{ item.item?.name || item.name || 'Supply Item' }} × {{ item.quantity }}
+                      </div>
+                    </td>
+                    <td style="padding: 12px 16px; font-weight: 700; color: #1e293b;">₹{{ order.total_price }}</td>
+                    <td style="padding: 12px 16px;">
+                      <span style="padding: 4px 8px; border-radius: 4px; font-size: 0.72rem; font-weight: 700;" [style.background]="order.payment_status === 'Paid' ? '#dcfce7' : '#fee2e2'" [style.color]="order.payment_status === 'Paid' ? '#166534' : '#991b1b'">
+                        {{ order.payment_status }}
+                      </span>
+                    </td>
+                    <td style="padding: 12px 16px;">
+                      <span style="padding: 4px 8px; border-radius: 4px; font-size: 0.72rem; font-weight: 700;" [style.background]="order.status === 'Delivered' ? '#dcfce7' : order.status === 'Dispatched' ? '#e0f2fe' : order.status === 'Rejected' ? '#fee2e2' : '#fef3c7'" [style.color]="order.status === 'Delivered' ? '#166534' : order.status === 'Dispatched' ? '#0369a1' : order.status === 'Rejected' ? '#991b1b' : '#d97706'">
+                        {{ order.status }}
+                      </span>
+                    </td>
+                    <td style="padding: 12px 16px; text-align: center;">
+                      <div *ngIf="order.status.toUpperCase() === 'PENDING'" style="display: flex; gap: 8px; justify-content: center;">
+                        <button (click)="approveTeacherOrder(order.id)" class="btn btn-success btn-xs" style="font-weight: 700; padding: 4px 10px;">✅ Approve</button>
+                        <button (click)="rejectTeacherOrder(order.id)" class="btn btn-danger btn-xs" style="font-weight: 700; padding: 4px 10px;">❌ Reject</button>
+                      </div>
+                      <div *ngIf="order.status.toUpperCase() !== 'PENDING'" style="color: #94a3b8; font-style: italic; font-weight: 600;">
+                        Processed
+                      </div>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <div *ngIf="!teacherOrdersLoading && teacherOrdersList.length === 0" style="text-align: center; padding: 40px; color: #94a3b8; font-style: italic;">
+              No student stationery orders placed yet for your class.
+            </div>
+          </div>
+        </div>
+
+        <!-- 2. ACHIEVEMENTS PORTFOLIO TAB -->
+        <div *ngIf="teacherActiveSubTab === 'achievements'" class="tab-content">
+          <div style="display: grid; grid-template-columns: 1fr 1.8fr; gap: 24px;">
+            <!-- Form Card -->
+            <div class="card" style="background: white; border-radius: 12px; border: 1px solid #E2E8F0; padding: 25px; box-shadow: 0 4px 6px rgba(0,0,0,0.02);">
+              <h3 style="margin-top:0; color:#1e293b; margin-bottom:12px; font-size:1.1rem; font-weight:800;">🎖️ Add New Award</h3>
+              <p style="color:#64748b; font-size:0.82rem; margin-bottom:20px;">Upload pedagogical awards, professional research certifications, or milestone certificates.</p>
+
+              <form (ngSubmit)="saveTeacherAchievement()">
+                <div class="form-group" style="margin-bottom: 15px;">
+                  <label class="form-label" style="display: block; font-weight: 600; font-size: 0.85rem; color: #475569; margin-bottom: 6px;">Certificate/Achievement Title *</label>
+                  <input type="text" [(ngModel)]="teacherNewAchievement.title" name="ach_title" required class="form-control" placeholder="e.g. Outstanding Early Educator Award" style="width: 100%; border: 1px solid #CBD5E1; border-radius: 6px; padding: 8px 12px;" />
+                </div>
+                <div class="form-group" style="margin-bottom: 15px;">
+                  <label class="form-label" style="display: block; font-weight: 600; font-size: 0.85rem; color: #475569; margin-bottom: 6px;">Date Awarded *</label>
+                  <input type="date" [(ngModel)]="teacherNewAchievement.date" name="ach_date" required class="form-control" style="width: 100%; border: 1px solid #CBD5E1; border-radius: 6px; padding: 8px 12px;" />
+                </div>
+                <div class="form-group" style="margin-bottom: 15px;">
+                  <label class="form-label" style="display: block; font-weight: 600; font-size: 0.85rem; color: #475569; margin-bottom: 6px;">Description / Context</label>
+                  <textarea [(ngModel)]="teacherNewAchievement.description" name="ach_desc" class="form-control" placeholder="Describe the focus or criteria of this certification..." style="width: 100%; border: 1px solid #CBD5E1; border-radius: 6px; padding: 8px 12px; min-height: 80px;"></textarea>
+                </div>
+                <div class="form-group" style="margin-bottom: 15px;">
+                  <label class="form-label" style="display: block; font-weight: 600; font-size: 0.85rem; color: #475569; margin-bottom: 6px;">Attach Credential File (Image/PDF)</label>
+                  <input type="file" id="teacherCertFiles" (change)="onTeacherCertSelected($event)" accept="image/*,application/pdf" class="form-control" style="width: 100%; border: 1px solid #CBD5E1; border-radius: 6px; padding: 8px 12px; background: white;" />
+                </div>
+
+                <button type="submit" [disabled]="teacherSavingAchievement" class="btn btn-primary btn-sm" style="width: 100%; height: 42px; margin-top: 10px; font-weight: 700;">
+                  {{ teacherSavingAchievement ? 'Uploading portfolio...' : '🎖️ Publish Achievement' }}
+                </button>
+              </form>
+            </div>
+
+            <!-- List Card -->
+            <div class="card" style="background: white; border-radius: 12px; border: 1px solid #E2E8F0; padding: 25px; box-shadow: 0 4px 6px rgba(0,0,0,0.02);">
+              <h3 style="margin-top:0; color:#1e293b; margin-bottom:20px; font-size:1.1rem; font-weight:800;">🏆 Portfolio Gallery</h3>
+              
+              <div *ngIf="teacherAchievementsLoading" style="text-align: center; padding: 30px; color: #64748b;">Loading achievements...</div>
+
+              <div *ngIf="!teacherAchievementsLoading && teacherAchievementsList.length > 0" style="display: flex; flex-direction: column; gap: 15px;">
+                <div *ngFor="let ach of teacherAchievementsList" style="border: 1.5px solid #e2e8f0; border-radius: 8px; padding: 16px; background: #fdfdfd; display: flex; flex-direction: column; gap: 6px;">
+                  <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                    <h4 style="margin: 0; font-size: 0.95rem; font-weight: 800; color: #334155;">🎖️ {{ ach.title }}</h4>
+                    <span style="font-size: 0.72rem; color: #94a3b8; font-weight: 700; background: #f1f5f9; padding: 2px 8px; border-radius: 4px;">📅 {{ ach.date }}</span>
+                  </div>
+                  <p style="margin: 4px 0; font-size: 0.8rem; color: #64748b; line-height: 1.4;">{{ ach.description }}</p>
+                  
+                  <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px dashed #e2e8f0; padding-top: 10px; margin-top: 6px;">
+                    <a *ngIf="ach.certificate_url" [href]="getMediaUrl(ach.certificate_url)" target="_blank" style="font-size: 0.78rem; font-weight: 700; color: var(--primary); text-decoration: underline;">
+                      📄 View Certificate Document
+                    </a>
+                    <span *ngIf="!ach.certificate_url" style="font-size: 0.75rem; color: #94a3b8; font-style: italic;">No document attached</span>
+
+                    <button (click)="deleteTeacherAchievement(ach.id)" style="background: none; border: none; color: #ef4444; font-size: 0.78rem; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 3px;">
+                      🗑️ Delete
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <div *ngIf="!teacherAchievementsLoading && teacherAchievementsList.length === 0" style="text-align: center; padding: 40px; color: #94a3b8; font-style: italic;">
+                No achievements recorded yet. Add yours on the left!
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 3. DAILY ASSIGNMENTS TAB -->
+        <div *ngIf="teacherActiveSubTab === 'assignments'" class="tab-content">
+          <div style="display: grid; grid-template-columns: 1fr 1.8fr; gap: 24px;">
+            <!-- Form Card -->
+            <div class="card" style="background: white; border-radius: 12px; border: 1px solid #E2E8F0; padding: 25px; box-shadow: 0 4px 6px rgba(0,0,0,0.02);">
+              <h3 style="margin-top:0; color:#1e293b; margin-bottom:12px; font-size:1.1rem; font-weight:800;">📚 Add Class Worksheets</h3>
+              <p style="color:#64748b; font-size:0.82rem; margin-bottom:20px;">Upload daily homework worksheets, assignment documents, or lesson PDF files.</p>
+
+              <form (ngSubmit)="uploadTeacherAssignment()">
+                <div class="form-group" style="margin-bottom: 15px;">
+                  <label class="form-label" style="display: block; font-weight: 600; font-size: 0.85rem; color: #475569; margin-bottom: 6px;">Assignment Title *</label>
+                  <input type="text" [(ngModel)]="teacherNewAssignment.title" name="asg_title" required class="form-control" placeholder="e.g. Maths Geometry Worksheet" style="width: 100%; border: 1px solid #CBD5E1; border-radius: 6px; padding: 8px 12px;" />
+                </div>
+                <div class="form-group" style="margin-bottom: 15px;">
+                  <label class="form-label" style="display: block; font-weight: 600; font-size: 0.85rem; color: #475569; margin-bottom: 6px;">Date Assigned *</label>
+                  <input type="date" [(ngModel)]="teacherNewAssignment.date" name="asg_date" required class="form-control" style="width: 100%; border: 1px solid #CBD5E1; border-radius: 6px; padding: 8px 12px;" />
+                </div>
+                <div class="form-group" style="margin-bottom: 15px;">
+                  <label class="form-label" style="display: block; font-weight: 600; font-size: 0.85rem; color: #475569; margin-bottom: 6px;">Worksheet Notes / Instructions</label>
+                  <textarea [(ngModel)]="teacherNewAssignment.description" name="asg_desc" class="form-control" placeholder="Notes for parents/students..." style="width: 100%; border: 1px solid #CBD5E1; border-radius: 6px; padding: 8px 12px; min-height: 80px;"></textarea>
+                </div>
+                <div class="form-group" style="margin-bottom: 15px;">
+                  <label class="form-label" style="display: block; font-weight: 600; font-size: 0.85rem; color: #475569; margin-bottom: 6px;">Select Worksheet Files *</label>
+                  <input type="file" id="teacherAsgFiles" (change)="onTeacherAsgFilesSelected($event)" multiple class="form-control" style="width: 100%; border: 1px solid #CBD5E1; border-radius: 6px; padding: 8px 12px; background: white;" />
+                  <div *ngIf="teacherAssignmentFileNames.length > 0" style="margin-top: 8px; font-size: 0.78rem; color: #64748b; font-weight: 600;">
+                    Selected: {{ teacherAssignmentFileNames.join(', ') }}
+                  </div>
+                </div>
+
+                <button type="submit" [disabled]="teacherUploadingAssignment" class="btn btn-primary btn-sm" style="width: 100%; height: 42px; margin-top: 10px; font-weight: 700;">
+                  {{ teacherUploadingAssignment ? 'Uploading worksheets...' : '📚 Share Worksheets' }}
+                </button>
+              </form>
+            </div>
+
+            <!-- List Card -->
+            <div class="card" style="background: white; border-radius: 12px; border: 1px solid #E2E8F0; padding: 25px; box-shadow: 0 4px 6px rgba(0,0,0,0.02);">
+              <h3 style="margin-top:0; color:#1e293b; margin-bottom:20px; font-size:1.1rem; font-weight:800;">📚 Active Homework Timelines</h3>
+              
+              <div *ngIf="teacherAssignmentsLoading" style="text-align: center; padding: 30px; color: #64748b;">Loading assignments...</div>
+
+              <div *ngIf="!teacherAssignmentsLoading && teacherAssignmentsList.length > 0" style="display: flex; flex-direction: column; gap: 15px;">
+                <div *ngFor="let asg of teacherAssignmentsList" style="border: 1.5px solid #e2e8f0; border-radius: 8px; padding: 16px; background: #fdfdfd; display: flex; flex-direction: column; gap: 8px;">
+                  <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                    <h4 style="margin: 0; font-size: 0.95rem; font-weight: 800; color: #334155;">📚 {{ asg.title }}</h4>
+                    <span style="font-size: 0.72rem; color: #94a3b8; font-weight: 700; background: #f1f5f9; padding: 2px 8px; border-radius: 4px;">Date: {{ asg.date }}</span>
+                  </div>
+                  <p style="margin: 4px 0; font-size: 0.8rem; color: #64748b; line-height: 1.4;">{{ asg.description }}</p>
+                  
+                  <div style="display: flex; flex-wrap: wrap; gap: 8px; margin: 4px 0;">
+                    <div *ngFor="let file of parseFilesList(asg.files_json)" style="background: #f1f5f9; border: 1px solid #e2e8f0; border-radius: 9999px; padding: 3px 12px; display: inline-flex; align-items: center; gap: 5px;">
+                      <a [href]="getMediaUrl(file)" target="_blank" style="font-size: 0.75rem; font-weight: 700; color: #1e3a8a; text-decoration: none;">📄 {{ getFileNameFromUrl(file) | slice:0:30 }}</a>
+                    </div>
+                  </div>
+
+                  <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px dashed #e2e8f0; padding-top: 10px; margin-top: 6px;">
+                    <span style="font-size: 0.72rem; color: #94a3b8;">Uploaded: {{ asg.created_at | date:'shortDate' }}</span>
+
+                    <button (click)="deleteTeacherAssignment(asg.id)" style="background: none; border: none; color: #ef4444; font-size: 0.78rem; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 3px;">
+                      🗑️ Delete
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <div *ngIf="!teacherAssignmentsLoading && teacherAssignmentsList.length === 0" style="text-align: center; padding: 40px; color: #94a3b8; font-style: italic;">
+                No class homework worksheets uploaded yet. Create yours on the left!
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 4. DAILY MOMENTS TAB -->
+        <div *ngIf="teacherActiveSubTab === 'moments'" class="tab-content">
+          <div style="display: grid; grid-template-columns: 1fr 1.8fr; gap: 24px;">
+            <!-- Form Card -->
+            <div class="card" style="background: white; border-radius: 12px; border: 1px solid #E2E8F0; padding: 25px; box-shadow: 0 4px 6px rgba(0,0,0,0.02);">
+              <h3 style="margin-top:0; color:#1e293b; margin-bottom:12px; font-size:1.1rem; font-weight:800;">📸 Share Class Daily Moments</h3>
+              <p style="color:#64748b; font-size:0.82rem; margin-bottom:20px;">Select a pupil in your class, then upload school pictures or classroom play clips. Expirable in 2 days.</p>
+
+              <form (ngSubmit)="uploadTeacherMoment()">
+                <div class="form-group" style="margin-bottom: 15px;">
+                  <label class="form-label" style="display: block; font-weight: 600; font-size: 0.85rem; color: #475569; margin-bottom: 6px;">Select Pupil</label>
+                  <select [(ngModel)]="teacherMomentSelectedStudentId" (change)="loadTeacherMoments()" name="mom_student" class="form-control" required style="width: 100%; border: 1px solid #CBD5E1; border-radius: 6px; padding: 8px 12px; background: white;">
+                    <option [value]="null" disabled selected>-- Select Pupil --</option>
+                    <option *ngFor="let student of teacherClassStudents" [value]="student.id">{{ student.name }}</option>
+                  </select>
+                </div>
+                <div class="form-group" *ngIf="teacherMomentSelectedStudentId" style="margin-bottom: 15px;">
+                  <label class="form-label" style="display: block; font-weight: 600; font-size: 0.85rem; color: #475569; margin-bottom: 6px;">Moment Caption / Title</label>
+                  <input type="text" [(ngModel)]="teacherNewMoment.title" name="mom_title" placeholder="e.g. Finger painting fun!" class="form-control" required style="width: 100%; border: 1px solid #CBD5E1; border-radius: 6px; padding: 8px 12px;" />
+                </div>
+                <div class="form-group" *ngIf="teacherMomentSelectedStudentId" style="margin-bottom: 15px;">
+                  <label class="form-label" style="display: block; font-weight: 600; font-size: 0.85rem; color: #475569; margin-bottom: 6px;">Choose Photos / Videos</label>
+                  <input type="file" id="teacherMomFiles" (change)="onTeacherMomFilesSelected($event)" multiple class="form-control" style="width: 100%; border: 1px solid #CBD5E1; border-radius: 6px; padding: 8px 12px; background: white;" />
+                  <div *ngIf="teacherMomentFileNames.length > 0" style="margin-top: 8px; font-size: 0.78rem; color: #64748b; font-weight: 600;">
+                    Selected: {{ teacherMomentFileNames.join(', ') }}
+                  </div>
+                </div>
+
+                <button *ngIf="teacherMomentSelectedStudentId" type="submit" [disabled]="teacherUploadingMoment" class="btn btn-primary btn-sm" style="width: 100%; height: 42px; margin-top: 10px; font-weight: 700;">
+                  {{ teacherUploadingMoment ? 'Sharing Daily Snapshots...' : '📸 Post Moments' }}
+                </button>
+              </form>
+            </div>
+
+            <!-- List Card -->
+            <div class="card" style="background: white; border-radius: 12px; border: 1px solid #E2E8F0; padding: 25px; box-shadow: 0 4px 6px rgba(0,0,0,0.02);">
+              <h3 style="margin-top:0; color:#1e293b; margin-bottom:20px; font-size:1.1rem; font-weight:800;">🎥 Active Daily Moments</h3>
+              
+              <div *ngIf="teacherMomentsLoading" style="text-align: center; padding: 30px; color: #64748b;">Loading moments...</div>
+
+              <div *ngIf="!teacherMomentSelectedStudentId" style="text-align: center; padding: 40px; color: #94a3b8; font-style: italic;">
+                Please select a pupil to view or post active daily moments.
+              </div>
+
+              <div *ngIf="!teacherMomentsLoading && teacherMomentSelectedStudentId && teacherMomentsList.length > 0" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 15px;">
+                <div *ngFor="let mom of teacherMomentsList" style="border: 1px solid #e2e8f0; border-radius: 8px; padding: 8px; background: #fff; box-shadow: 0 2px 4px rgba(0,0,0,0.02); display: flex; flex-direction: column; gap: 8px;">
+                  <div style="height: 120px; width: 100%; border-radius: 6px; overflow: hidden; background: #f8fafc; position: relative;">
+                    <img *ngIf="mom.file_type === 'image'" [src]="getMediaUrl(mom.file_path)" alt="Moment" style="width:100%; height:100%; object-fit:cover;" />
+                    <video *ngIf="mom.file_type === 'video'" [src]="getMediaUrl(mom.file_path)" style="width:100%; height:100%; object-fit:cover;" controls></video>
+                    <span style="position: absolute; bottom: 6px; right: 6px; background: rgba(0,0,0,0.6); color: white; font-size: 0.65rem; padding: 2px 6px; border-radius: 4px; font-weight: 700;">⏰ {{ mom.hours_remaining }}h left</span>
+                  </div>
+                  <div style="display: flex; flex-direction: column; gap: 4px;">
+                    <h5 style="margin: 0; font-size: 0.8rem; font-weight: 800; color: #475569; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{{ mom.title }}</h5>
+                    <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid #f1f5f9; padding-top: 6px; margin-top: 2px;">
+                      <span style="font-size: 0.7rem; color: #94a3b8;">{{ mom.created_at | date:'shortTime' }}</span>
+                      <button (click)="deleteTeacherMoment(mom.id)" style="background: none; border: none; color: #ef4444; font-size: 0.72rem; font-weight: 700; cursor: pointer; padding: 0;">🗑️ Delete</button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Empty state -->
+              <div *ngIf="!teacherMomentsLoading && teacherMomentSelectedStudentId && teacherMomentsList.length === 0" style="text-align: center; padding: 40px; color: #94a3b8; font-style: italic;">
+                No moments shared for this pupil today.
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
       <!-- ANALYTICS TAB -->
       <section *ngIf="activeTab === 'analytics'" class="tab-section">
         <div class="section-title-bar" style="background: linear-gradient(135deg, #fff5f5, #f0f9ff); border: 1.5px solid #fecdd3; border-left: 6px solid #fb7185; padding: 24px 32px; border-radius: 16px; margin-bottom: 28px; box-shadow: 0 10px 15px -3px rgba(244,63,94,0.04); display: flex; justify-content: space-between; align-items: center; gap: 20px; flex-wrap: wrap; text-align: left;">

@@ -146,13 +146,20 @@ def update_order_status(
     if not order:
         raise HTTPException(status_code=404, detail="Order not found.")
         
-    valid_statuses = ["Pending", "Dispatched", "Delivered"]
+    valid_statuses = ["Pending", "Dispatched", "Delivered", "Rejected"]
     if request.status not in valid_statuses:
-        raise HTTPException(
-            status_code=400,
-            detail=f"Invalid status '{request.status}'. Must be one of: {', '.join(valid_statuses)}"
-        )
+      raise HTTPException(
+        status_code=400,
+        detail=f"Invalid status '{request.status}'. Must be one of: {', '.join(valid_statuses)}"
+      )
         
+    # If transitioning to Rejected, restore the stock of items
+    if request.status == "Rejected" and order.status != "Rejected":
+      for item in order.items:
+        db_item = db.query(models.StationaryItem).filter(models.StationaryItem.id == item.item_id).first()
+        if db_item:
+          db_item.stock += item.quantity
+                
     order.status = request.status
     db.commit()
     db.refresh(order)

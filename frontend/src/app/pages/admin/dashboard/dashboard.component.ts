@@ -406,8 +406,8 @@ export class DashboardComponent implements OnInit, OnDestroy {
     this.authService.currentUser$.subscribe(user => {
       this.currentUser = user;
       if (user?.role?.toUpperCase() === 'TEACHER') {
-        this.activeTab = 'moments';
-        this.setTab('moments');
+        this.activeTab = 'teacher-home';
+        this.setTab('teacher-home');
       }
     });
     this.loadAnalytics();
@@ -425,11 +425,14 @@ export class DashboardComponent implements OnInit, OnDestroy {
       this.activeTab = 'analytics';
       return;
     }
-    if (tab !== 'permissions' && tab !== 'analytics' && !this.hasPermission(tab)) {
+    if (tab !== 'permissions' && tab !== 'analytics' && tab !== 'teacher-home' && !this.hasPermission(tab)) {
       return;
     }
     this.activeTab = tab;
-    if (tab === 'analytics') {
+    if (tab === 'teacher-home') {
+      this.loadTeacherDashboard();
+      this.loadTeacherClassStudents();
+    } else if (tab === 'analytics') {
       this.loadAnalytics();
     } else if (tab === 'attendance') {
       this.onAttendanceTabSelect();
@@ -3841,6 +3844,339 @@ export class DashboardComponent implements OnInit, OnDestroy {
   // Get file name from URL path
   getFileNameFromUrl(url: string): string {
     return url.substring(url.lastIndexOf('/') + 1);
+  }
+
+  // --- TEACHER PORTAL STATE ---
+  teacherProfile: any = null;
+  teacherStats: any = {
+    students_count: 0,
+    moments_count: 0,
+    assignments_count: 0,
+    achievements_count: 0
+  };
+  teacherOrdersLoading = false;
+  teacherOrdersList: any[] = [];
+  teacherAchievementsLoading = false;
+  teacherAchievementsList: any[] = [];
+  teacherSavingAchievement = false;
+  teacherNewAchievement = {
+    title: '',
+    description: '',
+    date: new Date().toISOString().split('T')[0]
+  };
+  teacherCertificateFileToUpload: File | null = null;
+  teacherAssignmentsLoading = false;
+  teacherAssignmentsList: any[] = [];
+  teacherUploadingAssignment = false;
+  teacherNewAssignment = {
+    title: '',
+    description: '',
+    date: new Date().toISOString().split('T')[0]
+  };
+  teacherAssignmentFilesToUpload: File[] = [];
+  teacherAssignmentFileNames: string[] = [];
+  teacherMomentsLoading = false;
+  teacherMomentsList: any[] = [];
+  teacherUploadingMoment = false;
+  teacherNewMoment = { title: '' };
+  teacherMomentFilesToUpload: File[] = [];
+  teacherMomentFileNames: string[] = [];
+  teacherClassStudents: any[] = [];
+  teacherMomentSelectedStudentId: number | null = null;
+  teacherActiveSubTab: 'orders' | 'achievements' | 'assignments' | 'moments' = 'orders';
+
+  // --- TEACHER PORTAL METHODS ---
+  loadTeacherDashboard(): void {
+    this.apiService.get<any>('/teacher/dashboard').subscribe({
+      next: (res) => {
+        this.teacherProfile = res.profile;
+        this.teacherStats = res.stats;
+        this.switchTeacherSubTab(this.teacherActiveSubTab);
+      },
+      error: () => {}
+    });
+  }
+
+  loadTeacherClassStudents(): void {
+    this.apiService.get<any[]>('/teacher/students').subscribe({
+      next: (students) => {
+        this.teacherClassStudents = students;
+      },
+      error: () => {}
+    });
+  }
+
+  switchTeacherSubTab(tab: 'orders' | 'achievements' | 'assignments' | 'moments'): void {
+    this.teacherActiveSubTab = tab;
+    if (tab === 'orders') {
+      this.loadTeacherOrders();
+    } else if (tab === 'achievements') {
+      this.loadTeacherAchievements();
+    } else if (tab === 'assignments') {
+      this.loadTeacherAssignments();
+    } else if (tab === 'moments') {
+      this.loadTeacherMoments();
+    }
+  }
+
+  loadTeacherOrders(): void {
+    this.teacherOrdersLoading = true;
+    this.apiService.get<any[]>('/teacher/orders').subscribe({
+      next: (res) => {
+        this.teacherOrdersList = res;
+        this.teacherOrdersLoading = false;
+      },
+      error: () => { this.teacherOrdersLoading = false; }
+    });
+  }
+
+  approveTeacherOrder(id: number): void {
+    this.apiService.put<any>(`/stationary/orders/${id}/status`, { status: 'Dispatched' }).subscribe({
+      next: () => {
+        this.loadTeacherOrders();
+      },
+      error: (err) => alert(err.error?.detail || 'Failed to approve order.')
+    });
+  }
+
+  rejectTeacherOrder(id: number): void {
+    this.apiService.put<any>(`/stationary/orders/${id}/status`, { status: 'Rejected' }).subscribe({
+      next: () => {
+        this.loadTeacherOrders();
+      },
+      error: (err) => alert(err.error?.detail || 'Failed to reject order.')
+    });
+  }
+
+  loadTeacherAchievements(): void {
+    this.teacherAchievementsLoading = true;
+    this.apiService.get<any[]>('/teacher/achievements').subscribe({
+      next: (res) => {
+        this.teacherAchievementsList = res;
+        this.teacherAchievementsLoading = false;
+      },
+      error: () => { this.teacherAchievementsLoading = false; }
+    });
+  }
+
+  onTeacherCertSelected(event: any): void {
+    const file = event.target.files?.[0];
+    if (file) {
+      this.teacherCertificateFileToUpload = file;
+    }
+  }
+
+  saveTeacherAchievement(): void {
+    if (!this.teacherNewAchievement.title.trim()) {
+      alert('Achievement title is required.');
+      return;
+    }
+    this.teacherSavingAchievement = true;
+    const formData = new FormData();
+    formData.append('title', this.teacherNewAchievement.title);
+    formData.append('description', this.teacherNewAchievement.description);
+    formData.append('date', this.teacherNewAchievement.date);
+    if (this.teacherCertificateFileToUpload) {
+      formData.append('file', this.teacherCertificateFileToUpload, this.teacherCertificateFileToUpload.name);
+    }
+
+    this.apiService.post<any>('/teacher/achievements', formData).subscribe({
+      next: () => {
+        this.teacherSavingAchievement = false;
+        alert('Achievement published to portfolio!');
+        this.resetTeacherAchievementForm();
+        this.loadTeacherAchievements();
+      },
+      error: (err) => {
+        this.teacherSavingAchievement = false;
+        alert(err.error?.detail || 'Failed to save achievement.');
+      }
+    });
+  }
+
+  deleteTeacherAchievement(id: number): void {
+    if (!confirm('Are you sure you want to delete this achievement?')) return;
+    this.apiService.delete<any>(`/teacher/achievements/${id}`).subscribe({
+      next: () => {
+        this.loadTeacherAchievements();
+      },
+      error: (err) => alert(err.error?.detail || 'Failed to delete achievement.')
+    });
+  }
+
+  resetTeacherAchievementForm(): void {
+    this.teacherNewAchievement = {
+      title: '',
+      description: '',
+      date: new Date().toISOString().split('T')[0]
+    };
+    this.teacherCertificateFileToUpload = null;
+    const fileInput = document.getElementById('teacherCertFiles') as HTMLInputElement;
+    if (fileInput) fileInput.value = '';
+  }
+
+  loadTeacherAssignments(): void {
+    this.teacherAssignmentsLoading = true;
+    this.assignmentService.getTeacherAssignments().subscribe({
+      next: (res) => {
+        this.teacherAssignmentsList = res;
+        this.teacherAssignmentsLoading = false;
+      },
+      error: () => { this.teacherAssignmentsLoading = false; }
+    });
+  }
+
+  onTeacherAsgFilesSelected(event: any): void {
+    const files = event.target.files;
+    if (files && files.length > 0) {
+      this.teacherAssignmentFilesToUpload = Array.from(files);
+      this.teacherAssignmentFileNames = this.teacherAssignmentFilesToUpload.map(f => f.name);
+    }
+  }
+
+  uploadTeacherAssignment(): void {
+    if (!this.teacherNewAssignment.title.trim()) {
+      alert('Assignment title is required.');
+      return;
+    }
+    if (this.teacherAssignmentFilesToUpload.length === 0) {
+      alert('Please select at least one homework worksheet file.');
+      return;
+    }
+    if (!this.teacherProfile?.assigned_program?.id) {
+      alert('You must be assigned to a program class to upload worksheets.');
+      return;
+    }
+
+    this.teacherUploadingAssignment = true;
+    const formData = new FormData();
+    formData.append('program_id', this.teacherProfile.assigned_program.id.toString());
+    formData.append('title', this.teacherNewAssignment.title);
+    formData.append('description', this.teacherNewAssignment.description);
+    formData.append('date', this.teacherNewAssignment.date);
+    for (let file of this.teacherAssignmentFilesToUpload) {
+      formData.append('files', file, file.name);
+    }
+
+    this.assignmentService.uploadAssignment(formData).subscribe({
+      next: () => {
+        this.teacherUploadingAssignment = false;
+        alert('Class assignments uploaded successfully!');
+        this.resetTeacherAssignmentForm();
+        this.loadTeacherAssignments();
+      },
+      error: (err) => {
+        this.teacherUploadingAssignment = false;
+        alert(err.error?.detail || 'Failed to upload assignments.');
+      }
+    });
+  }
+
+  deleteTeacherAssignment(id: number): void {
+    if (!confirm('Are you sure you want to delete this class assignment?')) return;
+    this.assignmentService.deleteAssignment(id).subscribe({
+      next: () => {
+        this.loadTeacherAssignments();
+      },
+      error: (err) => alert(err.error?.detail || 'Failed to delete assignment.')
+    });
+  }
+
+  resetTeacherAssignmentForm(): void {
+    this.teacherNewAssignment = {
+      title: '',
+      description: '',
+      date: new Date().toISOString().split('T')[0]
+    };
+    this.teacherAssignmentFilesToUpload = [];
+    this.teacherAssignmentFileNames = [];
+    const fileInput = document.getElementById('teacherAsgFiles') as HTMLInputElement;
+    if (fileInput) fileInput.value = '';
+  }
+
+  loadTeacherMoments(): void {
+    if (!this.teacherMomentSelectedStudentId) {
+      this.teacherMomentsList = [];
+      return;
+    }
+    this.teacherMomentsLoading = true;
+    this.momentsService.getMomentsByStudent(Number(this.teacherMomentSelectedStudentId)).subscribe({
+      next: (data) => {
+        this.teacherMomentsList = data;
+        this.teacherMomentsLoading = false;
+      },
+      error: (err) => {
+        this.teacherMomentsLoading = false;
+        alert(err.error?.detail || 'Failed to load moments.');
+      }
+    });
+  }
+
+  onTeacherMomFilesSelected(event: any): void {
+    const files = event.target.files;
+    if (files && files.length > 0) {
+      this.teacherMomentFilesToUpload = Array.from(files);
+      this.teacherMomentFileNames = this.teacherMomentFilesToUpload.map(f => f.name);
+    }
+  }
+
+  uploadTeacherMoment(): void {
+    if (!this.teacherMomentSelectedStudentId) {
+      alert('Please select a student.');
+      return;
+    }
+    if (!this.teacherNewMoment.title.trim()) {
+      alert('Moment title/caption is required.');
+      return;
+    }
+    if (this.teacherMomentFilesToUpload.length === 0) {
+      alert('Please select at least one media file.');
+      return;
+    }
+
+    this.teacherUploadingMoment = true;
+    this.momentsService.uploadMoment(
+      Number(this.teacherMomentSelectedStudentId),
+      this.teacherNewMoment.title,
+      this.teacherMomentFilesToUpload
+    ).subscribe({
+      next: () => {
+        this.teacherUploadingMoment = false;
+        alert('Daily moments shared successfully!');
+        this.resetTeacherMomentForm();
+        this.loadTeacherMoments();
+      },
+      error: (err) => {
+        this.teacherUploadingMoment = false;
+        alert(err.error?.detail || 'Failed to upload moments.');
+      }
+    });
+  }
+
+  deleteTeacherMoment(id: number): void {
+    if (!confirm('Are you sure you want to delete this daily moment?')) return;
+    this.momentsService.deleteMoment(id).subscribe({
+      next: (res) => {
+        alert(res.message || 'Moment deleted successfully.');
+        this.loadTeacherMoments();
+      },
+      error: (err) => alert(err.error?.detail || 'Failed to delete moment.')
+    });
+  }
+
+  resetTeacherMomentForm(): void {
+    this.teacherNewMoment = { title: '' };
+    this.teacherMomentFilesToUpload = [];
+    this.teacherMomentFileNames = [];
+    const fileInput = document.getElementById('teacherMomFiles') as HTMLInputElement;
+    if (fileInput) fileInput.value = '';
+  }
+
+  getTeacherPhotoUrl(photoPath: string | null): string {
+    if (!photoPath) {
+      return 'assets/images/teacher_avatar_ai.png';
+    }
+    return this.getMediaUrl(photoPath);
   }
 
   ngOnDestroy(): void {

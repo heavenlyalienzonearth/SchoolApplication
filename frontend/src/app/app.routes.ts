@@ -13,6 +13,7 @@ import { LoginComponent } from './pages/admin/login/login.component';
 import { DashboardComponent } from './pages/admin/dashboard/dashboard.component';
 import { ResetPasswordComponent } from './pages/admin/reset-password/reset-password.component';
 import { ParentDashboardComponent } from './pages/parent-dashboard/parent-dashboard.component';
+import { TeacherDashboardComponent } from './pages/teacher-dashboard/teacher-dashboard.component';
 import { authGuard } from './core/guards/auth.guard';
 
 export const routes: Routes = [
@@ -44,6 +45,7 @@ export const routes: Routes = [
   { path: 'admin/reset-password', component: ResetPasswordComponent },
   { path: 'admin/dashboard', component: DashboardComponent, canActivate: [authGuard] },
   { path: 'parent/dashboard', component: ParentDashboardComponent, canActivate: [authGuard] },
+  { path: 'teacher/dashboard', component: TeacherDashboardComponent, canActivate: [authGuard] },
 
   // Wildcard Fallback
   { path: '**', redirectTo: '' }

@@ -661,3 +661,23 @@ class ClassAssignmentResponse(ClassAssignmentBase):
         from_attributes = True
 
 
+# --- TEACHER ACHIEVEMENT SCHEMAS ---
+
+class TeacherAchievementBase(BaseModel):
+    title: str
+    description: Optional[str] = None
+    date: str
+
+class TeacherAchievementCreate(TeacherAchievementBase):
+    pass
+
+class TeacherAchievementResponse(TeacherAchievementBase):
+    id: int
+    teacher_id: int
+    certificate_url: Optional[str] = None
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
+
+

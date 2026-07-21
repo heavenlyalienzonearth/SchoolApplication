@@ -26,6 +26,7 @@ class User(Base):
     refresh_tokens = relationship("RefreshToken", back_populates="user", cascade="all, delete-orphan")
     student = relationship("Student", foreign_keys=[student_id])
     assigned_program = relationship("Program", foreign_keys=[assigned_program_id])
+    teacher_achievements = relationship("TeacherAchievement", back_populates="teacher", cascade="all, delete-orphan")
 
 class RefreshToken(Base):
     __tablename__ = "refresh_tokens"
@@ -38,6 +39,19 @@ class RefreshToken(Base):
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
 
     user = relationship("User", back_populates="refresh_tokens")
+
+class TeacherAchievement(Base):
+    __tablename__ = "teacher_achievements"
+
+    id = Column(Integer, primary_key=True, index=True)
+    teacher_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    title = Column(String(255), nullable=False)
+    description = Column(Text, nullable=True)
+    date = Column(String(50), nullable=False)
+    certificate_url = Column(String(500), nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+
+    teacher = relationship("User", back_populates="teacher_achievements")
 
 class SiteSetting(Base):
     __tablename__ = "site_settings"

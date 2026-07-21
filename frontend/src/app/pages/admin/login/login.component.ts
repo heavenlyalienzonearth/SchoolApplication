@@ -239,6 +239,8 @@ export class LoginComponent implements OnInit {
       const user = this.authService.currentUserValue;
       if (user?.role?.toUpperCase() === 'PARENT') {
         this.router.navigate(['/parent/dashboard']);
+      } else if (user?.role?.toUpperCase() === 'TEACHER') {
+        this.router.navigate(['/admin/dashboard']);
       } else {
         this.router.navigate(['/admin/dashboard']);
       }
@@ -307,6 +309,8 @@ export class LoginComponent implements OnInit {
         } else {
           if (res.user?.role?.toUpperCase() === 'PARENT') {
             this.router.navigate(['/parent/dashboard']);
+          } else if (res.user?.role?.toUpperCase() === 'TEACHER') {
+            this.router.navigate(['/admin/dashboard']);
           } else {
             this.router.navigate(['/admin/dashboard']);
           }
@@ -335,6 +339,8 @@ export class LoginComponent implements OnInit {
         const user = this.authService.currentUserValue;
         if (user?.role?.toUpperCase() === 'PARENT') {
           this.router.navigate(['/parent/dashboard']);
+        } else if (user?.role?.toUpperCase() === 'TEACHER') {
+          this.router.navigate(['/admin/dashboard']);
         } else {
           this.router.navigate(['/admin/dashboard']);
         }
