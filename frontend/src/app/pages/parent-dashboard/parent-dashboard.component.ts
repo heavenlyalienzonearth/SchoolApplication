@@ -389,74 +389,8 @@ import { AssignmentService, ClassAssignment } from '../../core/services/assignme
                   </div>
                 </div>
 
-                <!-- Stationery Orders Card -->
-                <div class="card orders-card">
-                  <h3 class="card-title">✏️ Supplies Order History</h3>
-                  
-                  <div class="orders-timeline" style="max-height: 380px; overflow-y: auto; padding-right: 5px;">
-                    <div class="order-box" *ngFor="let order of dashboardData.stationary_orders">
-                      <div class="order-hdr">
-                        <span class="order-id">Order #{{ order.id }}</span>
-                        <span class="badge" [ngClass]="{
-                          'badge-pending': order.status.toUpperCase() === 'PENDING',
-                          'badge-dispatched': order.status.toUpperCase() === 'DISPATCHED',
-                          'badge-delivered': order.status.toUpperCase() === 'DELIVERED'
-                        }">{{ order.status }}</span>
-                      </div>
-                      
-                      <div class="order-items-list">
-                        <div class="order-item-row" *ngFor="let item of order.items">
-                          <span>{{ item.name }} × {{ item.quantity }}</span>
-                          <span>₹{{ item.unit_price * item.quantity }}</span>
-                        </div>
-                      </div>
 
-                      <div class="order-footer">
-                        <span class="order-date">{{ order.order_date | date:'short' }}</span>
-                        <span class="order-total">Total: ₹{{ order.total_price }}</span>
-                      </div>
 
-                      <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 8px; border-top: 1px dashed #e2e8f0; padding-top: 8px; gap: 8px; flex-wrap: wrap;">
-                        <div>
-                          <span *ngIf="order.payment_status !== 'Paid' && order.status.toUpperCase() === 'PENDING'" style="color: #d97706; font-size: 0.72rem; font-weight: 700; display: inline-flex; align-items: center; gap: 4px;">
-                            🕒 Pending Teacher Approval
-                          </span>
-                          <span *ngIf="order.payment_status !== 'Paid' && order.status.toUpperCase() !== 'PENDING'" style="color: #10b981; font-size: 0.72rem; font-weight: 700; display: inline-flex; align-items: center; gap: 4px;">
-                            ✅ Approved - Pay Online
-                          </span>
-                          <span *ngIf="order.payment_status === 'Paid'" style="color: #059669; font-size: 0.72rem; font-weight: 700; display: inline-flex; align-items: center; gap: 4px;">
-                            💳 Paid & Completed
-                          </span>
-                        </div>
-                        
-                        <div style="display: flex; gap: 8px;">
-                          <!-- Trash button (Only for Pending Unpaid orders) -->
-                          <button *ngIf="order.status.toUpperCase() === 'PENDING' && order.payment_status !== 'Paid'" 
-                                  type="button" 
-                                  (click)="deleteParentOrder(order.id)" 
-                                  style="background: #fee2e2; color: #dc2626; border: 1px solid #fca5a5; border-radius: 4px; padding: 4px 8px; font-size: 0.72rem; font-weight: 700; cursor: pointer; transition: all 0.2s; display: inline-flex; align-items: center; gap: 2px;"
-                                  onmouseover="this.style.background='#ef4444'; this.style.color='white';"
-                                  onmouseout="this.style.background='#fee2e2'; this.style.color='#dc2626';"
-                                  title="Cancel Order">
-                            🗑️ Delete
-                          </button>
-                          
-                          <!-- Pay Button (Approved & Unpaid) -->
-                          <button *ngIf="order.payment_status !== 'Paid' && order.status.toUpperCase() !== 'PENDING'" 
-                                  type="button" 
-                                  (click)="startOrderPayment(order)" 
-                                  style="background: #10B981; color: white; border: none; border-radius: 4px; padding: 4px 8px; font-size: 0.72rem; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 4px;">
-                            💳 Pay ₹{{ order.total_price }}
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-
-                    <div *ngIf="dashboardData.stationary_orders?.length === 0" class="no-records" style="padding: 40px 0;">
-                      No stationery orders placed yet for {{ dashboardData.kid?.name }}.
-                    </div>
-                  </div>
-                </div>
               </div>
             </div>
           </div>
@@ -1210,7 +1144,6 @@ import { AssignmentService, ClassAssignment } from '../../core/services/assignme
                         <strong style="color: var(--primary);">Order #{{ order.id }}</strong>
                         <span style="color: #64748B; font-size: 0.72rem; margin-left: 6px;">{{ order.order_date | date:'dd MMM yy HH:mm' }}</span>
                       </div>
-                      
                       <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 3px;">
                         <span class="badge" [style.background-color]="order.status === 'Delivered' ? '#D1FAE5' : order.status === 'Dispatched' ? '#E0F2FE' : '#FEF3C7'" [style.color]="order.status === 'Delivered' ? '#065F46' : order.status === 'Dispatched' ? '#0369A1' : '#D97706'" style="border-radius: 4px; padding: 2px 6px; font-weight: 700; font-size: 0.7rem;">
                           {{ order.status }}
@@ -1236,18 +1169,17 @@ import { AssignmentService, ClassAssignment } from '../../core/services/assignme
                     <!-- Pay & Delete Actions -->
                     <div style="display: flex; justify-content: flex-end; gap: 8px; margin-top: 6px;">
                       <!-- Trash/Delete Button (Only for Pending Unpaid orders) -->
-                      <button *ngIf="order.status.toUpperCase() === 'PENDING' && order.payment_status !== 'Paid'" 
-                              type="button" 
-                              (click)="deleteParentOrder(order.id)" 
+                      <button *ngIf="order.status.toUpperCase() === 'PENDING' && order.payment_status !== 'Paid'"
+                              type="button"
+                              (click)="deleteParentOrder(order.id)"
                               style="background: #fee2e2; color: #dc2626; border: 1px solid #fca5a5; border-radius: 4px; padding: 4px 10px; font-size: 0.75rem; font-weight: 700; cursor: pointer; transition: all 0.2s; display: inline-flex; align-items: center; gap: 4px;"
                               onmouseover="this.style.background='#ef4444'; this.style.color='white';"
                               onmouseout="this.style.background='#fee2e2'; this.style.color='#dc2626';">
                         🗑️ Delete Order
                       </button>
-
-                      <button *ngIf="order.payment_status !== 'Paid' && (order.status === 'Dispatched' || order.status === 'Delivered')" 
-                              type="button" 
-                              (click)="startOrderPayment(order)" 
+                      <button *ngIf="order.payment_status !== 'Paid' && (order.status === 'Dispatched' || order.status === 'Delivered')"
+                              type="button"
+                              (click)="startOrderPayment(order)"
                               style="background: #10B981; color: white; border: none; padding: 4px 10px; border-radius: 4px; font-size: 0.75rem; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 4px;">
                         💳 Pay ₹{{ order.total_price }} Now
                       </button>

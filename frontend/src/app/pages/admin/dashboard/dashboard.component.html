@@ -30,7 +30,7 @@
         <li [class.active]="activeTab === 'teacher-home'" (click)="setTab('teacher-home')" *ngIf="currentUser?.role?.toUpperCase() === 'TEACHER'">
           <span class="icon">👩‍🏫</span> Teacher Console
         </li>
-        <li [class.active]="activeTab === 'analytics'" (click)="setTab('analytics')" *ngIf="hasPermission('analytics')">
+        <li [class.active]="activeTab === 'analytics'" (click)="setTab('analytics')" *ngIf="hasPermission('analytics') && currentUser?.role?.toUpperCase() !== 'TEACHER'">
           <span class="icon">📊</span> Rolewise CPanel
         </li>
         <!-- Settings Group -->
@@ -155,7 +155,7 @@
         <label class="form-label" for="mobileTabSelect">Dashboard Navigation:</label>
         <select id="mobileTabSelect" [ngModel]="activeTab" (ngModelChange)="setTab($event)" class="form-control select-tab">
           <option value="teacher-home" *ngIf="currentUser?.role?.toUpperCase() === 'TEACHER'">👩‍🏫 Teacher Console</option>
-          <option value="analytics" *ngIf="hasPermission('analytics')">📊 Rolewise CPanel</option>
+          <option value="analytics" *ngIf="hasPermission('analytics') && currentUser?.role?.toUpperCase() !== 'TEACHER'">📊 Rolewise CPanel</option>
           <option value="settings" *ngIf="hasPermission('settings')">⚙️ Public Settings</option>
           <option value="hero" *ngIf="hasPermission('hero')">🖼️ Modify Banner</option>
           <option value="programs" *ngIf="hasPermission('programs')">🎓 Programs</option>

@@ -422,10 +422,11 @@ export class DashboardComponent implements OnInit, OnDestroy {
   // --- TAB TOGGLE ---
   setTab(tab: string): void {
     if (tab === 'permissions' && this.currentUser?.role?.toUpperCase() !== 'SUPERADMIN') {
-      this.activeTab = 'analytics';
+      // Redirect to appropriate home tab instead of analytics
+      this.activeTab = this.currentUser?.role?.toUpperCase() === 'TEACHER' ? 'teacher-home' : 'analytics';
       return;
     }
-    if (tab !== 'permissions' && tab !== 'analytics' && tab !== 'teacher-home' && !this.hasPermission(tab)) {
+    if (tab !== 'permissions' && tab !== 'teacher-home' && !this.hasPermission(tab)) {
       return;
     }
     this.activeTab = tab;
