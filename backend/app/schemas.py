@@ -578,6 +578,7 @@ class StationaryOrderBase(BaseModel):
     student_name: Optional[str] = None
     class_name: Optional[str] = None
     payment_status: Optional[str] = "Unpaid"
+    reimbursement_status: Optional[str] = None
 
 class StationaryOrderCreate(StationaryOrderBase):
     items: List[StationaryOrderItemCreate]

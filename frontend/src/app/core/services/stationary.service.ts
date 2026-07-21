@@ -34,6 +34,7 @@ export interface StationaryOrder {
   order_date: string;
   status: string; // Pending, Dispatched, Delivered
   payment_status?: string; // Unpaid, Paid
+  reimbursement_status?: string; // None, Pending, Approved, Rejected
   total_price: number;
   created_by_id: number;
   created_by?: any;
@@ -72,5 +73,25 @@ export class StationaryService {
 
   updateOrderStatus(orderId: number, status: string): Observable<StationaryOrder> {
     return this.apiService.put<StationaryOrder>(`/stationary/orders/${orderId}/status`, { status });
+  }
+
+  createStationaryOrderRazorpayOrder(orderId: number): Observable<any> {
+    return this.apiService.post<any>(`/stationary/orders/${orderId}/razorpay-order`, {});
+  }
+
+  verifyStationaryOrderRazorpayPayment(orderId: number, payload: any): Observable<any> {
+    return this.apiService.post<any>(`/stationary/orders/${orderId}/razorpay-verify`, payload);
+  }
+
+  requestReimbursement(orderId: number): Observable<any> {
+    return this.apiService.post<any>(`/stationary/orders/${orderId}/reimburse`, {});
+  }
+
+  approveReimbursement(orderId: number): Observable<any> {
+    return this.apiService.post<any>(`/stationary/orders/${orderId}/reimburse-approve`, {});
+  }
+
+  rejectReimbursement(orderId: number): Observable<any> {
+    return this.apiService.post<any>(`/stationary/orders/${orderId}/reimburse-reject`, {});
   }
 }

@@ -1673,13 +1673,13 @@
 
         <!-- Category Sub-Tabs -->
         <div style="display: flex; gap: 0; margin-bottom: 24px; border-bottom: 2px solid #E2E8F0;">
-          <button type="button" (click)="stationaryCategory = 'school'" [style.border-bottom]="stationaryCategory === 'school' ? '3px solid var(--secondary)' : '3px solid transparent'" [style.color]="stationaryCategory === 'school' ? 'var(--secondary)' : '#64748B'" style="background: none; border: none; border-radius: 0; padding: 10px 20px; font-weight: 700; font-size: 0.95rem; cursor: pointer; transition: all 0.2s; margin-bottom: -2px;">
+          <button type="button" (click)="setStationaryCategory('school')" [style.border-bottom]="stationaryCategory === 'school' ? '3px solid var(--secondary)' : '3px solid transparent'" [style.color]="stationaryCategory === 'school' ? 'var(--secondary)' : '#64748B'" style="background: none; border: none; border-radius: 0; padding: 10px 20px; font-weight: 700; font-size: 0.95rem; cursor: pointer; transition: all 0.2s; margin-bottom: -2px;">
             🏫 School Stationery
           </button>
-          <button type="button" (click)="stationaryCategory = 'teacher'" [style.border-bottom]="stationaryCategory === 'teacher' ? '3px solid var(--secondary)' : '3px solid transparent'" [style.color]="stationaryCategory === 'teacher' ? 'var(--secondary)' : '#64748B'" style="background: none; border: none; border-radius: 0; padding: 10px 20px; font-weight: 700; font-size: 0.95rem; cursor: pointer; transition: all 0.2s; margin-bottom: -2px;">
+          <button type="button" (click)="setStationaryCategory('teacher')" [style.border-bottom]="stationaryCategory === 'teacher' ? '3px solid var(--secondary)' : '3px solid transparent'" [style.color]="stationaryCategory === 'teacher' ? 'var(--secondary)' : '#64748B'" style="background: none; border: none; border-radius: 0; padding: 10px 20px; font-weight: 700; font-size: 0.95rem; cursor: pointer; transition: all 0.2s; margin-bottom: -2px;">
             👩‍🏫 Teacher Stationery
           </button>
-          <button type="button" (click)="stationaryCategory = 'student'" [style.border-bottom]="stationaryCategory === 'student' ? '3px solid var(--secondary)' : '3px solid transparent'" [style.color]="stationaryCategory === 'student' ? 'var(--secondary)' : '#64748B'" style="background: none; border: none; border-radius: 0; padding: 10px 20px; font-weight: 700; font-size: 0.95rem; cursor: pointer; transition: all 0.2s; margin-bottom: -2px;">
+          <button type="button" (click)="setStationaryCategory('student')" [style.border-bottom]="stationaryCategory === 'student' ? '3px solid var(--secondary)' : '3px solid transparent'" [style.color]="stationaryCategory === 'student' ? 'var(--secondary)' : '#64748B'" style="background: none; border: none; border-radius: 0; padding: 10px 20px; font-weight: 700; font-size: 0.95rem; cursor: pointer; transition: all 0.2s; margin-bottom: -2px;">
             🎒 Student Stationery
           </button>
         </div>
@@ -1940,7 +1940,7 @@
             </h3>
             
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
-              <div *ngFor="let item of stationaryItems" style="border: 1px solid #E2E8F0; border-radius: 8px; padding: 15px; background: #FAFAFA; display: flex; flex-direction: column; justify-content: space-between; min-height: 140px;">
+              <div *ngFor="let item of getFilteredStationaryItems()" style="border: 1px solid #E2E8F0; border-radius: 8px; padding: 15px; background: #FAFAFA; display: flex; flex-direction: column; justify-content: space-between; min-height: 140px;">
                 <div>
                   <div style="display: flex; justify-content: space-between; align-items: start;">
                     <strong style="color: #1E293B; font-size: 0.95rem;">{{ item.name }}</strong>
@@ -1969,7 +1969,7 @@
               </div>
             </div>
             
-            <div *ngIf="stationaryItems.length === 0" style="text-align: center; color: var(--text-light); padding: 40px;">
+            <div *ngIf="getFilteredStationaryItems().length === 0" style="text-align: center; color: var(--text-light); padding: 40px;">
               No stationery items available in the catalog.
             </div>
           </div>
@@ -2048,17 +2048,33 @@
                 📜 Supply Orders History
               </h3>
 
-              <div style="overflow-y: auto; max-height: 350px;">
-                <div *ngFor="let order of stationaryOrders" style="border: 1px solid #E2E8F0; border-radius: 8px; padding: 12px; background: #FAFAFA; margin-bottom: 12px; font-size: 0.85rem;">
+              <div style="overflow-y: auto; max-height: 380px;">
+                <div *ngFor="let order of getFilteredStationaryOrders()" style="border: 1px solid #E2E8F0; border-radius: 8px; padding: 12px; background: #FAFAFA; margin-bottom: 12px; font-size: 0.85rem;">
                   <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 6px;">
                     <div>
                       <strong style="color: var(--primary);">Order #{{ order.id }}</strong>
                       <span style="color: #64748B; font-size: 0.75rem; margin-left: 8px;">{{ order.order_date | date:'short' }}</span>
                     </div>
                     
-                    <span class="badge" [style.background-color]="order.status === 'Delivered' ? '#D1FAE5' : order.status === 'Dispatched' ? '#E0F2FE' : '#FEF3C7'" [style.color]="order.status === 'Delivered' ? '#065F46' : order.status === 'Dispatched' ? '#0369A1' : '#D97706'" style="border-radius: 4px; padding: 2px 6px; font-weight: 700; font-size: 0.75rem;">
-                      {{ order.status }}
-                    </span>
+                    <div style="display: flex; gap: 6px; align-items: center;">
+                      <!-- Reimbursement Status Badge -->
+                      <span class="badge" *ngIf="order.reimbursement_status"
+                            [style.background-color]="order.reimbursement_status === 'Approved' ? '#D1FAE5' : order.reimbursement_status === 'Pending' ? '#FEF3C7' : '#FEE2E2'"
+                            [style.color]="order.reimbursement_status === 'Approved' ? '#065F46' : order.reimbursement_status === 'Pending' ? '#D97706' : '#991B1B'"
+                            style="border-radius: 4px; padding: 2px 6px; font-weight: 700; font-size: 0.7rem;">
+                        💸 Reimbursement: {{ order.reimbursement_status }}
+                      </span>
+                      
+                      <!-- Payment Status Badge -->
+                      <span class="badge" [style.background-color]="order.payment_status === 'Paid' ? '#D1FAE5' : '#FEE2E2'" [style.color]="order.payment_status === 'Paid' ? '#065F46' : '#991B1B'" style="border-radius: 4px; padding: 2px 6px; font-weight: 700; font-size: 0.7rem;">
+                        {{ order.payment_status || 'Unpaid' }}
+                      </span>
+                      
+                      <!-- Order Status Badge -->
+                      <span class="badge" [style.background-color]="order.status === 'Delivered' ? '#E0F2FE' : order.status === 'Dispatched' ? '#E0F2FE' : '#F3F4F6'" [style.color]="order.status === 'Delivered' ? '#0369A1' : order.status === 'Dispatched' ? '#0369A1' : '#374151'" style="border-radius: 4px; padding: 2px 6px; font-weight: 700; font-size: 0.7rem;">
+                        Status: {{ order.status }}
+                      </span>
+                    </div>
                   </div>
 
                   <div style="color: #475569; margin-bottom: 8px; line-height: 1.4;">
@@ -2078,19 +2094,42 @@
                     </div>
                   </div>
 
-                  <!-- Status Actions for Admin -->
-                  <div *ngIf="currentUser?.role?.toUpperCase() === 'ADMIN' && order.status !== 'Delivered'" style="display: flex; gap: 8px; justify-content: flex-end;">
-                    <button type="button" *ngIf="order.status === 'Pending'" (click)="updateOrderStatus(order.id, 'Dispatched')" style="background: #0284C7; color: white; border: none; padding: 3px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: 600; cursor: pointer;">
-                      🚚 Dispatch
+                  <!-- Actions footer -->
+                  <div style="display: flex; gap: 8px; justify-content: flex-end; align-items: center; margin-top: 10px; border-top: 1px solid #F1F5F9; padding-top: 8px;">
+                    <!-- Pay Button -->
+                    <button type="button" *ngIf="order.payment_status !== 'Paid'" (click)="payStationaryOrderWithRazorpay(order)" style="background: #2563eb; color: white; border: none; padding: 4px 10px; border-radius: 4px; font-size: 0.75rem; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 4px; transition: background 0.2s;" onmouseover="this.style.background='#1D4ED8'" onmouseout="this.style.background='#2563eb'">
+                      💳 Pay Now
                     </button>
-                    <button type="button" *ngIf="order.status === 'Dispatched'" (click)="updateOrderStatus(order.id, 'Delivered')" style="background: #059669; color: white; border: none; padding: 3px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: 600; cursor: pointer;">
-                      ✅ Deliver
+                    
+                    <!-- Request Reimbursement Button -->
+                    <button type="button" *ngIf="order.payment_status === 'Paid' && !order.reimbursement_status && (stationaryCategory === 'teacher' || stationaryCategory === 'school')" (click)="requestReimbursement(order.id)" style="background: #7C3AED; color: white; border: none; padding: 4px 10px; border-radius: 4px; font-size: 0.75rem; font-weight: 700; cursor: pointer; transition: background 0.2s;" onmouseover="this.style.background='#6D28D9'" onmouseout="this.style.background='#7C3AED'">
+                      💰 Reimburse
                     </button>
+                    
+                    <!-- Admin Reimbursement Actions -->
+                    <ng-container *ngIf="(currentUser?.role?.toUpperCase() === 'ADMIN' || currentUser?.role?.toUpperCase() === 'PRINCIPAL') && order.reimbursement_status === 'Pending'">
+                      <button type="button" (click)="approveReimbursement(order.id)" style="background: #10B981; color: white; border: none; padding: 4px 10px; border-radius: 4px; font-size: 0.75rem; font-weight: 700; cursor: pointer; transition: background 0.2s;" onmouseover="this.style.background='#059669'" onmouseout="this.style.background='#10B981'">
+                        ✅ Approve Reimburse
+                      </button>
+                      <button type="button" (click)="rejectReimbursement(order.id)" style="background: #EF4444; color: white; border: none; padding: 4px 10px; border-radius: 4px; font-size: 0.75rem; font-weight: 700; cursor: pointer; transition: background 0.2s;" onmouseover="this.style.background='#DC2626'" onmouseout="this.style.background='#EF4444'">
+                        ❌ Reject Reimburse
+                      </button>
+                    </ng-container>
+
+                    <!-- Dispatch/Deliver status updates -->
+                    <ng-container *ngIf="currentUser?.role?.toUpperCase() === 'ADMIN' && order.status !== 'Delivered'">
+                      <button type="button" *ngIf="order.status === 'Pending'" (click)="updateOrderStatus(order.id, 'Dispatched')" style="background: #0284C7; color: white; border: none; padding: 4px 10px; border-radius: 4px; font-size: 0.75rem; font-weight: 600; cursor: pointer;">
+                        🚚 Dispatch
+                      </button>
+                      <button type="button" *ngIf="order.status === 'Dispatched'" (click)="updateOrderStatus(order.id, 'Delivered')" style="background: #059669; color: white; border: none; padding: 4px 10px; border-radius: 4px; font-size: 0.75rem; font-weight: 600; cursor: pointer;">
+                        ✅ Deliver
+                      </button>
+                    </ng-container>
                   </div>
                 </div>
 
-                <div *ngIf="stationaryOrders.length === 0" style="text-align: center; color: var(--text-light); padding: 20px 0;">
-                  No supply orders placed yet.
+                <div *ngIf="getFilteredStationaryOrders().length === 0" style="text-align: center; color: var(--text-light); padding: 20px 0;">
+                  No supply orders found in this category.
                 </div>
               </div>
             </div>

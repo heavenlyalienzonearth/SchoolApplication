@@ -322,6 +322,8 @@ export class DashboardComponent implements OnInit, OnDestroy {
   showRazorpayMockModal = false;
   razorpayOrderData: any = null;
   processingPayment = false;
+  razorpayPaymentType: 'invoice' | 'stationary' = 'invoice';
+  stationaryOrderToPay: any = null;
   waiverModalOpen = false;
   waiverAmount = 0;
   waiverReason = '';
@@ -821,15 +823,125 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
   confirmRazorpayMockPayment(): void {
     if (!this.razorpayOrderData) return;
-    this.verifyOnlinePayment(this.razorpayOrderData.bill_id, {
-      is_mock: true
-    });
+    if (this.razorpayPaymentType === 'stationary') {
+      this.verifyStationaryOrderPayment(this.razorpayOrderData.bill_id, {
+        is_mock: true
+      });
+    } else {
+      this.verifyOnlinePayment(this.razorpayOrderData.bill_id, {
+        is_mock: true
+      });
+    }
   }
 
   closeRazorpayMockModal(): void {
     this.showRazorpayMockModal = false;
     this.selectedInvoice = null;
+    this.stationaryOrderToPay = null;
     this.razorpayOrderData = null;
+  }
+
+  payStationaryOrderWithRazorpay(order: any): void {
+    this.stationaryOrderToPay = order;
+    this.processingPayment = true;
+    this.razorpayPaymentType = 'stationary';
+    
+    this.stationaryService.createStationaryOrderRazorpayOrder(order.id).subscribe({
+      next: (data) => {
+        this.processingPayment = false;
+        if (data.is_mock) {
+          this.razorpayOrderData = data;
+          this.showRazorpayMockModal = true;
+        } else {
+          const options = {
+            key: data.key_id,
+            amount: data.amount,
+            currency: data.currency,
+            name: "Vidyankuram Kids School",
+            description: data.title,
+            order_id: data.order_id,
+            handler: (response: any) => {
+              this.verifyStationaryOrderPayment(order.id, {
+                razorpay_order_id: response.razorpay_order_id,
+                razorpay_payment_id: response.razorpay_payment_id,
+                razorpay_signature: response.razorpay_signature,
+                is_mock: false
+              });
+            },
+            prefill: {
+              name: order.created_by?.full_name || 'Staff',
+              email: order.created_by?.email || ''
+            },
+            theme: {
+              color: "#2563eb"
+            }
+          };
+          const rzp = new (window as any).Razorpay(options);
+          rzp.open();
+        }
+      },
+      error: (err) => {
+        this.processingPayment = false;
+        this.showToast(err.error?.detail || 'Failed to initialize payment gateway checkout.', 'error');
+      }
+    });
+  }
+
+  verifyStationaryOrderPayment(orderId: number, payload: any): void {
+    this.processingPayment = true;
+    this.stationaryService.verifyStationaryOrderRazorpayPayment(orderId, payload).subscribe({
+      next: (res) => {
+        this.processingPayment = false;
+        this.showRazorpayMockModal = false;
+        this.stationaryOrderToPay = null;
+        this.razorpayOrderData = null;
+        this.showToast(res.message || 'Payment processed successfully!', 'success');
+        this.loadStationary();
+      },
+      error: (err) => {
+        this.processingPayment = false;
+        this.showRazorpayMockModal = false;
+        this.stationaryOrderToPay = null;
+        this.razorpayOrderData = null;
+        this.showToast(err.error?.detail || 'Razorpay payment verification failed.', 'error');
+      }
+    });
+  }
+
+  requestReimbursement(orderId: number): void {
+    this.stationaryService.requestReimbursement(orderId).subscribe({
+      next: (res) => {
+        this.showToast(res.message || 'Reimbursement ticket raised successfully.', 'success');
+        this.loadStationary();
+      },
+      error: (err) => {
+        this.showToast(err.error?.detail || 'Failed to request reimbursement.', 'error');
+      }
+    });
+  }
+
+  approveReimbursement(orderId: number): void {
+    this.stationaryService.approveReimbursement(orderId).subscribe({
+      next: (res) => {
+        this.showToast(res.message || 'Reimbursement request approved.', 'success');
+        this.loadStationary();
+      },
+      error: (err) => {
+        this.showToast(err.error?.detail || 'Failed to approve reimbursement.', 'error');
+      }
+    });
+  }
+
+  rejectReimbursement(orderId: number): void {
+    this.stationaryService.rejectReimbursement(orderId).subscribe({
+      next: (res) => {
+        this.showToast(res.message || 'Reimbursement request rejected.', 'success');
+        this.loadStationary();
+      },
+      error: (err) => {
+        this.showToast(err.error?.detail || 'Failed to reject reimbursement.', 'error');
+      }
+    });
   }
 
   openEditInvoiceModal(invoice: any): void {
@@ -3072,6 +3184,29 @@ export class DashboardComponent implements OnInit, OnDestroy {
     this.cvUploadSuccess = false;
     this.uploadingCV = false;
     this.clearCVFileInput();
+  }
+
+  getFilteredStationaryOrders(): any[] {
+    if (!this.stationaryOrders) return [];
+    return this.stationaryOrders.filter(order => {
+      if (!order.items || order.items.length === 0) return false;
+      return order.items.some((item: any) => {
+        const itemType = item.item?.stationery_type || 'school';
+        return itemType === this.stationaryCategory;
+      });
+    });
+  }
+
+  getFilteredStationaryItems(): any[] {
+    if (!this.stationaryItems) return [];
+    return this.stationaryItems.filter((item: any) => {
+      return item.stationery_type === this.stationaryCategory || !item.stationery_type;
+    });
+  }
+
+  setStationaryCategory(category: 'school' | 'teacher' | 'student'): void {
+    this.stationaryCategory = category;
+    this.stationaryCart = []; // Clear cart on category change to prevent mixing types in checkout
   }
 
   // --- STATIONERY CENTER ---
