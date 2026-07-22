@@ -346,6 +346,7 @@ class StudentBase(BaseModel):
     parent_name: str
     phone: str
     program_id: int
+    teacher_id: Optional[int] = None
     allergies: Optional[str] = None
     photo_url: Optional[str] = None
     issued_items_json: Optional[str] = None
@@ -357,8 +358,21 @@ class StudentBase(BaseModel):
 class StudentCreate(StudentBase):
     pass
 
+class StudentUpdate(BaseModel):
+    name: Optional[str] = None
+    parent_name: Optional[str] = None
+    phone: Optional[str] = None
+    program_id: Optional[int] = None
+    teacher_id: Optional[int] = None
+    allergies: Optional[str] = None
+    blood_group: Optional[str] = None
+    emergency_phone: Optional[str] = None
+    date_of_birth: Optional[str] = None
+    is_active: Optional[bool] = None
+
 class StudentResponse(StudentBase):
     id: int
+    teacher_name: Optional[str] = None
     created_at: datetime
 
     class Config:

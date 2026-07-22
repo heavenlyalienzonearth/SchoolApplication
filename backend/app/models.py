@@ -218,10 +218,12 @@ class Student(Base):
     blood_group = Column(String(50), nullable=True)
     emergency_phone = Column(String(100), nullable=True)
     date_of_birth = Column(String(50), nullable=True)
+    teacher_id = Column(Integer, ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
     is_active = Column(Boolean, default=True, nullable=False)
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
 
     program = relationship("Program")
+    teacher = relationship("User", foreign_keys=[teacher_id])
 
 class Attendance(Base):
     __tablename__ = "attendance"

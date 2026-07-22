@@ -82,7 +82,7 @@ import { MomentsService, StudentMoment } from '../../core/services/moments.servi
           
           <!-- Key Indicators -->
           <div class="stats-cards-grid" style="width: 100%;">
-            <div class="stat-card pink">
+            <div class="stat-card pink" (click)="openPupilsModal()" style="cursor: pointer;" title="Click to view your assigned pupils roster">
               <span class="stat-num">{{ stats.students_count }}</span>
               <span class="stat-label">👥 Pupils</span>
             </div>
@@ -110,6 +110,12 @@ import { MomentsService, StudentMoment } from '../../core/services/moments.servi
             📋 Student Orders
           </button>
           <button 
+            [class.active]="activeTab === 'pupils'" 
+            (click)="switchTab('pupils')"
+            class="tab-btn">
+            👥 My Assigned Pupils ({{ classStudents.length }})
+          </button>
+          <button 
             [class.active]="activeTab === 'achievements'" 
             (click)="switchTab('achievements')"
             class="tab-btn">
@@ -130,6 +136,59 @@ import { MomentsService, StudentMoment } from '../../core/services/moments.servi
         </div>
 
         <!-- TAB CONTENT VIEWS -->
+
+        <!-- MY ASSIGNED PUPILS TAB -->
+        <div class="tab-content" *ngIf="activeTab === 'pupils'">
+          <div class="card" style="padding: 24px;">
+            <div class="card-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+              <div>
+                <h3 style="margin: 0; font-size: 1.25rem; font-weight: 800; color: #0f172a;">👥 My Assigned Pupils Roster</h3>
+                <p style="margin: 4px 0 0 0; color: #64748b; font-size: 0.85rem;">Class: <strong>{{ profile?.assigned_program?.title || 'Your Class' }}</strong> — Showing only pupils assigned to <strong>{{ profile?.full_name }}</strong></p>
+              </div>
+              <button (click)="loadClassStudents()" class="btn btn-secondary btn-sm">🔄 Refresh Roster</button>
+            </div>
+
+            <div *ngIf="classStudents.length === 0" class="loading-state" style="text-align: center; padding: 40px; color: #94a3b8; font-style: italic;">
+              No pupils currently assigned to you in this class roster.
+            </div>
+
+            <div *ngIf="classStudents.length > 0" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px;">
+              <div *ngFor="let student of classStudents" style="background: #f8fafc; border: 1.5px solid #e2e8f0; border-radius: 12px; padding: 18px;">
+                <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 12px;">
+                  <span style="font-size: 2rem; background: white; width: 48px; height: 48px; border-radius: 50%; display: flex; align-items: center; justify-content: center; border: 1.5px solid #e2e8f0;">👦</span>
+                  <div>
+                    <h4 style="margin: 0; font-size: 1.05rem; font-weight: 800; color: #0f172a;">{{ student.name }}</h4>
+                    <span style="background: #dcfce7; color: #15803d; font-size: 0.7rem; font-weight: 800; padding: 2px 8px; border-radius: 4px; display: inline-block; margin-top: 3px;">
+                      ✓ Assigned to You
+                    </span>
+                  </div>
+                </div>
+
+                <div style="display: flex; flex-direction: column; gap: 8px; font-size: 0.82rem; color: #475569; border-top: 1px solid #e2e8f0; padding-top: 12px;">
+                  <div style="display: flex; justify-content: space-between;">
+                    <span style="color: #64748b; font-weight: 600;">Parent Name:</span>
+                    <strong style="color: #1e293b;">{{ student.parent_name || 'N/A' }}</strong>
+                  </div>
+                  <div style="display: flex; justify-content: space-between;">
+                    <span style="color: #64748b; font-weight: 600;">Phone Contact:</span>
+                    <strong style="color: #2563eb;">{{ student.phone || 'N/A' }}</strong>
+                  </div>
+                  <div *ngIf="student.date_of_birth" style="display: flex; justify-content: space-between;">
+                    <span style="color: #64748b; font-weight: 600;">Date of Birth:</span>
+                    <span>{{ student.date_of_birth }}</span>
+                  </div>
+                  <div *ngIf="student.blood_group" style="display: flex; justify-content: space-between;">
+                    <span style="color: #64748b; font-weight: 600;">Blood Group:</span>
+                    <span style="color: #dc2626; font-weight: 700;">{{ student.blood_group }}</span>
+                  </div>
+                  <div *ngIf="student.allergies" style="margin-top: 6px; background: #fee2e2; border: 1px solid #fca5a5; color: #dc2626; padding: 6px 10px; border-radius: 6px; font-size: 0.78rem; font-weight: 700;">
+                    ⚠️ Allergy: {{ student.allergies }}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
 
         <!-- 1. STUDENT STATIONERY ORDERS TAB (Requirement 5) -->
         <div class="tab-content" *ngIf="activeTab === 'orders'">
@@ -402,6 +461,86 @@ import { MomentsService, StudentMoment } from '../../core/services/moments.servi
         </div>
 
       </main>
+
+      <!-- ASSIGNED PUPILS MODAL (TEACHER VIEW ONLY) -->
+      <div *ngIf="showPupilsModal"
+           style="position: fixed; inset: 0; background: rgba(15,23,42,0.6); backdrop-filter: blur(5px); z-index: 9999; display: flex; align-items: center; justify-content: center; padding: 20px;"
+           (click)="closePupilsModal()">
+        <div (click)="$event.stopPropagation()"
+             style="background: white; border-radius: 20px; box-shadow: 0 25px 60px rgba(0,0,0,0.25); max-width: 720px; width: 100%; max-height: 85vh; overflow-y: auto; animation: fadeIn 0.25s ease;">
+
+          <!-- Modal Header -->
+          <div style="background: linear-gradient(135deg, #fdf2f8, #fbcfe8); padding: 28px 28px 20px; border-bottom: 1px solid #f472b6; position: relative;">
+            <button type="button" (click)="closePupilsModal()" style="position: absolute; top: 18px; right: 20px; background: none; border: none; font-size: 1.5rem; color: #9d174d; cursor: pointer; line-height: 1;">&times;</button>
+            <div style="display: flex; align-items: center; gap: 14px;">
+              <div style="width: 52px; height: 52px; background: linear-gradient(135deg, #ec4899, #db2777); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-size: 1.6rem; box-shadow: 0 4px 12px rgba(236,72,153,0.3);">
+                👥
+              </div>
+              <div>
+                <h3 style="margin: 0; font-size: 1.3rem; font-weight: 900; color: #831843;">
+                  Assigned Pupils — {{ profile?.assigned_program?.title || 'Your Class' }}
+                </h3>
+                <p style="margin: 3px 0 0; font-size: 0.82rem; color: #9d174d; font-weight: 600;">
+                  Showing only pupils assigned to <strong>{{ profile?.full_name }}</strong> (Total: {{ classStudents.length }})
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Body / Pupils Roster -->
+          <div style="padding: 24px;">
+            <div *ngIf="classStudents.length === 0" style="text-align: center; padding: 40px; color: #94a3b8; font-style: italic;">
+              No pupils currently assigned to you in this class roster.
+            </div>
+
+            <div *ngIf="classStudents.length > 0" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px;">
+              <div *ngFor="let student of classStudents" style="background: #f8fafc; border: 1.5px solid #e2e8f0; border-radius: 12px; padding: 16px; transition: transform 0.2s, box-shadow 0.2s;" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 8px 16px rgba(0,0,0,0.06)';" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='none';">
+                <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px;">
+                  <div style="display: flex; align-items: center; gap: 10px;">
+                    <span style="font-size: 1.8rem; background: #f1f5f9; width: 44px; height: 44px; border-radius: 50%; display: flex; align-items: center; justify-content: center;">👦</span>
+                    <div>
+                      <h4 style="margin: 0; font-size: 1rem; font-weight: 800; color: #0f172a;">{{ student.name }}</h4>
+                      <span style="background: #dcfce7; color: #15803d; font-size: 0.68rem; font-weight: 800; padding: 2px 6px; border-radius: 4px; display: inline-block; margin-top: 2px;">
+                        ✓ Assigned to You
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                <div style="display: flex; flex-direction: column; gap: 6px; font-size: 0.8rem; color: #475569; border-top: 1px solid #e2e8f0; padding-top: 10px; margin-top: 6px;">
+                  <div style="display: flex; justify-content: space-between;">
+                    <span style="color: #64748b; font-weight: 600;">Parent:</span>
+                    <strong style="color: #1e293b;">{{ student.parent_name || 'N/A' }}</strong>
+                  </div>
+                  <div style="display: flex; justify-content: space-between;">
+                    <span style="color: #64748b; font-weight: 600;">Phone Contact:</span>
+                    <strong style="color: #2563eb;">{{ student.phone || 'N/A' }}</strong>
+                  </div>
+                  <div *ngIf="student.date_of_birth" style="display: flex; justify-content: space-between;">
+                    <span style="color: #64748b; font-weight: 600;">Date of Birth:</span>
+                    <span>{{ student.date_of_birth }}</span>
+                  </div>
+                  <div *ngIf="student.blood_group" style="display: flex; justify-content: space-between;">
+                    <span style="color: #64748b; font-weight: 600;">Blood Group:</span>
+                    <span style="color: #dc2626; font-weight: 700;">{{ student.blood_group }}</span>
+                  </div>
+                  <div *ngIf="student.allergies" style="margin-top: 4px; background: #fee2e2; border: 1px solid #fca5a5; color: #dc2626; padding: 4px 8px; border-radius: 6px; font-size: 0.73rem; font-weight: 700;">
+                    ⚠️ Allergy: {{ student.allergies }}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Footer -->
+          <div style="padding: 16px 28px 24px; text-align: right; border-top: 1px solid #f1f5f9;">
+            <button type="button" (click)="closePupilsModal()" style="padding: 10px 24px; background: #0f172a; color: white; border: none; border-radius: 8px; font-weight: 800; font-size: 0.88rem; cursor: pointer;">
+              Close Roster
+            </button>
+          </div>
+        </div>
+      </div>
+
     </div>
   `,
   styles: [`
@@ -1007,7 +1146,9 @@ export class TeacherDashboardComponent implements OnInit, OnDestroy {
     achievements_count: 0
   };
 
-  activeTab: 'orders' | 'achievements' | 'assignments' | 'moments' = 'orders';
+  showPupilsModal = false;
+
+  activeTab: 'orders' | 'pupils' | 'achievements' | 'assignments' | 'moments' = 'orders';
   ordersLoading = false;
   ordersList: any[] = [];
 
@@ -1095,15 +1236,27 @@ export class TeacherDashboardComponent implements OnInit, OnDestroy {
     this.teacherService.getStudents().subscribe({
       next: (students) => {
         this.classStudents = students;
+        this.stats.students_count = students.length;
       },
       error: () => {}
     });
   }
 
-  switchTab(tab: 'orders' | 'achievements' | 'assignments' | 'moments'): void {
+  openPupilsModal(): void {
+    this.loadClassStudents();
+    this.showPupilsModal = true;
+  }
+
+  closePupilsModal(): void {
+    this.showPupilsModal = false;
+  }
+
+  switchTab(tab: 'orders' | 'pupils' | 'achievements' | 'assignments' | 'moments'): void {
     this.activeTab = tab;
     if (tab === 'orders') {
       this.loadOrders();
+    } else if (tab === 'pupils') {
+      this.loadClassStudents();
     } else if (tab === 'achievements') {
       this.loadAchievements();
     } else if (tab === 'assignments') {

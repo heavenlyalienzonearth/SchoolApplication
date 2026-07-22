@@ -13,13 +13,33 @@ router = APIRouter(prefix="/attendance", tags=["Kid Attendance"])
 @router.get("/students", response_model=List[schemas.StudentResponse])
 def get_students(
     program_id: Optional[int] = None,
+    teacher_id: Optional[int] = None,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(get_current_user)
 ):
     query = db.query(models.Student)
+    
+    # If user is a Teacher, restrict exclusively to their assigned pupils
+    if current_user.role.upper() == "TEACHER":
+        query = query.filter(models.Student.teacher_id == current_user.id)
+    else:
+        if teacher_id is not None:
+            query = query.filter(models.Student.teacher_id == teacher_id)
+            
     if program_id is not None:
         query = query.filter(models.Student.program_id == program_id)
-    return query.order_by(models.Student.name).all()
+        
+    students = query.order_by(models.Student.name).all()
+    
+    # Populate teacher_name dynamically
+    results = []
+    for s in students:
+        s_resp = schemas.StudentResponse.model_validate(s)
+        if s.teacher:
+            s_resp.teacher_name = s.teacher.full_name or s.teacher.email
+        results.append(s_resp)
+        
+    return results
 
 @router.post("/students", response_model=schemas.StudentResponse, status_code=status.HTTP_201_CREATED)
 def create_student(
@@ -32,11 +52,65 @@ def create_student(
     if not prog:
         raise HTTPException(status_code=404, detail="Program not found")
         
+    # Validate teacher_id if provided
+    if student.teacher_id:
+        t_user = db.query(models.User).filter(models.User.id == student.teacher_id).first()
+        if not t_user:
+            raise HTTPException(status_code=404, detail="Assigned teacher user not found")
+        if t_user.assigned_program_id and t_user.assigned_program_id != student.program_id:
+            raise HTTPException(
+                status_code=400,
+                detail="Cannot assign student to a teacher of a different class/program."
+            )
+        
     db_student = models.Student(**student.model_dump())
     db.add(db_student)
     db.commit()
     db.refresh(db_student)
-    return db_student
+    
+    resp = schemas.StudentResponse.model_validate(db_student)
+    if db_student.teacher:
+        resp.teacher_name = db_student.teacher.full_name or db_student.teacher.email
+    return resp
+
+@router.put("/students/{student_id}", response_model=schemas.StudentResponse)
+def update_student(
+    student_id: int,
+    student_update: schemas.StudentUpdate,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user)
+):
+    db_student = db.query(models.Student).filter(models.Student.id == student_id).first()
+    if not db_student:
+        raise HTTPException(status_code=404, detail="Student not found")
+        
+    update_data = student_update.model_dump(exclude_unset=True)
+    
+    # Validate teacher swapping / assignment
+    if "teacher_id" in update_data and update_data["teacher_id"] is not None:
+        target_teacher_id = update_data["teacher_id"]
+        t_user = db.query(models.User).filter(models.User.id == target_teacher_id).first()
+        if not t_user:
+            raise HTTPException(status_code=404, detail="Target teacher not found")
+            
+        # Target student's program (or updated program)
+        prog_id = update_data.get("program_id", db_student.program_id)
+        if t_user.assigned_program_id and t_user.assigned_program_id != prog_id:
+            raise HTTPException(
+                status_code=400,
+                detail="Swapping failed: Cannot assign/swap student to a teacher of a different class/program."
+            )
+            
+    for key, value in update_data.items():
+        setattr(db_student, key, value)
+        
+    db.commit()
+    db.refresh(db_student)
+    
+    resp = schemas.StudentResponse.model_validate(db_student)
+    if db_student.teacher:
+        resp.teacher_name = db_student.teacher.full_name or db_student.teacher.email
+    return resp
 
 @router.delete("/students/{student_id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_student(
@@ -44,7 +118,14 @@ def delete_student(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(get_current_user)
 ):
-    db_student = db.query(models.Student).filter(models.Student.id == student_id).first()
+    # Only Admin or Principal can delete students (TC cases)
+    if current_user.role.upper() not in ["ADMIN", "PRINCIPAL"]:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="TC Removal Access Denied: Only Admin or Principal can delete a student from any teacher."
+        )
+        
+    db_student = models.Student(**{"id": student_id}) if False else db.query(models.Student).filter(models.Student.id == student_id).first()
     if not db_student:
         raise HTTPException(status_code=404, detail="Student not found")
     db.delete(db_student)

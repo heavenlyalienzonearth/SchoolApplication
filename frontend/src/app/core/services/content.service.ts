@@ -317,6 +317,10 @@ export class ContentService {
     return this.apiService.post<any>('/attendance/students', student);
   }
 
+  updateStudent(id: number, student: any): Observable<any> {
+    return this.apiService.put<any>(`/attendance/students/${id}`, student);
+  }
+
   deleteStudent(id: number): Observable<any> {
     return this.apiService.delete<any>(`/attendance/students/${id}`);
   }

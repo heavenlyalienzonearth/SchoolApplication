@@ -35,7 +35,18 @@ def get_teacher_dashboard(
     if current_user.assigned_program_id:
         program = db.query(models.Program).filter(models.Program.id == current_user.assigned_program_id).first()
         if program:
-            students_count = db.query(models.Student).filter(models.Student.program_id == program.id).count()
+            has_assignments = db.query(models.Student).filter(
+                models.Student.program_id == program.id,
+                models.Student.teacher_id.isnot(None)
+            ).first()
+            if has_assignments:
+                students_count = db.query(models.Student).filter(
+                    models.Student.program_id == program.id,
+                    models.Student.teacher_id == current_user.id
+                ).count()
+            else:
+                students_count = db.query(models.Student).filter(models.Student.program_id == program.id).count()
+                
             moments_count = db.query(models.StudentDailyMoment).filter(models.StudentDailyMoment.teacher_id == current_user.id).count()
             assignments_count = db.query(models.ClassAssignment).filter(models.ClassAssignment.program_id == program.id).count()
 
@@ -204,8 +215,29 @@ def get_class_students(
     if not current_user.assigned_program_id:
         return []
 
-    students = db.query(models.Student).filter(
-        models.Student.program_id == current_user.assigned_program_id
-    ).order_by(models.Student.name).all()
+    # Check if any student assignments exist for this program
+    has_assignments = db.query(models.Student).filter(
+        models.Student.program_id == current_user.assigned_program_id,
+        models.Student.teacher_id.isnot(None)
+    ).first()
 
-    return [{"id": s.id, "name": s.name} for s in students]
+    if has_assignments:
+        students = db.query(models.Student).filter(
+            models.Student.program_id == current_user.assigned_program_id,
+            models.Student.teacher_id == current_user.id
+        ).order_by(models.Student.name).all()
+    else:
+        students = db.query(models.Student).filter(
+            models.Student.program_id == current_user.assigned_program_id
+        ).order_by(models.Student.name).all()
+
+    return [{
+        "id": s.id,
+        "name": s.name,
+        "parent_name": s.parent_name,
+        "phone": s.phone,
+        "allergies": s.allergies,
+        "blood_group": s.blood_group,
+        "date_of_birth": s.date_of_birth,
+        "emergency_phone": s.emergency_phone
+    } for s in students]

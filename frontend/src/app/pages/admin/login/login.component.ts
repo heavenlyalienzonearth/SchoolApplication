@@ -240,7 +240,7 @@ export class LoginComponent implements OnInit {
       if (user?.role?.toUpperCase() === 'PARENT') {
         this.router.navigate(['/parent/dashboard']);
       } else if (user?.role?.toUpperCase() === 'TEACHER') {
-        this.router.navigate(['/admin/dashboard']);
+        this.router.navigate(['/teacher/dashboard']);
       } else {
         this.router.navigate(['/admin/dashboard']);
       }
@@ -310,7 +310,7 @@ export class LoginComponent implements OnInit {
           if (res.user?.role?.toUpperCase() === 'PARENT') {
             this.router.navigate(['/parent/dashboard']);
           } else if (res.user?.role?.toUpperCase() === 'TEACHER') {
-            this.router.navigate(['/admin/dashboard']);
+            this.router.navigate(['/teacher/dashboard']);
           } else {
             this.router.navigate(['/admin/dashboard']);
           }
@@ -340,7 +340,7 @@ export class LoginComponent implements OnInit {
         if (user?.role?.toUpperCase() === 'PARENT') {
           this.router.navigate(['/parent/dashboard']);
         } else if (user?.role?.toUpperCase() === 'TEACHER') {
-          this.router.navigate(['/admin/dashboard']);
+          this.router.navigate(['/teacher/dashboard']);
         } else {
           this.router.navigate(['/admin/dashboard']);
         }

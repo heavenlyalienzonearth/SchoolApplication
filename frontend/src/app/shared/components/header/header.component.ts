@@ -28,8 +28,8 @@ import { AuthService, User } from '../../../core/services/auth.service';
             <div class="auth-area">
               <div *ngIf="currentUser" class="user-pill">
                 <span class="user-avatar">👤</span>
-                <span class="user-name">Admin</span>
-                <a routerLink="/admin/dashboard" class="btn-dash">Dashboard</a>
+                <span class="user-name">{{ currentUser.role?.toUpperCase() === 'TEACHER' ? 'Teacher' : currentUser.role?.toUpperCase() === 'PARENT' ? 'Parent' : 'Admin' }}</span>
+                <a [routerLink]="currentUser.role?.toUpperCase() === 'PARENT' ? '/parent/dashboard' : currentUser.role?.toUpperCase() === 'TEACHER' ? '/teacher/dashboard' : '/admin/dashboard'" class="btn-dash">Dashboard</a>
                 <button (click)="logout()" class="btn-logout-small">Logout</button>
               </div>
               <a *ngIf="!currentUser" routerLink="/admin/login" class="login-link">Admin Portal</a>

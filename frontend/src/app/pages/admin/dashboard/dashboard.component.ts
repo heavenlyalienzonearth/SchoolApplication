@@ -2364,11 +2364,41 @@ export class DashboardComponent implements OnInit, OnDestroy {
     });
   }
 
+  // Student TC Delete Modal State
+  showStudentDeleteModal = false;
+  studentDeleteData: any = null;
+  deletingStudent = false;
+
+  get currentClassTeachers(): any[] {
+    if (!this.rosterProgramId || !this.usersList) return [];
+    return this.usersList.filter(u =>
+      u.role && u.role.toUpperCase() === 'TEACHER' &&
+      (u.assigned_program_id === Number(this.rosterProgramId) || !u.assigned_program_id)
+    );
+  }
+
   loadRosterStudents(): void {
     if (!this.rosterProgramId) return;
+    if (this.usersList.length === 0) {
+      this.loadUsers();
+    }
     this.contentService.getStudents(this.rosterProgramId).subscribe({
       next: (data) => {
         this.rosterStudents = data;
+      }
+    });
+  }
+
+  assignTeacherToStudent(studentId: number, teacherIdVal: any): void {
+    const teacherId = (teacherIdVal && teacherIdVal !== 'null') ? Number(teacherIdVal) : null;
+    this.contentService.updateStudent(studentId, { teacher_id: teacherId }).subscribe({
+      next: (res) => {
+        this.showToast('🎉 Student assigned / swapped to teacher successfully!');
+        this.loadRosterStudents();
+      },
+      error: (err) => {
+        this.showToast('❌ ' + (err.error?.detail || 'Failed to assign teacher.'), 'error');
+        this.loadRosterStudents();
       }
     });
   }
@@ -2393,19 +2423,41 @@ export class DashboardComponent implements OnInit, OnDestroy {
     });
   }
 
+  openStudentDeleteModal(student: any): void {
+    this.studentDeleteData = student;
+    this.showStudentDeleteModal = true;
+  }
+
+  cancelStudentDelete(): void {
+    this.showStudentDeleteModal = false;
+    this.studentDeleteData = null;
+    this.deletingStudent = false;
+  }
+
+  confirmStudentDelete(): void {
+    if (!this.studentDeleteData) return;
+    this.deletingStudent = true;
+    this.contentService.deleteStudent(this.studentDeleteData.id).subscribe({
+      next: () => {
+        this.deletingStudent = false;
+        this.showStudentDeleteModal = false;
+        this.showToast('🎉 Student TC processed & removed from class roster!');
+        this.studentDeleteData = null;
+        this.loadRosterStudents();
+        this.loadStudentsForAttendance();
+        this.loadAttendanceStats();
+      },
+      error: (err) => {
+        this.deletingStudent = false;
+        this.showToast('❌ Failed to delete student: ' + (err.error?.detail || err.message), 'error');
+      }
+    });
+  }
+
   deleteStudent(id: number): void {
-    if (confirm('Are you sure you want to remove this kid from the roster?')) {
-      this.contentService.deleteStudent(id).subscribe({
-        next: () => {
-          this.showToast('🎉 Kid removed from roster!');
-          this.loadRosterStudents();
-          this.loadStudentsForAttendance();
-          this.loadAttendanceStats();
-        },
-        error: (err) => {
-          this.showToast('❌ Failed to delete kid: ' + (err.error?.detail || err.message), 'error');
-        }
-      });
+    const student = this.rosterStudents.find(s => s.id === id);
+    if (student) {
+      this.openStudentDeleteModal(student);
     }
   }
 
