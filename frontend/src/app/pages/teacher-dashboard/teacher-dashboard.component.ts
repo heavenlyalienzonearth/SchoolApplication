@@ -29,11 +29,22 @@ import { MomentsService, StudentMoment } from '../../core/services/moments.servi
             <span class="profile-name">{{ profile.full_name }}</span>
             <span class="profile-class">Class: {{ profile.assigned_program?.title || 'Unassigned' }}</span>
           </div>
+          <!-- Teacher Dynamic Image or Icon -->
           <img 
-            [src]="getMediaUrl(profile.photo_url, 'assets/images/teacher_avatar_ai.png')" 
-            alt="Teacher Avatar" 
+            *ngIf="profile.photo_url && !imageError" 
+            [src]="getMediaUrl(profile.photo_url, '')" 
+            (error)="imageError = true"
+            alt="Teacher Photo" 
             class="teacher-small-pic"
+            style="width: 44px; height: 44px; border-radius: 50%; object-fit: cover; border: 2.5px solid #EC4899; box-shadow: 0 2px 8px rgba(236,72,153,0.3);"
           />
+          <div 
+            *ngIf="!profile.photo_url || imageError" 
+            class="teacher-small-pic-icon" 
+            style="width: 44px; height: 44px; border-radius: 50%; background: linear-gradient(135deg, #EC4899, #8B5CF6); color: white; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; border: 2.5px solid white; box-shadow: 0 2px 8px rgba(236,72,153,0.3); flex-shrink: 0;" 
+            title="Teacher Profile">
+            👩‍🏫
+          </div>
           <button (click)="logout()" class="btn-logout" title="Sign Out">Logout 🚪</button>
         </div>
       </header>
@@ -1146,6 +1157,7 @@ export class TeacherDashboardComponent implements OnInit, OnDestroy {
     achievements_count: 0
   };
 
+  imageError = false;
   showPupilsModal = false;
 
   activeTab: 'orders' | 'pupils' | 'achievements' | 'assignments' | 'moments' = 'orders';

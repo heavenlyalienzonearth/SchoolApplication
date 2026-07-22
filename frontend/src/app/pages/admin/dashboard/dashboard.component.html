@@ -8,16 +8,19 @@
     <div class="header-actions" style="display: flex; align-items: center; gap: 15px;">
       <a routerLink="/" class="btn btn-secondary btn-sm">🌐 Visit Site</a>
       <div style="display: flex; align-items: center; gap: 10px;">
+        <!-- Dynamic Avatar: Photo if valid, Icon if missing/error -->
         <img 
-          *ngIf="currentUser?.role?.toUpperCase() === 'TEACHER'" 
-          [src]="getTeacherPhotoUrl(teacherProfile?.photo_url)" 
+          *ngIf="headerPhotoUrl && !headerImageError" 
+          [src]="headerPhotoUrl" 
+          (error)="headerImageError = true"
           alt="Avatar" 
           style="width: 38px; height: 38px; border-radius: 50%; object-fit: cover; border: 2.5px solid var(--primary); box-shadow: 0 2px 4px rgba(0,0,0,0.08);" />
-        <img 
-          *ngIf="currentUser?.role?.toUpperCase() !== 'TEACHER'" 
-          src="assets/images/teacher_avatar_ai.png" 
-          alt="Avatar" 
-          style="width: 38px; height: 38px; border-radius: 50%; object-fit: cover; border: 2.5px solid #CBD5E1; box-shadow: 0 2px 4px rgba(0,0,0,0.04);" />
+        <div 
+          *ngIf="!headerPhotoUrl || headerImageError" 
+          style="width: 38px; height: 38px; border-radius: 50%; background: linear-gradient(135deg, #EC4899, #8B5CF6); color: white; display: flex; align-items: center; justify-content: center; font-size: 1.3rem; border: 2px solid white; box-shadow: 0 2px 6px rgba(0,0,0,0.1); flex-shrink: 0;"
+          [title]="currentUser?.full_name || 'User Profile'">
+          {{ currentUser?.role?.toUpperCase() === 'TEACHER' ? '👩‍🏫' : '👤' }}
+        </div>
         <button (click)="logout()" class="btn btn-outline btn-sm">🚪 Log Out</button>
       </div>
     </div>

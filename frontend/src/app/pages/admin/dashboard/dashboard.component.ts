@@ -4306,10 +4306,16 @@ export class DashboardComponent implements OnInit, OnDestroy {
     if (fileInput) fileInput.value = '';
   }
 
-  getTeacherPhotoUrl(photoPath: string | null): string {
-    if (!photoPath) {
-      return 'assets/images/teacher_avatar_ai.png';
-    }
+  headerImageError = false;
+
+  get headerPhotoUrl(): string | null {
+    const photo = this.currentUser?.role?.toUpperCase() === 'TEACHER' ? this.teacherProfile?.photo_url : this.currentUser?.photo_url;
+    if (!photo) return null;
+    return this.getMediaUrl(photo);
+  }
+
+  getTeacherPhotoUrl(photoPath: string | null): string | null {
+    if (!photoPath) return null;
     return this.getMediaUrl(photoPath);
   }
 
