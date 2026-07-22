@@ -695,3 +695,52 @@ class TeacherAchievementResponse(TeacherAchievementBase):
         from_attributes = True
 
 
+# --- STUDENT KUDOS & BADGES SCHEMAS ---
+
+class StudentKudosBase(BaseModel):
+    student_id: int
+    badge_type: str
+    badge_title: str
+    comment: Optional[str] = None
+    awarded_date: str
+
+class StudentKudosCreate(StudentKudosBase):
+    pass
+
+class StudentKudosResponse(StudentKudosBase):
+    id: int
+    teacher_id: int
+    created_at: datetime
+    student_name: Optional[str] = None
+    teacher_name: Optional[str] = None
+
+    class Config:
+        from_attributes = True
+
+
+# --- STUDENT INCIDENT & HEALTH LOG SCHEMAS ---
+
+class StudentIncidentLogBase(BaseModel):
+    student_id: int
+    category: str
+    title: str
+    description: str
+    action_taken: Optional[str] = None
+    severity: str = "LOW"
+    log_date: str
+
+class StudentIncidentLogCreate(StudentIncidentLogBase):
+    pass
+
+class StudentIncidentLogResponse(StudentIncidentLogBase):
+    id: int
+    teacher_id: int
+    parent_acknowledged: bool = False
+    created_at: datetime
+    student_name: Optional[str] = None
+    teacher_name: Optional[str] = None
+
+    class Config:
+        from_attributes = True
+
+

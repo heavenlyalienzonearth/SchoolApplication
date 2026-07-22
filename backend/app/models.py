@@ -544,4 +544,39 @@ class ClassAssignment(Base):
     teacher = relationship("User")
 
 
+class StudentKudos(Base):
+    __tablename__ = "student_kudos"
+
+    id = Column(Integer, primary_key=True, index=True)
+    student_id = Column(Integer, ForeignKey("students.id", ondelete="CASCADE"), nullable=False)
+    teacher_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    badge_type = Column(String(100), nullable=False)
+    badge_title = Column(String(255), nullable=False)
+    comment = Column(Text, nullable=True)
+    awarded_date = Column(String(50), nullable=False)
+    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+
+    student = relationship("Student")
+    teacher = relationship("User")
+
+
+class StudentIncidentLog(Base):
+    __tablename__ = "student_incident_logs"
+
+    id = Column(Integer, primary_key=True, index=True)
+    student_id = Column(Integer, ForeignKey("students.id", ondelete="CASCADE"), nullable=False)
+    teacher_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    category = Column(String(100), nullable=False)
+    title = Column(String(255), nullable=False)
+    description = Column(Text, nullable=False)
+    action_taken = Column(Text, nullable=True)
+    severity = Column(String(50), default="LOW", nullable=False)
+    parent_acknowledged = Column(Boolean, default=False, nullable=False)
+    log_date = Column(String(50), nullable=False)
+    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+
+    student = relationship("Student")
+    teacher = relationship("User")
+
+
 

@@ -275,3 +275,159 @@ def get_class_students(
         "date_of_birth": s.date_of_birth,
         "emergency_phone": s.emergency_phone
     } for s in students]
+
+
+# 6. POST /teacher/kudos
+@router.post("/kudos", response_model=schemas.StudentKudosResponse)
+def award_student_kudos(
+    req: schemas.StudentKudosCreate,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user)
+):
+    if current_user.role.upper() != "TEACHER":
+        raise HTTPException(status_code=403, detail="Only teachers can award student kudos.")
+
+    student = db.query(models.Student).filter(models.Student.id == req.student_id).first()
+    if not student:
+        raise HTTPException(status_code=404, detail="Student not found.")
+
+    kudos = models.StudentKudos(
+        student_id=req.student_id,
+        teacher_id=current_user.id,
+        badge_type=req.badge_type,
+        badge_title=req.badge_title,
+        comment=req.comment,
+        awarded_date=req.awarded_date
+    )
+    db.add(kudos)
+    db.commit()
+    db.refresh(kudos)
+
+    res = schemas.StudentKudosResponse.from_orm(kudos)
+    res.student_name = student.name
+    res.teacher_name = current_user.full_name
+    return res
+
+
+# 7. GET /teacher/kudos
+@router.get("/kudos", response_model=List[schemas.StudentKudosResponse])
+def get_teacher_kudos(
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user)
+):
+    if current_user.role.upper() != "TEACHER":
+        raise HTTPException(status_code=403, detail="Only teachers can view kudos.")
+
+    kudos_list = db.query(models.StudentKudos).filter(
+        models.StudentKudos.teacher_id == current_user.id
+    ).order_by(models.StudentKudos.created_at.desc()).all()
+
+    result = []
+    for k in kudos_list:
+        res = schemas.StudentKudosResponse.from_orm(k)
+        res.student_name = k.student.name if k.student else "Student"
+        res.teacher_name = current_user.full_name
+        result.append(res)
+
+    return result
+
+
+# 8. DELETE /teacher/kudos/{id}
+@router.delete("/kudos/{kudos_id}")
+def delete_student_kudos(
+    kudos_id: int,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user)
+):
+    if current_user.role.upper() != "TEACHER":
+        raise HTTPException(status_code=403, detail="Only teachers can delete kudos.")
+
+    kudos = db.query(models.StudentKudos).filter(
+        models.StudentKudos.id == kudos_id,
+        models.StudentKudos.teacher_id == current_user.id
+    ).first()
+    if not kudos:
+        raise HTTPException(status_code=404, detail="Kudos record not found or not owned by you.")
+
+    db.delete(kudos)
+    db.commit()
+    return {"message": "Kudos badge removed successfully."}
+
+
+# 9. POST /teacher/incidents
+@router.post("/incidents", response_model=schemas.StudentIncidentLogResponse)
+def log_student_incident(
+    req: schemas.StudentIncidentLogCreate,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user)
+):
+    if current_user.role.upper() != "TEACHER":
+        raise HTTPException(status_code=403, detail="Only teachers can log student incidents.")
+
+    student = db.query(models.Student).filter(models.Student.id == req.student_id).first()
+    if not student:
+        raise HTTPException(status_code=404, detail="Student not found.")
+
+    incident = models.StudentIncidentLog(
+        student_id=req.student_id,
+        teacher_id=current_user.id,
+        category=req.category,
+        title=req.title,
+        description=req.description,
+        action_taken=req.action_taken,
+        severity=req.severity,
+        log_date=req.log_date
+    )
+    db.add(incident)
+    db.commit()
+    db.refresh(incident)
+
+    res = schemas.StudentIncidentLogResponse.from_orm(incident)
+    res.student_name = student.name
+    res.teacher_name = current_user.full_name
+    return res
+
+
+# 10. GET /teacher/incidents
+@router.get("/incidents", response_model=List[schemas.StudentIncidentLogResponse])
+def get_teacher_incidents(
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user)
+):
+    if current_user.role.upper() != "TEACHER":
+        raise HTTPException(status_code=403, detail="Only teachers can view incident logs.")
+
+    incidents = db.query(models.StudentIncidentLog).filter(
+        models.StudentIncidentLog.teacher_id == current_user.id
+    ).order_by(models.StudentIncidentLog.created_at.desc()).all()
+
+    result = []
+    for i in incidents:
+        res = schemas.StudentIncidentLogResponse.from_orm(i)
+        res.student_name = i.student.name if i.student else "Student"
+        res.teacher_name = current_user.full_name
+        result.append(res)
+
+    return result
+
+
+# 11. DELETE /teacher/incidents/{id}
+@router.delete("/incidents/{incident_id}")
+def delete_student_incident(
+    incident_id: int,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user)
+):
+    if current_user.role.upper() != "TEACHER":
+        raise HTTPException(status_code=403, detail="Only teachers can delete incident logs.")
+
+    incident = db.query(models.StudentIncidentLog).filter(
+        models.StudentIncidentLog.id == incident_id,
+        models.StudentIncidentLog.teacher_id == current_user.id
+    ).first()
+    if not incident:
+        raise HTTPException(status_code=404, detail="Incident log record not found or not owned by you.")
+
+    db.delete(incident)
+    db.commit()
+    return {"message": "Incident log entry deleted successfully."}

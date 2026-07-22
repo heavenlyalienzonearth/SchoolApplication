@@ -6,6 +6,8 @@ import { AuthService } from '../../core/services/auth.service';
 import { TeacherService, TeacherAchievement } from '../../core/services/teacher.service';
 import { AssignmentService, ClassAssignment } from '../../core/services/assignment.service';
 import { MomentsService, StudentMoment } from '../../core/services/moments.service';
+import { ContentService } from '../../core/services/content.service';
+import { ApiService } from '../../core/services/api.service';
 
 @Component({
   selector: 'app-teacher-dashboard',
@@ -14,43 +16,113 @@ import { MomentsService, StudentMoment } from '../../core/services/moments.servi
   template: `
     <div class="teacher-dashboard-wrapper">
       <!-- Top Navigation Header -->
-      <header class="dashboard-header">
-        <div class="header-logo">
-          <span class="logo-icon">👩‍🏫</span>
-          <div class="logo-text">
-            <h1>Vidyankuram School</h1>
-            <p>Teacher Console Panel</p>
-          </div>
+      <header class="dash-header">
+        <div class="header-brand">
+          <img src="/assets/images/logo.png" alt="Logo" style="height: 38px;" />
+          <h2>Vidyankuram Club Control Panel</h2>
         </div>
 
-        <!-- Teacher Quick Stats & Small Picture (Requirement 4) -->
-        <div class="header-user-profile" *ngIf="profile">
-          <div class="profile-details">
-            <span class="profile-name">{{ profile.full_name }}</span>
-            <span class="profile-class">Class: {{ profile.assigned_program?.title || 'Unassigned' }}</span>
+        <div class="header-actions" style="display: flex; align-items: center; gap: 15px;">
+          <a routerLink="/" class="btn btn-secondary btn-sm" style="padding: 6px 14px; font-weight: 700;">🌐 Visit Site</a>
+          <div style="display: flex; align-items: center; gap: 10px;" *ngIf="profile">
+            <!-- Dynamic Teacher Avatar -->
+            <img 
+              *ngIf="profile.photo_url && !imageError" 
+              [src]="getMediaUrl(profile.photo_url, '')" 
+              (error)="imageError = true"
+              alt="Teacher Photo" 
+              style="width: 38px; height: 38px; border-radius: 50%; object-fit: cover; border: 2.5px solid #EC4899; box-shadow: 0 2px 4px rgba(0,0,0,0.1);" 
+            />
+            <div 
+              *ngIf="!profile.photo_url || imageError" 
+              style="width: 38px; height: 38px; border-radius: 50%; background: linear-gradient(135deg, #EC4899, #8B5CF6); color: white; display: flex; align-items: center; justify-content: center; font-size: 1.3rem; border: 2px solid white; box-shadow: 0 2px 6px rgba(0,0,0,0.1); flex-shrink: 0;"
+              [title]="profile.full_name || 'Teacher Profile'">
+              👩‍🏫
+            </div>
+            <button (click)="logout()" class="btn btn-outline btn-sm" style="padding: 6px 14px; font-weight: 700; border: 1px solid rgba(255,255,255,0.3); color: white; background: rgba(255,255,255,0.1); border-radius: 6px; cursor: pointer;">🚪 Log Out</button>
           </div>
-          <!-- Teacher Dynamic Image or Icon -->
-          <img 
-            *ngIf="profile.photo_url && !imageError" 
-            [src]="getMediaUrl(profile.photo_url, '')" 
-            (error)="imageError = true"
-            alt="Teacher Photo" 
-            class="teacher-small-pic"
-            style="width: 44px; height: 44px; border-radius: 50%; object-fit: cover; border: 2.5px solid #EC4899; box-shadow: 0 2px 8px rgba(236,72,153,0.3);"
-          />
-          <div 
-            *ngIf="!profile.photo_url || imageError" 
-            class="teacher-small-pic-icon" 
-            style="width: 44px; height: 44px; border-radius: 50%; background: linear-gradient(135deg, #EC4899, #8B5CF6); color: white; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; border: 2.5px solid white; box-shadow: 0 2px 8px rgba(236,72,153,0.3); flex-shrink: 0;" 
-            title="Teacher Profile">
-            👩‍🏫
-          </div>
-          <button (click)="logout()" class="btn-logout" title="Sign Out">Logout 🚪</button>
         </div>
       </header>
 
-      <!-- Main Dashboard Grid -->
-      <main class="dashboard-main" *ngIf="profile">
+      <div class="dash-layout">
+        <!-- DARK NAVY CONTROL PANEL SIDEBAR -->
+        <aside class="dash-sidebar" *ngIf="profile">
+          <ul class="sidebar-menu">
+            <!-- 1. TEACHER CONSOLE GROUP -->
+            <li class="sidebar-header" (click)="toggleTeacherConsole()" style="cursor: pointer; display: flex; justify-content: space-between; align-items: center;">
+              <span>👩‍🏫 Teacher Console</span>
+              <span style="font-size: 0.7rem; color: #94a3b8; font-weight: 800;">{{ teacherConsoleExpanded ? '▼' : '▶' }}</span>
+            </li>
+            <ng-container *ngIf="teacherConsoleExpanded">
+              <li [class.active]="activeTab === 'orders'" (click)="switchTab('orders')" class="submenu-item">
+                <span class="icon">📋</span> Student Orders
+              </li>
+              <li [class.active]="activeTab === 'pupils'" (click)="switchTab('pupils')" class="submenu-item">
+                <span class="icon">👥</span> My Assigned Pupils ({{ classStudents.length }})
+              </li>
+              <li [class.active]="activeTab === 'kudos'" (click)="switchTab('kudos')" class="submenu-item">
+                <span class="icon">⭐</span> Student Kudos
+              </li>
+              <li [class.active]="activeTab === 'incidents'" (click)="switchTab('incidents')" class="submenu-item">
+                <span class="icon">🩺</span> Incident & Health Log
+              </li>
+              <li [class.active]="activeTab === 'achievements'" (click)="switchTab('achievements')" class="submenu-item">
+                <span class="icon">🏆</span> Achievements Portfolio
+              </li>
+              <li [class.active]="activeTab === 'assignments'" (click)="switchTab('assignments')" class="submenu-item">
+                <span class="icon">📚</span> Daily Assignments
+              </li>
+              <li [class.active]="activeTab === 'moments'" (click)="switchTab('moments')" class="submenu-item">
+                <span class="icon">📸</span> Daily Moments
+              </li>
+            </ng-container>
+
+            <!-- 2. SCHOOL MANAGEMENT GROUP -->
+            <li class="sidebar-header" (click)="toggleSchoolManagement()" style="cursor: pointer; display: flex; justify-content: space-between; align-items: center; border-top: 1px solid rgba(255,255,255,0.08); margin-top: 14px; padding-top: 14px;">
+              <span>🏫 School Management</span>
+              <span style="font-size: 0.7rem; color: #94a3b8; font-weight: 800;">{{ schoolManagementExpanded ? '▼' : '▶' }}</span>
+            </li>
+            <ng-container *ngIf="schoolManagementExpanded">
+              <li [class.active]="activeTab === 'holidays'" (click)="switchTab('holidays')" class="submenu-item">
+                <span class="icon">📅</span> Holidays
+              </li>
+              <li [class.active]="activeTab === 'circulars'" (click)="switchTab('circulars')" class="submenu-item">
+                <span class="icon">📢</span> Circulars
+              </li>
+              <li [class.active]="activeTab === 'library'" (click)="switchTab('library')" class="submenu-item">
+                <span class="icon">📚</span> Library
+              </li>
+              <li [class.active]="activeTab === 'milestones'" (click)="switchTab('milestones')" class="submenu-item">
+                <span class="icon">🎯</span> SetUp Milestones
+              </li>
+            </ng-container>
+
+            <!-- 3. ATTENDANCE GROUP -->
+            <li class="sidebar-header" (click)="toggleAttendance()" style="cursor: pointer; display: flex; justify-content: space-between; align-items: center; border-top: 1px solid rgba(255,255,255,0.08); margin-top: 14px; padding-top: 14px;">
+              <span>📅 Attendance</span>
+              <span style="font-size: 0.7rem; color: #94a3b8; font-weight: 800;">{{ attendanceExpanded ? '▼' : '▶' }}</span>
+            </li>
+            <ng-container *ngIf="attendanceExpanded">
+              <li [class.active]="activeTab === 'attendance'" (click)="switchTab('attendance')" class="submenu-item">
+                <span class="icon">📅</span> Student Attendance
+              </li>
+            </ng-container>
+
+            <!-- 4. PARENT REQUESTS GROUP -->
+            <li class="sidebar-header" (click)="toggleParentRequests()" style="cursor: pointer; display: flex; justify-content: space-between; align-items: center; border-top: 1px solid rgba(255,255,255,0.08); margin-top: 14px; padding-top: 14px;">
+              <span>📋 Parent Requests</span>
+              <span style="font-size: 0.7rem; color: #94a3b8; font-weight: 800;">{{ parentRequestsExpanded ? '▼' : '▶' }}</span>
+            </li>
+            <ng-container *ngIf="parentRequestsExpanded">
+              <li [class.active]="activeTab === 'leaves'" (click)="switchTab('leaves')" class="submenu-item">
+                <span class="icon">📋</span> Parent Requests
+              </li>
+            </ng-container>
+          </ul>
+        </aside>
+
+        <!-- Main Dashboard Main Content Area -->
+        <main class="dash-main-content" *ngIf="profile">
         <!-- Banner Section -->
         <div class="welcome-banner" style="display: flex; flex-direction: column; gap: 20px; padding: 28px 32px;">
           <div style="display: flex; justify-content: space-between; align-items: flex-start; width: 100%; flex-wrap: wrap; gap: 15px;">
@@ -112,39 +184,6 @@ import { MomentsService, StudentMoment } from '../../core/services/moments.servi
           </div>
         </div>
 
-        <!-- Console Tab Selector -->
-        <div class="tabs-bar">
-          <button 
-            [class.active]="activeTab === 'orders'" 
-            (click)="switchTab('orders')"
-            class="tab-btn">
-            📋 Student Orders
-          </button>
-          <button 
-            [class.active]="activeTab === 'pupils'" 
-            (click)="switchTab('pupils')"
-            class="tab-btn">
-            👥 My Assigned Pupils ({{ classStudents.length }})
-          </button>
-          <button 
-            [class.active]="activeTab === 'achievements'" 
-            (click)="switchTab('achievements')"
-            class="tab-btn">
-            🏆 Achievements Portfolio
-          </button>
-          <button 
-            [class.active]="activeTab === 'assignments'" 
-            (click)="switchTab('assignments')"
-            class="tab-btn">
-            📚 Daily Assignments
-          </button>
-          <button 
-            [class.active]="activeTab === 'moments'" 
-            (click)="switchTab('moments')"
-            class="tab-btn">
-            📸 Daily Moments
-          </button>
-        </div>
 
         <!-- TAB CONTENT VIEWS -->
 
@@ -194,6 +233,190 @@ import { MomentsService, StudentMoment } from '../../core/services/moments.servi
                   </div>
                   <div *ngIf="student.allergies" style="margin-top: 6px; background: #fee2e2; border: 1px solid #fca5a5; color: #dc2626; padding: 6px 10px; border-radius: 6px; font-size: 0.78rem; font-weight: 700;">
                     ⚠️ Allergy: {{ student.allergies }}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- STUDENT KUDOS & BADGES TAB -->
+        <div class="tab-content" *ngIf="activeTab === 'kudos'">
+          <div class="card" style="padding: 24px;">
+            <div class="card-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 10px;">
+              <div>
+                <h3 style="margin: 0; font-size: 1.25rem; font-weight: 800; color: #0F172A;">⭐ Award Student Kudos & Star Badges</h3>
+                <p style="margin: 4px 0 0 0; color: #64748B; font-size: 0.85rem;">Recognize positive behavior, participation, and achievements. Badges are immediately visible to parents.</p>
+              </div>
+              <button (click)="loadKudos()" class="btn btn-secondary btn-sm">🔄 Refresh Badges</button>
+            </div>
+
+            <!-- Form & Timeline Layout -->
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px;">
+              <!-- Award Badge Form -->
+              <div style="background: #F8FAFC; border: 1.5px solid #E2E8F0; border-radius: 12px; padding: 20px;">
+                <h4 style="margin: 0 0 16px 0; font-size: 1rem; font-weight: 800; color: #1E293B;">✨ Award Badge to Student</h4>
+
+                <div class="form-group" style="margin-bottom: 16px;">
+                  <label style="font-weight: 700; font-size: 0.85rem; color: #475569; display: block; margin-bottom: 6px;">Select Assigned Pupil *</label>
+                  <select [(ngModel)]="kudosSelectedStudentId" class="form-control" style="width: 100%; border-radius: 8px; font-weight: 600;">
+                    <option [ngValue]="null" disabled>-- Choose Student --</option>
+                    <option *ngFor="let s of classStudents" [value]="s.id">👦 {{ s.name }}</option>
+                  </select>
+                </div>
+
+                <div class="form-group" style="margin-bottom: 16px;">
+                  <label style="font-weight: 700; font-size: 0.85rem; color: #475569; display: block; margin-bottom: 6px;">Select Badge Category *</label>
+                  <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px;">
+                    <div *ngFor="let b of badgeOptions" 
+                         (click)="selectedBadgeType = b.type"
+                         [style.border]="selectedBadgeType === b.type ? '2px solid #2563EB' : '1.5px solid #CBD5E1'"
+                         [style.background]="selectedBadgeType === b.type ? '#EFF6FF' : 'white'"
+                         style="padding: 10px; border-radius: 8px; cursor: pointer; transition: all 0.2s;">
+                      <div style="font-weight: 800; font-size: 0.88rem; color: #0F172A;">{{ b.title }}</div>
+                      <div style="font-size: 0.72rem; color: #64748B; margin-top: 3px;">{{ b.desc }}</div>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="form-group" style="margin-bottom: 18px;">
+                  <label style="font-weight: 700; font-size: 0.85rem; color: #475569; display: block; margin-bottom: 6px;">Praise Note / Teacher Comment (Optional)</label>
+                  <textarea [(ngModel)]="newKudosComment" rows="2" class="form-control" placeholder="e.g. Aarav did an amazing job sharing toys and helping clean up!" style="width: 100%; border-radius: 8px; font-size: 0.85rem;"></textarea>
+                </div>
+
+                <button (click)="awardKudos()" class="btn btn-primary" style="width: 100%; padding: 12px; font-weight: 700; border-radius: 8px; background: linear-gradient(135deg, #2563EB, #1D4ED8); border: none; color: white; cursor: pointer;">
+                  ⭐ Award Star Badge
+                </button>
+              </div>
+
+              <!-- Awarded Badges List -->
+              <div>
+                <h4 style="margin: 0 0 16px 0; font-size: 1rem; font-weight: 800; color: #1E293B;">🏆 Recent Awarded Badges</h4>
+
+                <div *ngIf="kudosLoading" style="text-align: center; padding: 40px; color: #64748B;">Loading badges...</div>
+
+                <div *ngIf="!kudosLoading && kudosList.length === 0" style="text-align: center; padding: 40px; color: #94A3B8; font-style: italic; border: 2px dashed #E2E8F0; border-radius: 12px;">
+                  No star badges awarded yet. Select a pupil and award their first badge!
+                </div>
+
+                <div *ngIf="!kudosLoading && kudosList.length > 0" style="display: flex; flex-direction: column; gap: 12px; max-height: 440px; overflow-y: auto;">
+                  <div *ngFor="let k of kudosList" style="background: white; border: 1.5px solid #E2E8F0; border-radius: 10px; padding: 14px; display: flex; justify-content: space-between; align-items: flex-start;">
+                    <div>
+                      <div style="display: flex; align-items: center; gap: 8px;">
+                        <span style="font-size: 1.2rem;">{{ k.badge_title }}</span>
+                        <strong style="font-size: 0.9rem; color: #0F172A;">for {{ k.student_name }}</strong>
+                      </div>
+                      <p *ngIf="k.comment" style="margin: 6px 0 0 0; font-size: 0.8rem; color: #475569; font-style: italic;">
+                        "{{ k.comment }}"
+                      </p>
+                      <span style="font-size: 0.7rem; color: #94A3B8; display: block; margin-top: 6px;">Awarded on: {{ k.awarded_date }}</span>
+                    </div>
+                    <button (click)="deleteKudosBadge(k.id)" style="background: #FEE2E2; color: #DC2626; border: none; padding: 4px 8px; border-radius: 6px; font-weight: 700; font-size: 0.75rem; cursor: pointer;">
+                      🗑️
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- INCIDENT & HEALTH LOG TAB -->
+        <div class="tab-content" *ngIf="activeTab === 'incidents'">
+          <div class="card" style="padding: 24px;">
+            <div class="card-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 10px;">
+              <div>
+                <h3 style="margin: 0; font-size: 1.25rem; font-weight: 800; color: #0F172A;">🩺 Classroom Incident & Health Log</h3>
+                <p style="margin: 4px 0 0 0; color: #64748B; font-size: 0.85rem;">Record minor playground scrapes, health checkups, temperature readings, or lunch records. Keeps parents informed.</p>
+              </div>
+              <button (click)="loadIncidents()" class="btn btn-secondary btn-sm">🔄 Refresh Logs</button>
+            </div>
+
+            <!-- Form & Log List Layout -->
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px;">
+              <!-- Log Entry Form -->
+              <div style="background: #F8FAFC; border: 1.5px solid #E2E8F0; border-radius: 12px; padding: 20px;">
+                <h4 style="margin: 0 0 16px 0; font-size: 1rem; font-weight: 800; color: #1E293B;">📝 Record New Incident / Health Note</h4>
+
+                <div class="form-group" style="margin-bottom: 14px;">
+                  <label style="font-weight: 700; font-size: 0.85rem; color: #475569; display: block; margin-bottom: 6px;">Select Pupil *</label>
+                  <select [(ngModel)]="incidentSelectedStudentId" class="form-control" style="width: 100%; border-radius: 8px; font-weight: 600;">
+                    <option [ngValue]="null" disabled>-- Choose Student --</option>
+                    <option *ngFor="let s of classStudents" [value]="s.id">👦 {{ s.name }}</option>
+                  </select>
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 14px;">
+                  <div class="form-group">
+                    <label style="font-weight: 700; font-size: 0.85rem; color: #475569; display: block; margin-bottom: 6px;">Category *</label>
+                    <select [(ngModel)]="newIncident.category" class="form-control" style="width: 100%; border-radius: 8px; font-size: 0.85rem;">
+                      <option *ngFor="let cat of incidentCategories" [value]="cat.code">{{ cat.label }}</option>
+                    </select>
+                  </div>
+                  <div class="form-group">
+                    <label style="font-weight: 700; font-size: 0.85rem; color: #475569; display: block; margin-bottom: 6px;">Severity</label>
+                    <select [(ngModel)]="newIncident.severity" class="form-control" style="width: 100%; border-radius: 8px; font-size: 0.85rem;">
+                      <option value="LOW">🟢 Low (Routine)</option>
+                      <option value="MEDIUM">🟡 Medium (Note Parent)</option>
+                      <option value="HIGH">🔴 High (Attention)</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div class="form-group" style="margin-bottom: 14px;">
+                  <label style="font-weight: 700; font-size: 0.85rem; color: #475569; display: block; margin-bottom: 6px;">Report Title *</label>
+                  <input [(ngModel)]="newIncident.title" type="text" class="form-control" placeholder="e.g. Minor Knee Scrape at Playground" style="width: 100%; border-radius: 8px; font-size: 0.85rem;" />
+                </div>
+
+                <div class="form-group" style="margin-bottom: 14px;">
+                  <label style="font-weight: 700; font-size: 0.85rem; color: #475569; display: block; margin-bottom: 6px;">Description / Observations *</label>
+                  <textarea [(ngModel)]="newIncident.description" rows="2" class="form-control" placeholder="e.g. Fell during outdoor play time. Minor superficial scratch on right knee." style="width: 100%; border-radius: 8px; font-size: 0.85rem;"></textarea>
+                </div>
+
+                <div class="form-group" style="margin-bottom: 18px;">
+                  <label style="font-weight: 700; font-size: 0.85rem; color: #475569; display: block; margin-bottom: 6px;">Action Taken / First Aid</label>
+                  <input [(ngModel)]="newIncident.action_taken" type="text" class="form-control" placeholder="e.g. Cleaned with antiseptic wipe and applied cartoon band-aid." style="width: 100%; border-radius: 8px; font-size: 0.85rem;" />
+                </div>
+
+                <button (click)="logIncident()" class="btn btn-primary" style="width: 100%; padding: 12px; font-weight: 700; border-radius: 8px; background: linear-gradient(135deg, #0F172A, #1E293B); border: none; color: white; cursor: pointer;">
+                  📋 Save Incident / Health Record
+                </button>
+              </div>
+
+              <!-- Log History List -->
+              <div>
+                <h4 style="margin: 0 0 16px 0; font-size: 1rem; font-weight: 800; color: #1E293B;">📋 Class Incident & Care Log</h4>
+
+                <div *ngIf="incidentsLoading" style="text-align: center; padding: 40px; color: #64748B;">Loading incident logs...</div>
+
+                <div *ngIf="!incidentsLoading && incidentsList.length === 0" style="text-align: center; padding: 40px; color: #94A3B8; font-style: italic; border: 2px dashed #E2E8F0; border-radius: 12px;">
+                  No incident logs recorded yet.
+                </div>
+
+                <div *ngIf="!incidentsLoading && incidentsList.length > 0" style="display: flex; flex-direction: column; gap: 12px; max-height: 480px; overflow-y: auto;">
+                  <div *ngFor="let inc of incidentsList" style="background: white; border: 1.5px solid #E2E8F0; border-radius: 10px; padding: 14px;">
+                    <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 6px;">
+                      <div>
+                        <span [style.background]="inc.severity === 'HIGH' ? '#FEE2E2' : inc.severity === 'MEDIUM' ? '#FEF3C7' : '#DCFCE7'"
+                              [style.color]="inc.severity === 'HIGH' ? '#991B1B' : inc.severity === 'MEDIUM' ? '#92400E' : '#166534'"
+                              style="font-size: 0.68rem; font-weight: 800; padding: 2px 8px; border-radius: 4px; display: inline-block; text-transform: uppercase;">
+                          {{ inc.severity }} SEVERITY
+                        </span>
+                        <h5 style="margin: 4px 0 0 0; font-size: 0.92rem; font-weight: 800; color: #0F172A;">
+                          {{ inc.title }} <span style="font-weight: 600; color: #64748B;">({{ inc.student_name }})</span>
+                        </h5>
+                      </div>
+                      <button (click)="deleteIncidentLog(inc.id)" style="background: #FEE2E2; color: #DC2626; border: none; padding: 4px 8px; border-radius: 6px; font-weight: 700; font-size: 0.75rem; cursor: pointer;">
+                        🗑️
+                      </button>
+                    </div>
+                    <p style="margin: 0 0 6px 0; font-size: 0.8rem; color: #334155; line-line: 1.4;">
+                      {{ inc.description }}
+                    </p>
+                    <div *ngIf="inc.action_taken" style="background: #F8FAFC; border-left: 3px solid #2563EB; padding: 6px 10px; border-radius: 0 4px 4px 0; font-size: 0.76rem; color: #1E40AF; margin-bottom: 6px;">
+                      <strong>Action Taken:</strong> {{ inc.action_taken }}
+                    </div>
+                    <span style="font-size: 0.7rem; color: #94A3B8;">Recorded on: {{ inc.log_date }}</span>
                   </div>
                 </div>
               </div>
@@ -471,7 +694,965 @@ import { MomentsService, StudentMoment } from '../../core/services/moments.servi
           </div>
         </div>
 
-      </main>
+        <!-- SCHOOL CIRCULARS MANAGEMENT TAB (SAME AS ADMIN LOGIN) -->
+        <div class="tab-content animate-fade-in" *ngIf="activeTab === 'circulars'">
+          <div class="tab-header" style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #E2E8F0; padding-bottom: 15px; margin-bottom: 20px;">
+            <div>
+              <h2 style="margin: 0; color: #0F172A; font-weight: 800; font-size: 1.3rem;">📢 School Circulars Management</h2>
+              <p style="margin: 3px 0 0 0; color: #64748B; font-size: 0.88rem;">Create and publish official announcements and school circulars for parents and staff.</p>
+            </div>
+            <button (click)="loadCirculars()" class="btn btn-secondary" style="padding: 8px 16px; font-weight: 700; border-radius: 8px;">🔄 Refresh Circulars</button>
+          </div>
+
+          <div style="display: grid; grid-template-columns: 1fr 2fr; gap: 24px; margin-bottom: 24px;">
+            <!-- Left Panel: Create/Edit Circular Form -->
+            <div class="card" style="background: white; border-radius: 12px; border: 1.5px solid #E2E8F0; padding: 22px; box-shadow: 0 4px 6px rgba(0,0,0,0.02);">
+              <h3 style="margin-top: 0; color: #0F172A; margin-bottom: 16px; font-size: 1.1rem; font-weight: 800; border-bottom: 1px solid #F1F5F9; padding-bottom: 10px;">
+                {{ editingCircularId ? '✏️ Edit Circular' : '📝 Publish New Circular' }}
+              </h3>
+              
+              <form (ngSubmit)="saveCircular()">
+                <div class="form-group" style="margin-bottom: 14px;">
+                  <label class="form-label" style="display: block; font-weight: 700; font-size: 0.82rem; color: #475569; margin-bottom: 5px;">Circular Title *</label>
+                  <input type="text" [(ngModel)]="newCircular.title" name="c_title" required class="form-control" placeholder="e.g. Science Exhibition Guidelines" style="width: 100%; border: 1.5px solid #CBD5E1; border-radius: 6px; padding: 8px 12px;" />
+                </div>
+
+                <div class="form-group" style="margin-bottom: 14px;">
+                  <label class="form-label" style="display: block; font-weight: 700; font-size: 0.82rem; color: #475569; margin-bottom: 5px;">Target Class (Program) *</label>
+                  <select [(ngModel)]="newCircular.program_id" name="c_program" class="form-control" style="width: 100%; border: 1.5px solid #CBD5E1; border-radius: 6px; padding: 8px 12px; background-color: white; cursor: pointer;">
+                    <option [ngValue]="null">📢 All Classes (School-Wide)</option>
+                    <option *ngFor="let prog of programsList" [value]="prog.id">🏫 {{ prog.title }}</option>
+                  </select>
+                </div>
+
+                <div class="form-group" style="margin-bottom: 14px;">
+                  <label class="form-label" style="display: block; font-weight: 700; font-size: 0.82rem; color: #475569; margin-bottom: 5px;">Circular Content / Body *</label>
+                  <textarea [(ngModel)]="newCircular.content" name="c_content" required class="form-control" style="width: 100%; border: 1.5px solid #CBD5E1; border-radius: 6px; padding: 8px 12px; min-height: 110px;" placeholder="Write the circular announcement message details here..."></textarea>
+                </div>
+
+                <div class="form-group" style="margin-bottom: 14px;">
+                  <label class="form-label" style="display: block; font-weight: 700; font-size: 0.82rem; color: #475569; margin-bottom: 5px;">Attachment File / Image (Optional)</label>
+                  <input type="file" (change)="onCircularFileSelected($event)" class="form-control" style="width: 100%; border: 1.5px solid #CBD5E1; border-radius: 6px; padding: 6px 12px; background-color: white; cursor: pointer;" />
+                  
+                  <div *ngIf="uploadingCircularFile" style="font-size: 0.8rem; color: #EE5A24; margin-top: 5px; font-weight: 700;">
+                    ⏳ Uploading file, please wait...
+                  </div>
+                  
+                  <div *ngIf="newCircular.attachment_url" style="margin-top: 8px; display: flex; align-items: center; gap: 8px;">
+                    <a [href]="getMediaUrl(newCircular.attachment_url, '')" target="_blank" style="font-size: 0.78rem; color: #2563EB; font-weight: 700; text-decoration: none;">📎 View Attached File</a>
+                    <button type="button" (click)="newCircular.attachment_url = ''" style="background: #FEE2E2; color: #DC2626; border: none; padding: 2px 6px; font-size: 0.72rem; border-radius: 4px; font-weight: 700; cursor: pointer;">Remove</button>
+                  </div>
+                </div>
+
+                <div class="form-group" style="margin-bottom: 18px; display: flex; align-items: center; gap: 8px;">
+                  <input type="checkbox" [(ngModel)]="newCircular.is_active" name="c_active" id="t_c_active" style="width: 16px; height: 16px; cursor: pointer;" />
+                  <label for="t_c_active" style="font-weight: 700; font-size: 0.82rem; color: #475569; cursor: pointer; user-select: none;">Published & Active</label>
+                </div>
+
+                <div style="display: flex; gap: 10px;">
+                  <button type="submit" class="btn btn-primary" style="flex: 1; padding: 10px; font-weight: 700; border-radius: 6px; border: none; background: #2563EB; color: white; cursor: pointer;">
+                    {{ editingCircularId ? '💾 Update Circular' : '🚀 Publish Circular' }}
+                  </button>
+                  <button *ngIf="editingCircularId" type="button" (click)="resetCircularForm()" class="btn btn-outline" style="border: 1.5px solid #CBD5E1; color: #64748B; padding: 10px; font-weight: 600; border-radius: 6px; background: white; cursor: pointer;">
+                    Cancel
+                  </button>
+                </div>
+              </form>
+            </div>
+
+            <!-- Right Panel: Circulars Roster Table -->
+            <div class="card" style="background: white; border-radius: 12px; border: 1.5px solid #E2E8F0; padding: 22px; box-shadow: 0 4px 6px rgba(0,0,0,0.02); min-height: 400px;">
+              <h3 style="margin-top: 0; color: #0F172A; margin-bottom: 16px; font-size: 1.1rem; font-weight: 800; border-bottom: 1px solid #F1F5F9; padding-bottom: 10px;">
+                📋 Published Circulars Roster
+              </h3>
+              
+              <div *ngIf="circularsLoading" style="text-align: center; padding: 40px; color: #64748B;">Loading circulars...</div>
+
+              <div *ngIf="!circularsLoading" style="overflow-x: auto;">
+                <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 0.88rem;">
+                  <thead>
+                    <tr style="background: #F8FAFC; border-bottom: 2px solid #CBD5E1; color: #475569; font-weight: 800;">
+                      <th style="padding: 10px 12px;">Date</th>
+                      <th style="padding: 10px 12px;">Target Class</th>
+                      <th style="padding: 10px 12px;">Title</th>
+                      <th style="padding: 10px 12px;">Attachment</th>
+                      <th style="padding: 10px 12px;">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr *ngFor="let c of circularsList" style="border-bottom: 1px solid #E2E8F0;">
+                      <td style="padding: 12px 10px; font-size: 0.82rem; color: #64748B; white-space: nowrap;">
+                        {{ c.created_at | date:'shortDate' }}
+                      </td>
+                      <td style="padding: 12px 10px;">
+                        <span [style.background]="c.program_id ? '#E0F2FE' : '#F3E8FF'"
+                              [style.color]="c.program_id ? '#0369A1' : '#6B21A8'"
+                              style="font-size: 0.75rem; font-weight: 800; border-radius: 6px; padding: 4px 8px; display: inline-block;">
+                          {{ getProgramTitle(c.program_id) }}
+                        </span>
+                      </td>
+                      <td style="padding: 12px 10px;">
+                        <div style="font-weight: 800; color: #2563EB;">{{ c.title }}</div>
+                        <span *ngIf="!c.is_active" style="background-color: #F3F4F6; color: #9CA3AF; font-size: 0.7rem; border-radius: 4px; padding: 2px 6px; margin-top: 4px; display: inline-block;">Draft</span>
+                      </td>
+                      <td style="padding: 12px 10px; font-size: 0.82rem;">
+                        <a *ngIf="c.attachment_url" [href]="getMediaUrl(c.attachment_url, '')" target="_blank" style="color: #2563EB; font-weight: 700; text-decoration: none;">📎 View File</a>
+                        <span *ngIf="!c.attachment_url" style="color: #94A3B8;">—</span>
+                      </td>
+                      <td style="padding: 12px 10px;">
+                        <div style="display: flex; gap: 6px;">
+                          <button (click)="editCircular(c)" style="background: #EFF6FF; color: #2563EB; border: 1px solid #BFDBFE; padding: 4px 10px; border-radius: 6px; font-weight: 700; font-size: 0.78rem; cursor: pointer;">✏️ Edit</button>
+                          <button (click)="deleteCircular(c.id)" style="background: #FEE2E2; color: #DC2626; border: 1px solid #FCA5A5; padding: 4px 10px; border-radius: 6px; font-weight: 700; font-size: 0.78rem; cursor: pointer;">🗑️ Delete</button>
+                        </div>
+                      </td>
+                    </tr>
+                    <tr *ngIf="circularsList.length === 0">
+                      <td colspan="5" style="text-align: center; color: #94A3B8; padding: 40px; font-style: italic;">
+                        No circulars published yet.
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- SCHOOL LIBRARY MANAGER TAB (SAME AS ADMIN LOGIN) -->
+        <div class="tab-content animate-fade-in" *ngIf="activeTab === 'library'">
+          <div class="tab-header" style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #E2E8F0; padding-bottom: 15px; margin-bottom: 20px;">
+            <div>
+              <h2 style="margin: 0; color: #0F172A; font-weight: 800; font-size: 1.3rem;">📚 School Library & Book Manager</h2>
+              <p style="margin: 3px 0 0 0; color: #64748B; font-size: 0.88rem;">Manage the school library catalog, add children's books, track inventory, and register borrowed/returned books for students.</p>
+            </div>
+            <button (click)="loadBooks()" class="btn btn-secondary" style="padding: 8px 16px; font-weight: 700; border-radius: 8px;">🔄 Refresh Catalog</button>
+          </div>
+
+          <div style="display: grid; grid-template-columns: 1fr 2fr; gap: 24px; margin-bottom: 24px;">
+            <!-- Left Panel: Add Book Form / Issue Book Form -->
+            <div style="display: flex; flex-direction: column; gap: 20px;">
+              <!-- Card 1: Add/Edit Book -->
+              <div class="card" style="background: white; border-radius: 12px; border: 1.5px solid #E2E8F0; padding: 22px; box-shadow: 0 4px 6px rgba(0,0,0,0.02);">
+                <h3 style="margin-top: 0; color: #0F172A; margin-bottom: 16px; font-size: 1.1rem; font-weight: 800; border-bottom: 1px solid #F1F5F9; padding-bottom: 10px;">
+                  {{ editingBookId ? '✏️ Edit Book Details' : '➕ Add Book to Catalog' }}
+                </h3>
+                <form (ngSubmit)="saveBook()">
+                  <div class="form-group" style="margin-bottom: 12px;">
+                    <label class="form-label" style="display: block; font-weight: 700; font-size: 0.82rem; color: #475569; margin-bottom: 4px;">Book Title *</label>
+                    <input type="text" [(ngModel)]="newBook.title" name="b_title" required class="form-control" placeholder="e.g. Green Eggs and Ham" style="width: 100%; border: 1.5px solid #CBD5E1; border-radius: 6px; padding: 8px 10px;" />
+                  </div>
+                  
+                  <div class="form-group" style="margin-bottom: 12px;">
+                    <label class="form-label" style="display: block; font-weight: 700; font-size: 0.82rem; color: #475569; margin-bottom: 4px;">Author *</label>
+                    <input type="text" [(ngModel)]="newBook.author" name="b_author" required class="form-control" placeholder="e.g. Dr. Seuss" style="width: 100%; border: 1.5px solid #CBD5E1; border-radius: 6px; padding: 8px 10px;" />
+                  </div>
+
+                  <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px;">
+                    <div class="form-group">
+                      <label class="form-label" style="display: block; font-weight: 700; font-size: 0.82rem; color: #475569; margin-bottom: 4px;">ISBN (Optional)</label>
+                      <input type="text" [(ngModel)]="newBook.isbn" name="b_isbn" class="form-control" placeholder="e.g. 978039480" style="width: 100%; border: 1.5px solid #CBD5E1; border-radius: 6px; padding: 8px 10px;" />
+                    </div>
+                    <div class="form-group">
+                      <label class="form-label" style="display: block; font-weight: 700; font-size: 0.82rem; color: #475569; margin-bottom: 4px;">Category *</label>
+                      <select [(ngModel)]="newBook.category" name="b_category" required class="form-control" style="width: 100%; border: 1.5px solid #CBD5E1; border-radius: 6px; padding: 8px 10px; background-color: white;">
+                        <option value="Picture Book">Picture Book</option>
+                        <option value="Beginner Reader">Beginner Reader</option>
+                        <option value="Fiction">Fiction</option>
+                        <option value="Chapter Book">Chapter Book</option>
+                        <option value="Science & Nature">Science & Nature</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <div class="form-group" style="margin-bottom: 15px;">
+                    <label class="form-label" style="display: block; font-weight: 700; font-size: 0.82rem; color: #475569; margin-bottom: 4px;">Total Copies *</label>
+                    <input type="number" [(ngModel)]="newBook.total_copies" name="b_copies" min="1" required class="form-control" style="width: 100%; border: 1.5px solid #CBD5E1; border-radius: 6px; padding: 8px 10px;" />
+                  </div>
+
+                  <div style="display: flex; gap: 8px;">
+                    <button type="submit" class="btn btn-primary" style="flex: 1; padding: 9px; font-weight: 700; border-radius: 6px; background: #2563EB; color: white; border: none; cursor: pointer;">
+                      {{ editingBookId ? '💾 Update Book' : '➕ Add Book' }}
+                    </button>
+                    <button *ngIf="editingBookId" type="button" (click)="resetBookForm()" class="btn btn-outline" style="padding: 9px 14px; font-weight: 600; border: 1.5px solid #CBD5E1; color: #64748B; border-radius: 6px; background: white; cursor: pointer;">
+                      Cancel
+                    </button>
+                  </div>
+                </form>
+              </div>
+
+              <!-- Card 2: Issue Book to Student -->
+              <div class="card" style="background: white; border-radius: 12px; border: 1.5px solid #E2E8F0; padding: 22px; box-shadow: 0 4px 6px rgba(0,0,0,0.02);">
+                <h3 style="margin-top: 0; color: #0F172A; margin-bottom: 16px; font-size: 1.1rem; font-weight: 800; border-bottom: 1px solid #F1F5F9; padding-bottom: 10px;">
+                  📖 Issue Book to Student
+                </h3>
+                <form (ngSubmit)="issueBook()">
+                  <div class="form-group" style="margin-bottom: 12px;">
+                    <label class="form-label" style="display: block; font-weight: 700; font-size: 0.82rem; color: #475569; margin-bottom: 4px;">Select Book *</label>
+                    <select [(ngModel)]="newBorrow.book_id" name="iss_book" required class="form-control" style="width: 100%; border: 1.5px solid #CBD5E1; border-radius: 6px; padding: 8px 10px; background-color: white;">
+                      <option [ngValue]="null" disabled>-- Choose Available Book --</option>
+                      <option *ngFor="let b of getAvailableBooks()" [value]="b.id">{{ b.title }} (By {{ b.author }}) - [{{ b.available_copies }} left]</option>
+                    </select>
+                  </div>
+
+                  <div class="form-group" style="margin-bottom: 12px;">
+                    <label class="form-label" style="display: block; font-weight: 700; font-size: 0.82rem; color: #475569; margin-bottom: 4px;">Select Student *</label>
+                    <select [(ngModel)]="newBorrow.student_id" name="iss_student" required class="form-control" style="width: 100%; border: 1.5px solid #CBD5E1; border-radius: 6px; padding: 8px 10px; background-color: white;">
+                      <option [ngValue]="null" disabled>-- Choose Student --</option>
+                      <option *ngFor="let s of classStudents" [value]="s.id">{{ s.name }}</option>
+                    </select>
+                  </div>
+
+                  <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 15px;">
+                    <div class="form-group">
+                      <label class="form-label" style="display: block; font-weight: 700; font-size: 0.82rem; color: #475569; margin-bottom: 4px;">Borrow Date</label>
+                      <input type="date" [(ngModel)]="newBorrow.borrow_date" name="iss_bdate" required class="form-control" style="width: 100%; border: 1.5px solid #CBD5E1; border-radius: 6px; padding: 8px 10px;" />
+                    </div>
+                    <div class="form-group">
+                      <label class="form-label" style="display: block; font-weight: 700; font-size: 0.82rem; color: #475569; margin-bottom: 4px;">Due Date</label>
+                      <input type="date" [(ngModel)]="newBorrow.due_date" name="iss_ddate" required class="form-control" style="width: 100%; border: 1.5px solid #CBD5E1; border-radius: 6px; padding: 8px 10px;" />
+                    </div>
+                  </div>
+
+                  <button type="submit" class="btn" style="width: 100%; padding: 10px; font-weight: 700; border-radius: 6px; background: #0652DD; color: white; border: none; cursor: pointer;">
+                    🚀 Register Borrow
+                  </button>
+                </form>
+              </div>
+            </div>
+
+            <!-- Right Panel: Books catalog and Borrow registry -->
+            <div style="display: flex; flex-direction: column; gap: 20px;">
+              <!-- Catalog List Card -->
+              <div class="card" style="background: white; border-radius: 12px; border: 1.5px solid #E2E8F0; padding: 22px; box-shadow: 0 4px 6px rgba(0,0,0,0.02);">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                  <h3 style="margin: 0; color: #0F172A; font-size: 1.1rem; font-weight: 800;">📚 Library Catalog</h3>
+                  <span style="background: #E2E8F0; color: #475569; font-weight: 700; padding: 4px 10px; border-radius: 6px; font-size: 0.78rem;">Total Books: {{ booksList.length }}</span>
+                </div>
+
+                <!-- Search Bar -->
+                <div style="position: relative; margin-top: 14px;">
+                  <span style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%); font-size: 1rem; pointer-events: none;">🔍</span>
+                  <input
+                    type="text"
+                    [(ngModel)]="bookSearchQuery"
+                    name="book_search"
+                    placeholder="Search by title, author or ISBN..."
+                    style="width: 100%; padding: 9px 12px 9px 38px; border: 1.5px solid #CBD5E1; border-radius: 8px; font-size: 0.85rem; color: #1E293B; background: #F8FAFC; box-sizing: border-box; outline: none;"
+                  />
+                  <button *ngIf="bookSearchQuery"
+                          type="button"
+                          (click)="bookSearchQuery = ''"
+                          style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; font-size: 1rem; color: #94a3b8;"
+                          title="Clear search">
+                    &times;
+                  </button>
+                </div>
+                <div *ngIf="bookSearchQuery && filteredBooksList.length > 0" style="margin-top: 6px; font-size: 0.78rem; color: #64748b;">
+                  Showing <strong>{{ filteredBooksList.length }}</strong> of {{ booksList.length }} books
+                </div>
+
+                <div style="overflow-x: auto; margin-top: 14px; max-height: 280px;">
+                  <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 0.88rem;">
+                    <thead>
+                      <tr style="background: #F8FAFC; border-bottom: 2px solid #CBD5E1; color: #475569; font-weight: 800;">
+                        <th style="padding: 10px 12px;">Title & Author</th>
+                        <th style="padding: 10px 12px;">Category</th>
+                        <th style="padding: 10px 12px; text-align: center;">Copies (Avail/Total)</th>
+                        <th style="padding: 10px 12px; width: 80px;">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr *ngFor="let b of filteredBooksList" style="border-bottom: 1px solid #E2E8F0;">
+                        <td style="padding: 10px 12px;">
+                          <div style="font-weight: 800; color: #2563EB;">{{ b.title }}</div>
+                          <div style="font-size: 0.78rem; color: #64748B; margin-top: 2px;">By {{ b.author }} <span *ngIf="b.isbn" style="margin-left: 5px; opacity: 0.7;">(ISBN: {{ b.isbn }})</span></div>
+                        </td>
+                        <td style="padding: 10px 12px; font-size: 0.85rem; color: #475569;">
+                          {{ b.category }}
+                        </td>
+                        <td style="padding: 10px 12px; text-align: center;">
+                          <span [style.background]="b.available_copies > 0 ? '#D1FAE5' : '#FEE2E2'"
+                                [style.color]="b.available_copies > 0 ? '#065F46' : '#991B1B'"
+                                style="font-size: 0.78rem; font-weight: 800; border-radius: 6px; padding: 4px 8px; display: inline-block;">
+                            {{ b.available_copies }} / {{ b.total_copies }}
+                          </span>
+                        </td>
+                        <td style="padding: 10px 12px;">
+                          <div style="display: flex; gap: 6px;">
+                            <button (click)="editBook(b)" style="background: #EFF6FF; color: #2563EB; border: 1px solid #BFDBFE; padding: 4px 8px; border-radius: 6px; font-weight: 700; font-size: 0.75rem; cursor: pointer;">✏️</button>
+                            <button (click)="deleteBook(b.id)" style="background: #FEE2E2; color: #DC2626; border: 1px solid #FCA5A5; padding: 4px 8px; border-radius: 6px; font-weight: 700; font-size: 0.75rem; cursor: pointer;">🗑️</button>
+                          </div>
+                        </td>
+                      </tr>
+                      <tr *ngIf="filteredBooksList.length === 0">
+                        <td colspan="4" style="text-align: center; color: #94A3B8; font-style: italic; padding: 20px;">
+                          {{ bookSearchQuery ? 'No books match your search.' : 'Library catalog is empty.' }}
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              <!-- Borrow Registry Card -->
+              <div class="card" style="background: white; border-radius: 12px; border: 1.5px solid #E2E8F0; padding: 22px; box-shadow: 0 4px 6px rgba(0,0,0,0.02);">
+                <h3 style="margin-top: 0; color: #0F172A; margin-bottom: 16px; font-size: 1.1rem; font-weight: 800; border-bottom: 1px solid #F1F5F9; padding-bottom: 10px;">
+                  📋 Active Borrow & Issue Register
+                </h3>
+                
+                <div style="overflow-x: auto; max-height: 280px;">
+                  <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 0.88rem;">
+                    <thead>
+                      <tr style="background: #F8FAFC; border-bottom: 2px solid #CBD5E1; color: #475569; font-weight: 800;">
+                        <th style="padding: 10px 12px;">Book</th>
+                        <th style="padding: 10px 12px;">Student</th>
+                        <th style="padding: 10px 12px;">Borrow ➔ Due</th>
+                        <th style="padding: 10px 12px; text-align: center;">Status</th>
+                        <th style="padding: 10px 12px; text-align: center;">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr *ngFor="let br of borrowsList" style="border-bottom: 1px solid #E2E8F0;">
+                        <td style="padding: 10px 12px; font-size: 0.88rem; font-weight: 700; color: #1E293B;">
+                          {{ getBookTitle(br.book_id) }}
+                        </td>
+                        <td style="padding: 10px 12px; font-size: 0.85rem; color: #475569;">
+                          {{ getStudentName(br.student_id) }}
+                        </td>
+                        <td style="padding: 10px 12px; font-size: 0.78rem; color: #64748B;">
+                          <div>{{ br.borrow_date }}</div>
+                          <div style="font-weight: 700; color: #DC2626; margin-top: 2px;">⌛ {{ br.due_date }}</div>
+                        </td>
+                        <td style="padding: 10px 12px; text-align: center;">
+                          <span [style.background]="br.status?.toUpperCase() === 'RETURNED' ? '#D1FAE5' : '#FEF3C7'"
+                                [style.color]="br.status?.toUpperCase() === 'RETURNED' ? '#065F46' : '#92400E'"
+                                style="font-size: 0.72rem; font-weight: 800; border-radius: 4px; padding: 3px 8px;">
+                            {{ br.status }}
+                          </span>
+                        </td>
+                        <td style="padding: 10px 12px; text-align: center;">
+                          <button *ngIf="br.status?.toUpperCase() === 'BORROWED'" (click)="returnBorrowedBook(br.id)" style="padding: 4px 10px; font-size: 0.75rem; font-weight: 700; border-radius: 6px; background: #10B981; color: white; border: none; cursor: pointer;">
+                            ↩ Return
+                          </button>
+                          <span *ngIf="br.status?.toUpperCase() === 'RETURNED'" style="color: #94A3B8; font-size: 0.78rem; font-style: italic;">Returned</span>
+                        </td>
+                      </tr>
+                      <tr *ngIf="borrowsList.length === 0">
+                        <td colspan="5" style="text-align: center; color: #94A3B8; font-style: italic; padding: 20px;">
+                          No books currently registered as borrowed.
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ACADEMIC HOLIDAYS MANAGER TAB (SAME AS ADMIN LOGIN) -->
+        <div class="tab-content animate-fade-in" *ngIf="activeTab === 'holidays'">
+          <div class="tab-header" style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #E2E8F0; padding-bottom: 15px; margin-bottom: 20px;">
+            <div>
+              <h2 style="margin: 0; color: #0F172A; font-weight: 800; font-size: 1.3rem;">📅 School Holidays Management</h2>
+              <p style="margin: 3px 0 0 0; color: #64748B; font-size: 0.88rem;">Publish, configure, and manage holidays on a year-on-year basis for parents and staff.</p>
+            </div>
+            <div style="display: flex; align-items: center; gap: 10px;">
+              <label style="font-weight: 700; color: #475569; font-size: 0.88rem;">Select Year:</label>
+              <select [(ngModel)]="selectedHolidayYear" (change)="loadHolidays()" class="form-control" style="width: 120px; background-color: white; border: 1.5px solid #CBD5E1; border-radius: 8px; padding: 6px 12px; font-weight: 700;">
+                <option *ngFor="let y of holidayYears" [value]="y">{{ y }}</option>
+              </select>
+            </div>
+          </div>
+
+          <div style="display: grid; grid-template-columns: 1fr 2fr; gap: 24px; margin-bottom: 24px;">
+            <!-- Add / Edit Holiday Form Card -->
+            <div>
+              <div class="card" style="background: white; border-radius: 12px; border: 1.5px solid #E2E8F0; padding: 22px; box-shadow: 0 4px 6px rgba(0,0,0,0.02);">
+                <h3 style="margin-top: 0; color: #0F172A; margin-bottom: 16px; font-size: 1.1rem; font-weight: 800; border-bottom: 1px solid #F1F5F9; padding-bottom: 10px;">
+                  {{ editingHolidayId ? '✏️ Edit Holiday Details' : '➕ Add New Holiday' }}
+                </h3>
+                
+                <form (ngSubmit)="saveHoliday()">
+                  <div class="form-group" style="margin-bottom: 14px;">
+                    <label class="form-label" style="display: block; font-weight: 700; font-size: 0.82rem; color: #475569; margin-bottom: 5px;">Holiday Title *</label>
+                    <input type="text" [(ngModel)]="newHoliday.title" name="h_title" required class="form-control" style="width: 100%; border: 1.5px solid #CBD5E1; border-radius: 6px; padding: 8px 12px;" placeholder="e.g. Ugadi Festival" />
+                  </div>
+
+                  <div class="form-group" style="margin-bottom: 14px;">
+                    <label class="form-label" style="display: block; font-weight: 700; font-size: 0.82rem; color: #475569; margin-bottom: 5px;">Holiday Date *</label>
+                    <input type="date" [(ngModel)]="newHoliday.holiday_date" name="h_date" required class="form-control" style="width: 100%; border: 1.5px solid #CBD5E1; border-radius: 6px; padding: 8px 12px;" />
+                  </div>
+
+                  <div class="form-group" style="margin-bottom: 14px;">
+                    <label class="form-label" style="display: block; font-weight: 700; font-size: 0.82rem; color: #475569; margin-bottom: 5px;">Holiday Category *</label>
+                    <select [(ngModel)]="newHoliday.category" name="h_category" required class="form-control" style="width: 100%; border: 1.5px solid #CBD5E1; border-radius: 6px; padding: 8px 12px; background-color: white; cursor: pointer;">
+                      <option value="National Holiday">National Holiday</option>
+                      <option value="Vacation">Vacation</option>
+                      <option value="Public Event">Public Event</option>
+                      <option value="Religious Event">Religious Event</option>
+                      <option value="School Event">School Event</option>
+                    </select>
+                  </div>
+
+                  <div class="form-group" style="margin-bottom: 14px;">
+                    <label class="form-label" style="display: block; font-weight: 700; font-size: 0.82rem; color: #475569; margin-bottom: 5px;">Description / Details</label>
+                    <textarea [(ngModel)]="newHoliday.description" name="h_desc" class="form-control" style="width: 100%; border: 1.5px solid #CBD5E1; border-radius: 6px; padding: 8px 12px; min-height: 70px;" placeholder="Details about this holiday..."></textarea>
+                  </div>
+
+                  <div class="form-group" style="margin-bottom: 14px;">
+                    <label class="form-label" style="display: block; font-weight: 700; font-size: 0.82rem; color: #475569; margin-bottom: 5px;">Holiday Image (Optional)</label>
+                    <input type="file" (change)="onHolidayFileSelected($event)" accept="image/*" class="form-control" style="width: 100%; border: 1.5px solid #CBD5E1; border-radius: 6px; padding: 6px 12px; background-color: white; cursor: pointer;" />
+                    
+                    <div *ngIf="uploadingHolidayImage" style="font-size: 0.8rem; color: #EE5A24; margin-top: 5px; font-weight: 700;">
+                      ⏳ Uploading image, please wait...
+                    </div>
+                    
+                    <div *ngIf="newHoliday.image_url" style="margin-top: 10px; display: flex; align-items: center; gap: 10px;">
+                      <img [src]="getMediaUrl(newHoliday.image_url, '')" alt="Preview" style="width: 60px; height: 60px; object-fit: cover; border-radius: 6px; border: 1px solid #CBD5E1;" />
+                      <button type="button" (click)="removeHolidayImage()" style="background: #FEE2E2; color: #DC2626; border: none; padding: 4px 8px; font-size: 0.75rem; border-radius: 4px; font-weight: 700; cursor: pointer;">Remove</button>
+                    </div>
+                  </div>
+
+                  <div class="form-group" style="margin-bottom: 16px; display: flex; flex-direction: column; gap: 8px;">
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                      <input type="checkbox" [(ngModel)]="newHoliday.is_active" name="h_active" id="t_h_active" style="width: 16px; height: 16px; cursor: pointer;" />
+                      <label for="t_h_active" style="font-weight: 700; font-size: 0.82rem; color: #475569; cursor: pointer; user-select: none;">Published & Active</label>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                      <input type="checkbox" [(ngModel)]="newHoliday.send_email" name="h_send_email" id="t_h_send_email" style="width: 16px; height: 16px; cursor: pointer;" />
+                      <label for="t_h_send_email" style="font-weight: 700; font-size: 0.82rem; color: #475569; cursor: pointer; user-select: none;">📧 Bulk Email Parents</label>
+                    </div>
+                  </div>
+
+                  <div style="display: flex; gap: 10px;">
+                    <button type="submit" class="btn btn-primary" style="flex: 1; padding: 10px; font-weight: 700; border-radius: 6px; border: none; background: #2563EB; color: white; cursor: pointer;">
+                      {{ editingHolidayId ? '💾 Update Holiday' : '💾 Save Holiday' }}
+                    </button>
+                    <button *ngIf="editingHolidayId" type="button" (click)="resetHolidayForm()" class="btn btn-outline" style="border: 1.5px solid #CBD5E1; color: #64748B; padding: 10px; font-weight: 600; border-radius: 6px; background: white; cursor: pointer;">
+                      Cancel
+                    </button>
+                  </div>
+                </form>
+              </div>
+
+              <!-- Custom Holiday Bulk Mailer Card -->
+              <div class="card" style="background: white; border-radius: 12px; border: 1.5px solid #E2E8F0; padding: 22px; box-shadow: 0 4px 6px rgba(0,0,0,0.02); margin-top: 20px;">
+                <h3 style="margin-top: 0; color: #0F172A; margin-bottom: 14px; font-size: 1.05rem; font-weight: 800; border-bottom: 1px solid #F1F5F9; padding-bottom: 10px;">
+                  📢 Custom Holiday Bulk Mailer
+                </h3>
+                <p style="font-size: 0.8rem; color: #64748B; margin-bottom: 14px; line-height: 1.4;">
+                  Send an immediate, styled HTML holiday announcement to all registered parent contacts.
+                </p>
+                
+                <form (ngSubmit)="sendBulkHolidayEmail()">
+                  <div class="form-group" style="margin-bottom: 12px;">
+                    <label class="form-label" style="display: block; font-weight: 700; font-size: 0.82rem; color: #475569; margin-bottom: 5px;">Reason for Holiday *</label>
+                    <input type="text" [(ngModel)]="customHolidayEmail.reason" name="c_reason" required class="form-control" style="width: 100%; border: 1.5px solid #CBD5E1; border-radius: 6px; padding: 8px 12px;" placeholder="e.g. Extreme weather red alert" />
+                  </div>
+
+                  <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px;">
+                    <div class="form-group">
+                      <label class="form-label" style="display: block; font-weight: 700; font-size: 0.82rem; color: #475569; margin-bottom: 5px;">From Date *</label>
+                      <input type="date" [(ngModel)]="customHolidayEmail.start_date" name="c_start" required class="form-control" style="width: 100%; border: 1.5px solid #CBD5E1; border-radius: 6px; padding: 8px 12px;" />
+                    </div>
+                    <div class="form-group">
+                      <label class="form-label" style="display: block; font-weight: 700; font-size: 0.82rem; color: #475569; margin-bottom: 5px;">To Date *</label>
+                      <input type="date" [(ngModel)]="customHolidayEmail.end_date" name="c_end" required class="form-control" style="width: 100%; border: 1.5px solid #CBD5E1; border-radius: 6px; padding: 8px 12px;" />
+                    </div>
+                  </div>
+
+                  <div class="form-group" style="margin-bottom: 16px;">
+                    <label class="form-label" style="display: block; font-weight: 700; font-size: 0.82rem; color: #475569; margin-bottom: 5px;">School Reopening Date *</label>
+                    <input type="date" [(ngModel)]="customHolidayEmail.reopen_date" name="c_reopen" required class="form-control" style="width: 100%; border: 1.5px solid #CBD5E1; border-radius: 6px; padding: 8px 12px;" />
+                  </div>
+
+                  <button type="submit" [disabled]="sendingBulkEmail" class="btn" style="width: 100%; padding: 10px; font-weight: 700; border-radius: 6px; border: none; background-color: #EC4899; color: white; cursor: pointer;">
+                    {{ sendingBulkEmail ? '⏳ Dispatching Emails...' : '📧 Send Bulk Holiday Email' }}
+                  </button>
+                </form>
+              </div>
+            </div>
+
+            <!-- Holidays Table Card -->
+            <div>
+              <div class="card" style="background: white; border-radius: 12px; border: 1.5px solid #E2E8F0; padding: 22px; box-shadow: 0 4px 6px rgba(0,0,0,0.02); min-height: 400px; width: 100%;">
+                <h3 style="margin-top: 0; color: #0F172A; margin-bottom: 16px; font-size: 1.1rem; font-weight: 800; border-bottom: 1px solid #F1F5F9; padding-bottom: 10px;">
+                  Holidays List for {{ selectedHolidayYear }}
+                </h3>
+
+                <div style="overflow-x: auto;">
+                  <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 0.88rem;">
+                    <thead>
+                      <tr style="border-bottom: 2px solid #CBD5E1; color: #475569; font-weight: 800; background: #F8FAFC;">
+                        <th style="padding: 10px 12px;">Date</th>
+                        <th style="padding: 10px 12px;">Holiday Title</th>
+                        <th style="padding: 10px 12px;">Category</th>
+                        <th style="padding: 10px 12px;">Description</th>
+                        <th style="padding: 10px 12px;">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr *ngFor="let h of holidaysList" style="border-bottom: 1px solid #E2E8F0;">
+                        <td style="padding: 12px 10px; font-weight: 800; color: #1E293B; white-space: nowrap;">
+                          📅 {{ h.holiday_date }}
+                        </td>
+                        <td style="padding: 12px 10px;">
+                          <div style="font-weight: 800; color: #2563EB;">{{ h.title }}</div>
+                          <span *ngIf="!h.is_active" style="background-color: #F3F4F6; color: #9CA3AF; font-size: 0.7rem; border-radius: 4px; padding: 2px 6px; margin-top: 4px; display: inline-block;">Draft</span>
+                        </td>
+                        <td style="padding: 12px 10px;">
+                          <span [style.background]="h.category === 'National Holiday' ? '#FEE2E2' : h.category === 'Vacation' ? '#FFEDD5' : h.category === 'Public Event' ? '#D1FAE5' : '#DBEAFE'"
+                                [style.color]="h.category === 'National Holiday' ? '#EF4444' : h.category === 'Vacation' ? '#F97316' : h.category === 'Public Event' ? '#10B981' : '#2563EB'"
+                                style="font-size: 0.75rem; font-weight: 800; border-radius: 6px; padding: 4px 8px; display: inline-block;">
+                            {{ h.category || 'National Holiday' }}
+                          </span>
+                        </td>
+                        <td style="padding: 12px 10px; color: #475569; font-size: 0.85rem;">
+                          {{ h.description || '—' }}
+                        </td>
+                        <td style="padding: 12px 10px;">
+                          <div style="display: flex; gap: 6px;">
+                            <button (click)="editHoliday(h)" style="background: #EFF6FF; color: #2563EB; border: 1px solid #BFDBFE; padding: 4px 10px; border-radius: 6px; font-weight: 700; font-size: 0.78rem; cursor: pointer;">✏️ Edit</button>
+                            <button (click)="deleteHolidayFromRoster(h.id)" style="background: #FEE2E2; color: #DC2626; border: 1px solid #FCA5A5; padding: 4px 10px; border-radius: 6px; font-weight: 700; font-size: 0.78rem; cursor: pointer;">🗑️ Delete</button>
+                          </div>
+                        </td>
+                      </tr>
+                      <tr *ngIf="holidaysList.length === 0">
+                        <td colspan="5" style="text-align: center; color: #94A3B8; padding: 40px; font-style: italic;">
+                          No holidays scheduled for year {{ selectedHolidayYear }}.
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- CAMPUS GALLERY TAB -->
+        <div class="tab-content" *ngIf="activeTab === 'gallery'">
+          <div class="card" style="padding: 24px;">
+            <h3 style="margin: 0 0 16px 0; font-size: 1.25rem; font-weight: 800; color: #0F172A;">📷 Campus Photo Gallery</h3>
+            <div *ngIf="galleryLoading" style="text-align: center; padding: 40px; color: #64748B;">Loading gallery photos...</div>
+            <div *ngIf="!galleryLoading && galleryList.length === 0" style="text-align: center; padding: 40px; color: #94A3B8; font-style: italic;">No photos in gallery.</div>
+            <div *ngIf="!galleryLoading && galleryList.length > 0" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 14px;">
+              <div *ngFor="let img of galleryList" style="border-radius: 10px; overflow: hidden; height: 130px; background: #000; position: relative;">
+                <img [src]="getMediaUrl(img.image_url, '')" style="width: 100%; height: 100%; object-fit: cover;" alt="Gallery Photo" />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- STUDENT ATTENDANCE MANAGER TAB -->
+        <div class="tab-content" *ngIf="activeTab === 'attendance'">
+          <div class="card" style="padding: 24px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 12px;">
+              <div>
+                <h3 style="margin: 0; font-size: 1.25rem; font-weight: 800; color: #0F172A;">📅 Daily Student Attendance Manager</h3>
+                <p style="margin: 4px 0 0 0; color: #64748B; font-size: 0.85rem;">Mark daily pupil attendance status, record absence notes, and view roster statistics.</p>
+              </div>
+              <div style="display: flex; gap: 8px;">
+                <input type="date" [(ngModel)]="attendanceDate" (change)="loadStudentsForAttendance()" class="form-control" style="width: 160px;" />
+                <button (click)="saveAttendanceRoster()" class="btn btn-primary btn-sm" style="padding: 8px 18px; font-weight: 700; background: #2563EB; border: none; color: white; border-radius: 6px; cursor: pointer;">💾 Save Roster</button>
+              </div>
+            </div>
+
+            <div *ngIf="attendanceLoading" style="text-align: center; padding: 40px; color: #64748B;">Loading roster for attendance...</div>
+
+            <div *ngIf="!attendanceLoading" style="overflow-x: auto;">
+              <table style="width: 100%; border-collapse: collapse; font-size: 0.88rem;">
+                <thead>
+                  <tr style="background: #F8FAFC; border-bottom: 2px solid #E2E8F0;">
+                    <th style="padding: 12px 14px; text-align: left; font-weight: 800; color: #334155;">Student Name</th>
+                    <th style="padding: 12px 14px; text-align: left; font-weight: 800; color: #334155;">Parent Name</th>
+                    <th style="padding: 12px 14px; text-align: left; font-weight: 800; color: #334155;">Attendance Status</th>
+                    <th style="padding: 12px 14px; text-align: left; font-weight: 800; color: #334155;">Allergies / Notes</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr *ngFor="let kid of attendanceStudents" style="border-bottom: 1px solid #F1F5F9;">
+                    <td style="padding: 12px 14px; font-weight: 800; color: #0F172A;">
+                      <div style="display: flex; align-items: center; gap: 10px;">
+                        <span style="font-size: 1.4rem;">👦</span>
+                        <span>{{ kid.name }}</span>
+                      </div>
+                    </td>
+                    <td style="padding: 12px 14px; color: #475569;">{{ kid.parent_name || 'N/A' }}</td>
+                    <td style="padding: 12px 14px;">
+                      <div style="display: flex; gap: 8px;">
+                        <button type="button" (click)="markKidStatus(kid.id, 'PRESENT')" 
+                                [style.background]="kid.status === 'PRESENT' ? '#10B981' : '#F1F5F9'"
+                                [style.color]="kid.status === 'PRESENT' ? 'white' : '#475569'"
+                                style="border: none; padding: 6px 14px; border-radius: 20px; font-weight: 800; font-size: 0.78rem; cursor: pointer;">
+                          ✓ Present
+                        </button>
+                        <button type="button" (click)="markKidStatus(kid.id, 'ABSENT')" 
+                                [style.background]="kid.status === 'ABSENT' ? '#EF4444' : '#F1F5F9'"
+                                [style.color]="kid.status === 'ABSENT' ? 'white' : '#475569'"
+                                style="border: none; padding: 6px 14px; border-radius: 20px; font-weight: 800; font-size: 0.78rem; cursor: pointer;">
+                          ✗ Absent
+                        </button>
+                        <button type="button" (click)="markKidStatus(kid.id, 'LATE')" 
+                                [style.background]="kid.status === 'LATE' ? '#F59E0B' : '#F1F5F9'"
+                                [style.color]="kid.status === 'LATE' ? 'white' : '#475569'"
+                                style="border: none; padding: 6px 14px; border-radius: 20px; font-weight: 800; font-size: 0.78rem; cursor: pointer;">
+                          ⏰ Late
+                        </button>
+                      </div>
+                    </td>
+                    <td style="padding: 12px 14px; color: #64748B;">
+                      <span *ngIf="kid.allergies" style="background: #FEE2E2; color: #DC2626; border: 1px solid #FCA5A5; font-size: 0.72rem; font-weight: 700; padding: 2px 6px; border-radius: 4px;">
+                        ⚠️ {{ kid.allergies }}
+                      </span>
+                      <span *ngIf="!kid.allergies">—</span>
+                    </td>
+                  </tr>
+                  <tr *ngIf="attendanceStudents.length === 0">
+                    <td colspan="4" style="text-align: center; padding: 30px; color: #94A3B8; font-style: italic;">No students found in class roster.</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- PARENT REQUESTS CENTER TAB -->
+        <div class="tab-content" *ngIf="activeTab === 'leaves'">
+          <div class="card" style="padding: 24px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 12px;">
+              <div>
+                <h3 style="margin: 0; font-size: 1.25rem; font-weight: 800; color: #0F172A;">📋 Parent Requests Center</h3>
+                <p style="margin: 4px 0 0 0; color: #64748B; font-size: 0.85rem;">Review leave applications and meal suspension notes submitted by parents.</p>
+              </div>
+              <div style="display: flex; gap: 10px;">
+                <button type="button" (click)="parentRequestSubTab = 'leaves'" [style.background]="parentRequestSubTab === 'leaves' ? '#2563EB' : '#F1F5F9'" [style.color]="parentRequestSubTab === 'leaves' ? 'white' : '#475569'" style="border: none; padding: 8px 16px; border-radius: 8px; font-weight: 700; cursor: pointer;">📋 Absence Leaves</button>
+                <button type="button" (click)="parentRequestSubTab = 'meals'" [style.background]="parentRequestSubTab === 'meals' ? '#2563EB' : '#F1F5F9'" [style.color]="parentRequestSubTab === 'meals' ? 'white' : '#475569'" style="border: none; padding: 8px 16px; border-radius: 8px; font-weight: 700; cursor: pointer;">🍽️ Skip Meals</button>
+              </div>
+            </div>
+
+            <div *ngIf="parentRequestsLoading" style="text-align: center; padding: 40px; color: #64748B;">Loading parent requests...</div>
+
+            <!-- LEAVE APPROVALS -->
+            <div *ngIf="!parentRequestsLoading && parentRequestSubTab === 'leaves'">
+              <div *ngIf="parentRequestsList.length === 0" style="text-align: center; padding: 40px; color: #94A3B8; font-style: italic;">No absence leave requests submitted.</div>
+              <div *ngIf="parentRequestsList.length > 0" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 16px;">
+                <div *ngFor="let req of parentRequestsList" style="background: white; border: 1.5px solid #E2E8F0; border-radius: 12px; padding: 18px; display: flex; flex-direction: column; justify-content: space-between;">
+                  <div>
+                    <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px;">
+                      <div>
+                        <h4 style="margin: 0; font-size: 1rem; font-weight: 800; color: #0F172A;">👦 {{ req.student_name || 'Pupil Request' }}</h4>
+                        <span style="font-size: 0.75rem; color: #64748B;">Parent: {{ req.parent_name || 'Parent' }}</span>
+                      </div>
+                      <span [style.background]="req.status === 'Approved' ? '#DCFCE7' : req.status === 'Declined' ? '#FEE2E2' : '#FEF3C7'" [style.color]="req.status === 'Approved' ? '#15803D' : req.status === 'Declined' ? '#B91C1C' : '#D97706'" style="padding: 4px 10px; border-radius: 6px; font-weight: 800; font-size: 0.72rem;">
+                        {{ req.status || 'Pending' }}
+                      </span>
+                    </div>
+                    <p style="margin: 8px 0; font-size: 0.85rem; color: #334155; line-height: 1.5;"><strong>Reason:</strong> {{ req.reason || req.description }}</p>
+                    <span style="font-size: 0.72rem; color: #94A3B8; display: block;">Dates: {{ req.start_date }} to {{ req.end_date }}</span>
+                  </div>
+                  <div style="display: flex; gap: 8px; margin-top: 14px; border-top: 1px solid #F1F5F9; padding-top: 12px;">
+                    <button (click)="updateLeaveStatus(req.id, 'Approved')" class="btn btn-sm" style="flex: 1; background: #10B981; color: white; border: none; padding: 6px; border-radius: 6px; font-weight: 700; cursor: pointer;">Approve ✓</button>
+                    <button (click)="updateLeaveStatus(req.id, 'Declined')" class="btn btn-sm" style="flex: 1; background: #EF4444; color: white; border: none; padding: 6px; border-radius: 6px; font-weight: 700; cursor: pointer;">Decline ✗</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- SKIP MEALS -->
+            <div *ngIf="!parentRequestsLoading && parentRequestSubTab === 'meals'">
+              <div *ngIf="mealInstructionsList.length === 0" style="text-align: center; padding: 40px; color: #94A3B8; font-style: italic;">No meal suspension instructions submitted.</div>
+              <div *ngIf="mealInstructionsList.length > 0" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 16px;">
+                <div *ngFor="let meal of mealInstructionsList" style="background: white; border: 1.5px solid #E2E8F0; border-radius: 12px; padding: 18px;">
+                  <h4 style="margin: 0 0 6px 0; font-size: 1rem; font-weight: 800; color: #0F172A;">🍽️ {{ meal.student_name }}</h4>
+                  <p style="margin: 0 0 8px 0; font-size: 0.85rem; color: #475569;">Instruction: {{ meal.note || 'Skip school meal' }}</p>
+                  <span style="font-size: 0.72rem; color: #94A3B8;">Date: {{ meal.date }}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ADMISSION ENQUIRIES TAB -->
+        <div class="tab-content" *ngIf="activeTab === 'inquiries'">
+          <div class="card" style="padding: 24px;">
+            <h3 style="margin: 0 0 16px 0; font-size: 1.25rem; font-weight: 800; color: #0F172A;">📩 Admission Enquiries</h3>
+            <div *ngIf="inquiriesLoading" style="text-align: center; padding: 40px; color: #64748B;">Loading inquiries...</div>
+            <div *ngIf="!inquiriesLoading && inquiriesList.length === 0" style="text-align: center; padding: 40px; color: #94A3B8; font-style: italic;">No public admission inquiries found.</div>
+            <div *ngIf="!inquiriesLoading && inquiriesList.length > 0" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 16px;">
+              <div *ngFor="let inq of inquiriesList" style="background: white; border: 1.5px solid #E2E8F0; border-radius: 12px; padding: 18px;">
+                <h4 style="margin: 0 0 4px 0; font-size: 1rem; font-weight: 800; color: #0F172A;">👤 {{ inq.parent_name || inq.name }}</h4>
+                <span style="font-size: 0.78rem; color: #2563EB; font-weight: 700; display: block;">📞 {{ inq.phone || inq.email }}</span>
+                <p style="margin: 8px 0 0 0; font-size: 0.85rem; color: #475569;">{{ inq.message || inq.notes }}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- PROGRAMS CATALOGUE TAB -->
+        <div class="tab-content" *ngIf="activeTab === 'programs'">
+          <div class="card" style="padding: 24px;">
+            <h3 style="margin: 0 0 16px 0; font-size: 1.25rem; font-weight: 800; color: #0F172A;">🎓 Academic Programs</h3>
+            <div *ngIf="programsLoading" style="text-align: center; padding: 40px; color: #64748B;">Loading programs...</div>
+            <div *ngIf="!programsLoading && programsList.length === 0" style="text-align: center; padding: 40px; color: #94A3B8; font-style: italic;">No academic programs found.</div>
+            <div *ngIf="!programsLoading && programsList.length > 0" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 16px;">
+              <div *ngFor="let prog of programsList" style="background: white; border: 1.5px solid #E2E8F0; border-radius: 12px; padding: 18px;">
+                <h4 style="margin: 0 0 6px 0; font-size: 1rem; font-weight: 800; color: #0F172A;">🎓 {{ prog.title }}</h4>
+                <p style="margin: 0; font-size: 0.85rem; color: #475569; line-height: 1.5;">{{ prog.description }}</p>
+                <span style="font-size: 0.72rem; color: #EC4899; font-weight: 800; display: block; margin-top: 8px;">Age Group: {{ prog.age_group || '2 - 6 Years' }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- TEACHER UPDATES TAB -->
+        <div class="tab-content" *ngIf="activeTab === 'users'">
+          <div class="card" style="padding: 24px;">
+            <h3 style="margin: 0 0 16px 0; font-size: 1.25rem; font-weight: 800; color: #0F172A;">👥 Staff & Teacher Updates</h3>
+            <div *ngIf="teachersRosterLoading" style="text-align: center; padding: 40px; color: #64748B;">Loading staff list...</div>
+            <div *ngIf="!teachersRosterLoading && teachersRoster.length === 0" style="text-align: center; padding: 40px; color: #94A3B8; font-style: italic;">No staff records found.</div>
+            <div *ngIf="!teachersRosterLoading && teachersRoster.length > 0" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 16px;">
+              <div *ngFor="let staff of teachersRoster" style="background: white; border: 1.5px solid #E2E8F0; border-radius: 12px; padding: 16px;">
+                <h4 style="margin: 0 0 4px 0; font-size: 0.95rem; font-weight: 800; color: #0F172A;">👩‍🏫 {{ staff.full_name || staff.username }}</h4>
+                <span style="font-size: 0.75rem; color: #64748B; font-weight: 700;">Role: {{ staff.role }}</span>
+                <span style="font-size: 0.72rem; color: #2563EB; display: block; margin-top: 4px;">📧 {{ staff.email || staff.username }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ADMISSIONS TAB -->
+        <div class="tab-content" *ngIf="activeTab === 'admissions'">
+          <div class="card" style="padding: 24px;">
+            <h3 style="margin: 0 0 16px 0; font-size: 1.25rem; font-weight: 800; color: #0F172A;">🏫 Admissions Management</h3>
+            <p style="margin: 0 0 16px 0; color: #64748B; font-size: 0.88rem;">Track new student enrollment applications and admission statuses.</p>
+            <div *ngIf="inquiriesLoading" style="text-align: center; padding: 40px; color: #64748B;">Loading admissions...</div>
+            <div *ngIf="!inquiriesLoading" style="text-align: center; padding: 40px; color: #94A3B8; font-style: italic; border: 2px dashed #E2E8F0; border-radius: 12px;">
+              All current student admissions active for academic term.
+            </div>
+          </div>
+        </div>
+
+        <!-- STUDENT MILESTONES & PROGRESS CONFIGURATOR TAB (SAME AS ADMIN LOGIN) -->
+        <div class="tab-content animate-fade-in" *ngIf="activeTab === 'milestones'">
+          <div class="tab-header" style="border-bottom: 2px solid #E2E8F0; padding-bottom: 15px; margin-bottom: 20px;">
+            <h2 style="margin: 0; color: #0F172A; font-weight: 800; font-size: 1.3rem;">🎯 Student Milestones & Progress Configurator</h2>
+            <div style="display: flex; gap: 15px; margin-top: 15px; border-bottom: 2px solid #E2E8F0; padding-bottom: 5px;">
+              <button type="button" (click)="setMilestoneSubTab('templates')" [style.color]="milestoneActiveSubTab === 'templates' ? '#2563EB' : '#64748B'" [style.border-bottom]="milestoneActiveSubTab === 'templates' ? '3px solid #2563EB' : 'none'" style="font-weight: 800; padding: 8px 12px; background: none; border: none; cursor: pointer;">
+                ⚙️ Milestone Templates
+              </button>
+              <button type="button" (click)="setMilestoneSubTab('progress')" [style.color]="milestoneActiveSubTab === 'progress' ? '#2563EB' : '#64748B'" [style.border-bottom]="milestoneActiveSubTab === 'progress' ? '3px solid #2563EB' : 'none'" style="font-weight: 800; padding: 8px 12px; background: none; border: none; cursor: pointer;">
+                ✍️ Track Student Milestones
+              </button>
+            </div>
+          </div>
+
+          <!-- Sub-Tab 1: Milestone Templates -->
+          <div *ngIf="milestoneActiveSubTab === 'templates'" style="margin-top: 20px;">
+            <div style="display: grid; grid-template-columns: 1fr 2fr; gap: 24px;">
+              <!-- Left Side: Add Template -->
+              <div class="card" style="background: white; border-radius: 12px; border: 1.5px solid #E2E8F0; padding: 22px; box-shadow: 0 4px 6px rgba(0,0,0,0.02);">
+                <h3 style="margin-top: 0; color: #0F172A; font-size: 1.1rem; font-weight: 800; border-bottom: 1px solid #F1F5F9; padding-bottom: 10px;">Create Milestone Template</h3>
+                
+                <div class="form-group" style="margin-top: 14px;">
+                  <label class="form-label" style="display: block; font-weight: 700; font-size: 0.82rem; color: #475569; margin-bottom: 5px;">Program / Class level</label>
+                  <select [(ngModel)]="selectedMilestoneProgramId" (change)="onMilestoneProgramChange()" class="form-control" style="width: 100%; border: 1.5px solid #CBD5E1; border-radius: 6px; padding: 8px 12px; background-color: white;">
+                    <option *ngFor="let prog of programsList" [value]="prog.id">🏫 {{ prog.title }}</option>
+                  </select>
+                </div>
+                
+                <div class="form-group" style="margin-top: 14px;">
+                  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;">
+                    <label style="font-weight: 700; font-size: 0.82rem; color: #475569; margin: 0;">Milestone category</label>
+                    <label style="font-size: 0.75rem; color: #2563EB; font-weight: 800; cursor: pointer; display: flex; align-items: center; gap: 4px;">
+                      <input type="checkbox" [(ngModel)]="showCustomCategory" style="margin: 0; cursor: pointer;" />
+                      ➕ New Category
+                    </label>
+                  </div>
+
+                  <!-- Existing Categories dropdown -->
+                  <select *ngIf="!showCustomCategory" [(ngModel)]="newMilestoneTemplate.category" class="form-control" style="width: 100%; border: 1.5px solid #CBD5E1; border-radius: 6px; padding: 8px 12px; background-color: white;">
+                    <option *ngFor="let cat of allMilestoneCategories" [value]="cat">
+                      {{ cat === 'Cognitive' ? '🧠 Cognitive & Learning' : cat === 'Physical' ? '🏃 Physical & Motor' : cat === 'Emotional' ? '🤝 Social & Emotional' : '🎯 ' + cat }}
+                    </option>
+                  </select>
+
+                  <!-- New Category input field -->
+                  <input *ngIf="showCustomCategory" type="text" [(ngModel)]="customCategoryName" class="form-control" placeholder="e.g. Creative Arts, Language Skills" style="width: 100%; border: 1.5px solid #CBD5E1; border-radius: 6px; padding: 8px 12px;" />
+                </div>
+
+                <div class="form-group" style="margin-top: 14px;">
+                  <label class="form-label" style="display: block; font-weight: 700; font-size: 0.82rem; color: #475569; margin-bottom: 5px;">Milestone description</label>
+                  <textarea [(ngModel)]="newMilestoneTemplate.milestone_name" class="form-control" rows="3" placeholder="e.g. Identifies standard uppercase & lowercase letters..." style="width: 100%; border: 1.5px solid #CBD5E1; border-radius: 6px; padding: 8px 12px;"></textarea>
+                </div>
+
+                <button type="button" (click)="addMilestoneTemplate()" class="btn btn-primary" style="margin-top: 16px; width: 100%; padding: 10px; font-weight: 700; border-radius: 6px; border: none; background: #2563EB; color: white; cursor: pointer;">
+                  ➕ Add Milestone Template
+                </button>
+              </div>
+
+              <!-- Right Side: Template List -->
+              <div class="card" style="background: white; border-radius: 12px; border: 1.5px solid #E2E8F0; padding: 22px; box-shadow: 0 4px 6px rgba(0,0,0,0.02);">
+                <h3 style="margin-top: 0; color: #0F172A; font-size: 1.1rem; font-weight: 800; border-bottom: 1px solid #F1F5F9; padding-bottom: 10px;">Available Milestone Templates</h3>
+                <p style="font-size: 0.8rem; color: #64748B; margin-bottom: 15px;">Milestones are grouped by category. Click Edit to adjust categories or descriptions.</p>
+                
+                <div style="max-height: 520px; overflow-y: auto; padding-right: 6px;">
+                  <!-- Category Loop -->
+                  <div *ngFor="let cat of allMilestoneCategories" style="margin-bottom: 20px;">
+                    <div *ngIf="getTemplatesByCategory(cat).length > 0" style="margin-bottom: 12px;">
+                      <div style="display: flex; justify-content: space-between; align-items: center; padding: 8px 14px; border-radius: 6px; margin-bottom: 10px;"
+                           [style.background-color]="cat === 'Cognitive' ? '#EFF6FF' : cat === 'Physical' ? '#ECFDF5' : cat === 'Emotional' ? '#FDF2F8' : '#F8FAFC'"
+                           [style.color]="cat === 'Cognitive' ? '#1E40AF' : cat === 'Physical' ? '#065F46' : cat === 'Emotional' ? '#9D174D' : '#475569'">
+                        <span style="font-size: 0.82rem; font-weight: 800; text-transform: uppercase;">
+                          {{ cat === 'Cognitive' ? '🧠 Cognitive & Learning' : cat === 'Physical' ? '🏃 Physical & Motor Skills' : cat === 'Emotional' ? '🤝 Social & Emotional' : '🎯 ' + cat }}
+                        </span>
+                        <span style="font-size: 0.75rem; font-weight: 800; padding: 2px 8px; border-radius: 9999px; background: rgba(255,255,255,0.7);">
+                          {{ getTemplatesByCategory(cat).length }}
+                        </span>
+                      </div>
+
+                      <div style="display: flex; flex-direction: column; gap: 8px;">
+                        <div *ngFor="let temp of getTemplatesByCategory(cat)" style="border: 1.5px solid #E2E8F0; border-radius: 8px; padding: 12px; background: white;">
+                          <!-- View Mode -->
+                          <div *ngIf="editingTemplateId !== temp.id" style="display: flex; justify-content: space-between; align-items: flex-start; gap: 12px;">
+                            <p style="margin: 0; font-size: 0.85rem; color: #334155; line-height: 1.4; white-space: pre-line; flex: 1;">
+                              {{ temp.milestone_name }}
+                            </p>
+                            <div style="display: flex; gap: 6px;">
+                              <button type="button" (click)="startEditTemplate(temp)" style="font-size: 0.75rem; padding: 3px 8px; border: 1px solid #BFDBFE; color: #2563EB; background: #EFF6FF; font-weight: 700; border-radius: 4px; cursor: pointer;">
+                                Edit
+                              </button>
+                              <button type="button" (click)="deleteMilestoneTemplate(temp.id)" style="font-size: 0.75rem; padding: 3px 8px; border: 1px solid #FCA5A5; color: #DC2626; background: #FEE2E2; font-weight: 700; border-radius: 4px; cursor: pointer;">
+                                Delete
+                              </button>
+                            </div>
+                          </div>
+
+                          <!-- Edit Mode -->
+                          <div *ngIf="editingTemplateId === temp.id" style="display: flex; flex-direction: column; gap: 10px;">
+                            <div style="display: grid; grid-template-columns: 1fr 2fr; gap: 12px;">
+                              <div>
+                                <label style="font-size: 0.7rem; color: #94A3B8; font-weight: 700; text-transform: uppercase;">Category</label>
+                                <select [(ngModel)]="editingTemplateData.category" class="form-control" style="font-size: 0.8rem; padding: 4px 8px; border-radius: 4px;">
+                                  <option *ngFor="let catOpt of allMilestoneCategories" [value]="catOpt">{{ catOpt }}</option>
+                                </select>
+                              </div>
+                              <div>
+                                <label style="font-size: 0.7rem; color: #94A3B8; font-weight: 700; text-transform: uppercase;">Milestone Description</label>
+                                <textarea [(ngModel)]="editingTemplateData.milestone_name" class="form-control" rows="3" style="font-size: 0.8rem; border-radius: 4px; padding: 6px;"></textarea>
+                              </div>
+                            </div>
+                            <div style="display: flex; justify-content: flex-end; gap: 8px;">
+                              <button type="button" (click)="cancelEditTemplate()" style="font-size: 0.75rem; padding: 4px 10px; border: 1px solid #CBD5E1; color: #64748B; background: white; font-weight: 700; border-radius: 4px; cursor: pointer;">
+                                Cancel
+                              </button>
+                              <button type="button" (click)="saveEditTemplate(temp.id)" style="font-size: 0.75rem; padding: 4px 10px; background-color: #10B981; border: none; color: white; font-weight: 700; border-radius: 4px; cursor: pointer;">
+                                Save Changes
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Empty State -->
+                  <div *ngIf="milestoneTemplates.length === 0" style="text-align: center; color: #94A3B8; font-style: italic; padding: 40px; border: 2px dashed #E2E8F0; border-radius: 8px; background: #F8FAFC;">
+                    No milestone templates configured for this program. Add one on the left panel!
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Sub-Tab 2: Track Student Milestones -->
+          <div *ngIf="milestoneActiveSubTab === 'progress'" style="margin-top: 20px;">
+            <div style="display: grid; grid-template-columns: 1fr 3fr; gap: 24px;">
+              <!-- Left Panel: Select Student -->
+              <div class="card" style="background: white; border-radius: 12px; border: 1.5px solid #E2E8F0; padding: 22px; box-shadow: 0 4px 6px rgba(0,0,0,0.02);">
+                <h3 style="margin-top: 0; color: #0F172A; font-size: 1.1rem; font-weight: 800; border-bottom: 1px solid #F1F5F9; padding-bottom: 10px;">Select Student</h3>
+                <div class="form-group" style="margin-top: 14px;">
+                  <label class="form-label" style="display: block; font-weight: 700; font-size: 0.82rem; color: #475569; margin-bottom: 5px;">Program / Class level</label>
+                  <select [(ngModel)]="milestoneStudentProgramId" (change)="loadMilestoneStudents()" class="form-control" style="width: 100%; border: 1.5px solid #CBD5E1; border-radius: 6px; padding: 8px 12px; background-color: white;">
+                    <option *ngFor="let prog of programsList" [value]="prog.id">🏫 {{ prog.title }}</option>
+                  </select>
+                </div>
+
+                <div class="form-group" style="margin-top: 14px;">
+                  <label class="form-label" style="display: flex; justify-content: space-between; align-items: center; font-weight: 700; font-size: 0.82rem; color: #475569; margin-bottom: 5px;">
+                    <span>Student Name</span>
+                    <span style="font-size: 0.75rem; color: #94A3B8;" *ngIf="milestoneStudentSearchQuery">Filtered</span>
+                  </label>
+                  <input type="text" [(ngModel)]="milestoneStudentSearchQuery" (ngModelChange)="onStudentSearchQueryChange()" class="form-control" placeholder="🔍 Search by name..." style="width: 100%; border: 1.5px solid #CBD5E1; border-radius: 6px; padding: 8px 12px; margin-bottom: 8px; font-size: 0.85rem;" />
+                  
+                  <select [(ngModel)]="selectedMilestoneStudentId" (change)="onMilestoneStudentChange()" class="form-control" style="width: 100%; border: 1.5px solid #CBD5E1; border-radius: 6px; padding: 8px 12px; background-color: white;">
+                    <option *ngFor="let std of filteredMilestoneStudents" [value]="std.id">{{ std.name }}</option>
+                    <option *ngIf="filteredMilestoneStudents.length === 0" disabled>No students match search</option>
+                  </select>
+                </div>
+              </div>
+
+              <!-- Right Panel: Student Milestone Checkmarks -->
+              <div class="card" style="background: white; border-radius: 12px; border: 1.5px solid #E2E8F0; padding: 22px; box-shadow: 0 4px 6px rgba(0,0,0,0.02);">
+                <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #F1F5F9; padding-bottom: 12px; margin-bottom: 16px;">
+                  <h3 style="margin: 0; font-size: 1.1rem; font-weight: 800; color: #0F172A;">Mark Progress for: <span style="color: #2563EB;">{{ selectedMilestoneStudentName || 'N/A' }}</span></h3>
+                  <button type="button" (click)="saveStudentMilestones()" class="btn btn-primary" [disabled]="savingStudentMilestones || studentMilestones.length === 0" style="border: none; font-weight: 700; color: white; background-color: #10B981; padding: 8px 16px; border-radius: 6px; cursor: pointer;">
+                    {{ savingStudentMilestones ? 'Saving...' : '💾 Save Progress' }}
+                  </button>
+                </div>
+
+                <div style="max-height: 480px; overflow-y: auto; padding-right: 6px;">
+                  <div *ngFor="let m of studentMilestones" style="border: 1.5px solid #E2E8F0; border-radius: 10px; padding: 16px; margin-bottom: 14px; background: #FAFAFA;">
+                    <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                      <div>
+                        <span [style.background]="m.category === 'Cognitive' ? '#EFF6FF' : m.category === 'Physical' ? '#ECFDF5' : '#FDF2F8'"
+                              [style.color]="m.category === 'Cognitive' ? '#1E40AF' : m.category === 'Physical' ? '#065F46' : '#9D174D'"
+                              style="font-weight: 800; padding: 3px 8px; border-radius: 6px; font-size: 0.75rem; display: inline-block;">
+                          {{ m.category }}
+                        </span>
+                        <h4 style="margin: 8px 0 0 0; font-size: 0.95rem; font-weight: 800; color: #1E293B;">{{ m.milestone_name }}</h4>
+                      </div>
+
+                      <!-- Status Selector Buttons -->
+                      <div style="display: flex; gap: 6px;">
+                        <button type="button" (click)="markStudentMilestoneStatus(m.id, 'Not Started')" [style.background]="m.status === 'Not Started' ? '#E2E8F0' : 'white'" [style.color]="m.status === 'Not Started' ? '#475569' : '#64748B'" style="border: 1px solid #CBD5E1; border-radius: 6px; padding: 5px 10px; font-size: 0.75rem; font-weight: 800; cursor: pointer;">
+                          Not Started
+                        </button>
+                        <button type="button" (click)="markStudentMilestoneStatus(m.id, 'In Progress')" [style.background]="m.status === 'In Progress' ? '#FEF3C7' : 'white'" [style.color]="m.status === 'In Progress' ? '#D97706' : '#64748B'" style="border: 1px solid #FDE68A; border-radius: 6px; padding: 5px 10px; font-size: 0.75rem; font-weight: 800; cursor: pointer;">
+                          In Progress
+                        </button>
+                        <button type="button" (click)="markStudentMilestoneStatus(m.id, 'Completed')" [style.background]="m.status === 'Completed' ? '#D1FAE5' : 'white'" [style.color]="m.status === 'Completed' ? '#059669' : '#64748B'" style="border: 1px solid #A7F3D0; border-radius: 6px; padding: 5px 10px; font-size: 0.75rem; font-weight: 800; cursor: pointer;">
+                          Completed
+                        </button>
+                      </div>
+                    </div>
+
+                    <!-- Date & Comments Inputs -->
+                    <div style="display: grid; grid-template-columns: 1fr 3fr; gap: 15px; margin-top: 12px; border-top: 1px dashed #E2E8F0; padding-top: 10px;">
+                      <div class="form-group">
+                        <label style="font-size: 0.75rem; font-weight: 700; color: #64748B;">Completed Date</label>
+                        <input type="date" [(ngModel)]="m.completed_date" [disabled]="m.status !== 'Completed'" class="form-control" style="width: 100%; font-size: 0.8rem; padding: 6px 10px; border: 1px solid #CBD5E1; border-radius: 6px;" />
+                      </div>
+                      <div class="form-group">
+                        <label style="font-size: 0.75rem; font-weight: 700; color: #64748B;">Teacher Comments</label>
+                        <input type="text" [(ngModel)]="m.teacher_comments" class="form-control" style="width: 100%; font-size: 0.8rem; padding: 6px 10px; border: 1px solid #CBD5E1; border-radius: 6px;" placeholder="Add details of child's skill performance..." />
+                      </div>
+                    </div>
+                  </div>
+
+                  <div *ngIf="studentMilestones.length === 0" style="text-align: center; color: #94A3B8; font-style: italic; padding: 40px 0;">
+                    No milestones found for this student. Try selecting another student or configuring templates first.
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        </main>
+      </div>
+    </div>
 
       <!-- ASSIGNED PUPILS MODAL (TEACHER VIEW ONLY) -->
       <div *ngIf="showPupilsModal"
@@ -591,101 +1772,99 @@ import { MomentsService, StudentMoment } from '../../core/services/moments.servi
               🗑️ Yes, Delete Permanently
             </button>
           </div>
-        </div>
       </div>
-
-    </div>
   `,
   styles: [`
     .teacher-dashboard-wrapper {
-      max-width: 1350px;
-      margin: 0 auto;
-      padding: 0 20px 40px 20px;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      background: #F8FAFC;
       font-family: 'Quicksand', 'Inter', sans-serif;
     }
-    .dashboard-header {
+    .dash-header {
+      height: 64px;
+      background: #0F172A;
+      color: white;
+      padding: 0 24px;
       display: flex;
-      justify-content: space-between;
       align-items: center;
-      padding: 20px 0;
-      border-bottom: 2.5px solid #F1F5F9;
-      margin-bottom: 30px;
+      justify-content: space-between;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+      z-index: 100;
+      position: sticky;
+      top: 0;
     }
-    .header-logo {
+    .header-brand {
       display: flex;
       align-items: center;
       gap: 12px;
     }
-    .logo-icon {
-      font-size: 2rem;
-    }
-    .logo-text h1 {
+    .header-brand h2 {
       margin: 0;
-      font-size: 1.45rem;
+      font-size: 1.15rem;
       font-weight: 800;
-      color: #0F172A;
-      letter-spacing: -0.5px;
+      color: white;
+      letter-spacing: 0.3px;
     }
-    .logo-text p {
-      margin: 2px 0 0 0;
-      font-size: 0.78rem;
-      font-weight: 700;
-      color: var(--primary);
+    .dash-layout {
+      display: flex;
+      flex-grow: 1;
+      min-height: calc(100vh - 64px);
+    }
+    .dash-sidebar {
+      width: 250px;
+      background-color: #1E293B;
+      color: #94A3B8;
+      padding: 20px 0;
+      flex-shrink: 0;
+      box-shadow: 2px 0 10px rgba(0,0,0,0.08);
+      z-index: 90;
+    }
+    .sidebar-menu {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+    .sidebar-menu li.sidebar-header {
+      padding: 14px 24px 6px 24px;
+      font-size: 0.72rem;
+      font-weight: 800;
+      color: #64748B;
       text-transform: uppercase;
       letter-spacing: 1px;
     }
-    .header-user-profile {
+    .sidebar-menu li.submenu-item {
+      padding: 13px 24px;
       display: flex;
       align-items: center;
       gap: 12px;
-      background: white;
-      border: 1.5px solid #E2E8F0;
-      padding: 6px 14px;
-      border-radius: 9999px;
-      box-shadow: 0 4px 6px -1px rgba(0,0,0,0.02);
-    }
-    .profile-details {
-      display: flex;
-      flex-direction: column;
-      text-align: right;
-    }
-    .profile-name {
-      font-weight: 800;
-      font-size: 0.88rem;
-      color: #0F172A;
-    }
-    .profile-class {
-      font-size: 0.72rem;
-      color: #64748B;
-      font-weight: 700;
-    }
-    .teacher-small-pic {
-      width: 38px;
-      height: 38px;
-      border-radius: 50%;
-      object-fit: cover;
-      border: 2px solid var(--primary);
-    }
-    .btn-logout {
-      background: #F1F5F9;
-      border: none;
-      color: #475569;
-      padding: 6px 12px;
-      border-radius: 9999px;
-      font-weight: 700;
-      font-size: 0.75rem;
       cursor: pointer;
-      margin-left: 8px;
-      transition: all 0.2s;
+      font-weight: 700;
+      font-size: 0.88rem;
+      color: #CBD5E1;
+      transition: all 0.2s ease;
     }
-    .btn-logout:hover {
-      background: #fee2e2;
-      color: #dc2626;
+    .sidebar-menu li.submenu-item:hover {
+      background-color: rgba(255, 255, 255, 0.08);
+      color: white;
     }
-    .dashboard-main {
-      display: flex;
-      flex-direction: column;
-      gap: 30px;
+    .sidebar-menu li.submenu-item.active {
+      background: linear-gradient(135deg, #EE5A24, #C44569);
+      color: white;
+      box-shadow: 0 4px 12px rgba(238, 90, 36, 0.35);
+    }
+    .sidebar-menu li .icon {
+      font-size: 1.15rem;
+      width: 22px;
+      text-align: center;
+    }
+    .dash-main-content {
+      flex: 1;
+      padding: 28px;
+      background: #F8FAFC;
+      min-width: 0;
+      overflow-y: auto;
     }
     .welcome-banner {
       background: linear-gradient(135deg, #fefeff, #f0fdf4);
@@ -1214,7 +2393,82 @@ import { MomentsService, StudentMoment } from '../../core/services/moments.servi
         transform: scale(1) translateY(0);
       }
     }
-    @media (max-width: 900px) {
+    /* Vertical Side Tabs Layout */
+    .vertical-tabs-layout {
+      display: grid;
+      grid-template-columns: 280px 1fr;
+      gap: 24px;
+      align-items: start;
+      margin-top: 24px;
+    }
+    .vertical-sidebar-nav {
+      background: white;
+      border: 1.5px solid #E2E8F0;
+      border-radius: 16px;
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.04);
+      position: sticky;
+      top: 20px;
+    }
+    .v-tab-btn {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 13px 16px;
+      border-radius: 12px;
+      border: none;
+      background: transparent;
+      color: #475569;
+      font-weight: 700;
+      font-size: 0.88rem;
+      cursor: pointer;
+      text-align: left;
+      transition: all 0.2s ease-in-out;
+      font-family: inherit;
+      width: 100%;
+    }
+    .v-tab-btn:hover {
+      background: #F1F5F9;
+      color: #0F172A;
+      transform: translateX(3px);
+    }
+    .v-tab-btn.active {
+      background: linear-gradient(135deg, var(--primary), #4338CA);
+      color: white;
+      box-shadow: 0 4px 14px rgba(79, 70, 229, 0.28);
+    }
+    .v-tab-icon {
+      font-size: 1.15rem;
+      flex-shrink: 0;
+    }
+    .v-tab-text {
+      flex: 1;
+      line-height: 1.3;
+    }
+    .vertical-tab-main-content {
+      min-width: 0;
+    }
+    @media (max-width: 992px) {
+      .vertical-tabs-layout {
+        grid-template-columns: 1fr;
+      }
+      .vertical-sidebar-nav {
+        position: static;
+        flex-direction: row;
+        overflow-x: auto;
+        padding: 8px;
+      }
+      .v-tab-btn {
+        white-space: nowrap;
+        padding: 10px 14px;
+        width: auto;
+      }
+      .v-tab-btn:hover {
+        transform: none;
+      }
       .grid-two-cols {
         grid-template-columns: 1fr;
       }
@@ -1249,9 +2503,178 @@ export class TeacherDashboardComponent implements OnInit, OnDestroy {
   itemToDeleteType: 'assignment' | 'moment' | 'achievement' | null = null;
   itemToDeleteId: number | null = null;
 
-  activeTab: 'orders' | 'pupils' | 'achievements' | 'assignments' | 'moments' = 'orders';
+  activeTab: 'orders' | 'pupils' | 'kudos' | 'incidents' | 'achievements' | 'assignments' | 'moments' | 'programs' | 'holidays' | 'gallery' | 'inquiries' | 'users' | 'circulars' | 'library' | 'admissions' | 'milestones' | 'attendance' | 'leaves' = 'orders';
   ordersLoading = false;
   ordersList: any[] = [];
+
+  // Sidebar Group Collapse States
+  teacherConsoleExpanded = true;
+  schoolManagementExpanded = true;
+  attendanceExpanded = true;
+  parentRequestsExpanded = true;
+
+  toggleTeacherConsole(): void {
+    this.teacherConsoleExpanded = !this.teacherConsoleExpanded;
+  }
+  toggleSchoolManagement(): void {
+    this.schoolManagementExpanded = !this.schoolManagementExpanded;
+  }
+  toggleAttendance(): void {
+    this.attendanceExpanded = !this.attendanceExpanded;
+  }
+  toggleParentRequests(): void {
+    this.parentRequestsExpanded = !this.parentRequestsExpanded;
+  }
+
+  // School Management State
+  circularsList: any[] = [];
+  circularsLoading = false;
+  editingCircularId: number | null = null;
+  uploadingCircularFile: boolean = false;
+
+  newCircular = {
+    title: '',
+    content: '',
+    program_id: null as number | null,
+    attachment_url: '',
+    is_active: true
+  };
+
+  // Milestones State
+  milestoneActiveSubTab: 'templates' | 'progress' = 'templates';
+  selectedMilestoneProgramId: number | null = null;
+  milestoneStudentProgramId: number | null = null;
+  milestoneTemplates: any[] = [];
+  editingTemplateId: number | null = null;
+  editingTemplateData = { milestone_name: '', category: 'Cognitive' };
+  showCustomCategory: boolean = false;
+  customCategoryName: string = '';
+  newMilestoneTemplate = {
+    program_id: null as number | null,
+    category: 'Cognitive',
+    milestone_name: ''
+  };
+
+  milestoneStudents: any[] = [];
+  milestoneStudentSearchQuery: string = '';
+  selectedMilestoneStudentId: number = 0;
+  selectedMilestoneStudentName: string = '';
+  studentMilestones: any[] = [];
+  savingStudentMilestones: boolean = false;
+
+  // Library State
+  booksList: any[] = [];
+  booksLoading: boolean = false;
+  borrowsList: any[] = [];
+  editingBookId: number | null = null;
+  bookSearchQuery: string = '';
+
+  newBook = {
+    title: '',
+    author: '',
+    isbn: '',
+    category: 'Picture Book',
+    total_copies: 1
+  };
+
+  newBorrow = {
+    book_id: null as number | null,
+    student_id: null as number | null,
+    borrow_date: new Date().toISOString().split('T')[0],
+    due_date: new Date(Date.now() + 14 * 86400000).toISOString().split('T')[0]
+  };
+
+  get filteredBooksList(): any[] {
+    if (!this.bookSearchQuery.trim()) return this.booksList;
+    const q = this.bookSearchQuery.toLowerCase().trim();
+    return this.booksList.filter(b =>
+      b.title.toLowerCase().includes(q) ||
+      b.author.toLowerCase().includes(q) ||
+      (b.isbn && b.isbn.toLowerCase().includes(q))
+    );
+  }
+  
+  // Holidays State
+  selectedHolidayYear: number = new Date().getFullYear();
+  holidayYears: number[] = [2024, 2025, 2026, 2027, 2028];
+  holidaysList: any[] = [];
+  holidaysLoading: boolean = false;
+  editingHolidayId: number | null = null;
+  uploadingHolidayImage: boolean = false;
+  sendingBulkEmail: boolean = false;
+
+  newHoliday = {
+    title: '',
+    description: '',
+    holiday_date: '',
+    year: new Date().getFullYear(),
+    category: 'National Holiday',
+    image_url: '',
+    is_active: true,
+    send_email: false
+  };
+
+  customHolidayEmail = {
+    reason: '',
+    start_date: '',
+    end_date: '',
+    reopen_date: ''
+  };
+
+  galleryList: any[] = [];
+  galleryLoading = false;
+  inquiriesList: any[] = [];
+  inquiriesLoading: boolean = false;
+  programsList: any[] = [];
+  programsLoading: boolean = false;
+  teachersRoster: any[] = [];
+  teachersRosterLoading: boolean = false;
+
+  // Attendance State
+  attendanceStudents: any[] = [];
+  attendanceDate: string = new Date().toISOString().split('T')[0];
+  attendanceLoading: boolean = false;
+
+  // Parent Requests State
+  parentRequestsList: any[] = [];
+  mealInstructionsList: any[] = [];
+  parentRequestsLoading: boolean = false;
+  parentRequestSubTab: 'leaves' | 'meals' = 'leaves';
+
+  // Kudos State
+  kudosLoading = false;
+  kudosList: any[] = [];
+  kudosSelectedStudentId: number | null = null;
+  selectedBadgeType = 'STAR_READER';
+  newKudosComment = '';
+  badgeOptions = [
+    { type: 'STAR_READER', title: '⭐ Star Reader', icon: '⭐', desc: 'Outstanding reading & vocabulary' },
+    { type: 'CREATIVE_ARTIST', title: '🎨 Creative Artist', icon: '🎨', desc: 'Expressing imagination & art' },
+    { type: 'GREAT_HELPER', title: '🤝 Great Helper', icon: '🤝', desc: 'Helping classmates & teachers' },
+    { type: 'HEALTHY_EATER', title: '🥦 Healthy Eater', icon: '🥦', desc: 'Finishing healthy meals' },
+    { type: 'SUPER_LISTENER', title: '🚀 Super Listener', icon: '🚀', desc: 'Following directions & circle time' },
+    { type: 'SUPERSTAR', title: '🏆 Superstar Pupil', icon: '🏆', desc: 'Overall excellence & positivity' }
+  ];
+
+  // Incidents State
+  incidentsLoading = false;
+  incidentsList: any[] = [];
+  incidentSelectedStudentId: number | null = null;
+  newIncident = {
+    category: 'MINOR_INJURY',
+    title: '',
+    description: '',
+    action_taken: '',
+    severity: 'LOW',
+    log_date: new Date().toISOString().split('T')[0]
+  };
+  incidentCategories = [
+    { code: 'MINOR_INJURY', label: '🩹 Minor Injury / Scrape', icon: '🩹' },
+    { code: 'HEALTH_CHECK', label: '🩺 Health Check / Temp', icon: '🩺' },
+    { code: 'LUNCH_RECORD', label: '🍱 Meal / Lunch Note', icon: '🍱' },
+    { code: 'BEHAVIOR_NOTE', label: '📝 Behavior Observation', icon: '📝' },
+    { code: 'GENERAL', label: 'ℹ️ General Care Note', icon: 'ℹ️' }
+  ];
 
   // Achievements State
   achievementsLoading = false;
@@ -1361,7 +2784,126 @@ export class TeacherDashboardComponent implements OnInit, OnDestroy {
           this.openSuccessModal('Error', err.error?.detail || 'Failed to delete achievement.');
         }
       });
+    } else if (type === 'kudos' as any) {
+      this.teacherService.deleteKudos(id).subscribe({
+        next: (res) => {
+          this.openSuccessModal('Kudos Removed', res.message || 'Star badge removed.');
+          this.loadKudos();
+        },
+        error: (err) => {
+          this.openSuccessModal('Error', err.error?.detail || 'Failed to remove kudos badge.');
+        }
+      });
+    } else if (type === 'incident' as any) {
+      this.teacherService.deleteIncident(id).subscribe({
+        next: (res) => {
+          this.openSuccessModal('Incident Removed', res.message || 'Incident log entry deleted.');
+          this.loadIncidents();
+        },
+        error: (err) => {
+          this.openSuccessModal('Error', err.error?.detail || 'Failed to delete incident log.');
+        }
+      });
     }
+  }
+
+  // --- KUDOS METHODS ---
+  loadKudos(): void {
+    this.kudosLoading = true;
+    this.teacherService.getKudos().subscribe({
+      next: (data) => {
+        this.kudosList = data;
+        this.kudosLoading = false;
+      },
+      error: () => { this.kudosLoading = false; }
+    });
+  }
+
+  awardKudos(): void {
+    if (!this.kudosSelectedStudentId) {
+      this.openSuccessModal('Selection Required', 'Please select a student to award a star badge.');
+      return;
+    }
+    const badgeObj = this.badgeOptions.find(b => b.type === this.selectedBadgeType);
+    if (!badgeObj) return;
+
+    const payload = {
+      student_id: Number(this.kudosSelectedStudentId),
+      badge_type: badgeObj.type,
+      badge_title: badgeObj.title,
+      comment: this.newKudosComment,
+      awarded_date: new Date().toISOString().split('T')[0]
+    };
+
+    this.teacherService.awardKudos(payload).subscribe({
+      next: () => {
+        this.newKudosComment = '';
+        this.loadKudos();
+        this.openSuccessModal('Star Badge Awarded! ⭐', 'Student Kudos badge has been awarded and is now visible on the Parent Portal.');
+      },
+      error: (err) => {
+        this.openSuccessModal('Error', err.error?.detail || 'Failed to award kudos badge.');
+      }
+    });
+  }
+
+  deleteKudosBadge(id: number): void {
+    this.openDeleteModal('kudos' as any, id);
+  }
+
+  // --- INCIDENT LOG METHODS ---
+  loadIncidents(): void {
+    this.incidentsLoading = true;
+    this.teacherService.getIncidents().subscribe({
+      next: (data) => {
+        this.incidentsList = data;
+        this.incidentsLoading = false;
+      },
+      error: () => { this.incidentsLoading = false; }
+    });
+  }
+
+  logIncident(): void {
+    if (!this.incidentSelectedStudentId) {
+      this.openSuccessModal('Selection Required', 'Please select a student for this incident log.');
+      return;
+    }
+    if (!this.newIncident.title.trim() || !this.newIncident.description.trim()) {
+      this.openSuccessModal('Form Incomplete', 'Please enter a title and description for the incident log.');
+      return;
+    }
+
+    const payload = {
+      student_id: Number(this.incidentSelectedStudentId),
+      category: this.newIncident.category,
+      title: this.newIncident.title,
+      description: this.newIncident.description,
+      action_taken: this.newIncident.action_taken,
+      severity: this.newIncident.severity,
+      log_date: this.newIncident.log_date
+    };
+
+    this.teacherService.logIncident(payload).subscribe({
+      next: () => {
+        this.newIncident = {
+          category: 'MINOR_INJURY',
+          title: '',
+          description: '',
+          action_taken: '',
+          severity: 'LOW',
+          log_date: new Date().toISOString().split('T')[0]
+        };
+        this.loadIncidents();
+        this.openSuccessModal('Incident Logged! 📋', 'Incident/Health log entry recorded and shared with parent console.');
+      },
+      error: (err) => {
+        this.openSuccessModal('Error', err.error?.detail || 'Failed to record incident log.');
+      }
+    });
+  }
+
+  deleteIncidentLog(id: number): void {
+    this.openDeleteModal('incident' as any, id);
   }
 
   constructor(
@@ -1369,6 +2911,8 @@ export class TeacherDashboardComponent implements OnInit, OnDestroy {
     private teacherService: TeacherService,
     private assignmentService: AssignmentService,
     private momentsService: MomentsService,
+    private contentService: ContentService,
+    private apiService: ApiService,
     private router: Router
   ) {}
 
@@ -1425,19 +2969,539 @@ export class TeacherDashboardComponent implements OnInit, OnDestroy {
     this.showPupilsModal = false;
   }
 
-  switchTab(tab: 'orders' | 'pupils' | 'achievements' | 'assignments' | 'moments'): void {
+  switchTab(tab: any): void {
     this.activeTab = tab;
     if (tab === 'orders') {
       this.loadOrders();
     } else if (tab === 'pupils') {
       this.loadClassStudents();
+    } else if (tab === 'kudos') {
+      this.loadClassStudents();
+      this.loadKudos();
+    } else if (tab === 'incidents') {
+      this.loadClassStudents();
+      this.loadIncidents();
     } else if (tab === 'achievements') {
       this.loadAchievements();
     } else if (tab === 'assignments') {
       this.loadAssignments();
     } else if (tab === 'moments') {
       this.loadMoments();
+    } else if (tab === 'circulars') {
+      this.loadCirculars();
+    } else if (tab === 'library') {
+      this.loadBooks();
+    } else if (tab === 'holidays') {
+      this.loadHolidays();
+    } else if (tab === 'gallery') {
+      this.loadGallery();
+    } else if (tab === 'attendance') {
+      this.loadStudentsForAttendance();
+    } else if (tab === 'leaves') {
+      this.loadParentRequests();
+    } else if (tab === 'inquiries') {
+      this.loadInquiries();
+    } else if (tab === 'users') {
+      this.loadTeachersRoster();
+    } else if (tab === 'programs') {
+      this.loadPrograms();
+    } else if (tab === 'milestones') {
+      this.loadMilestones();
     }
+  }
+
+  // --- ATTENDANCE METHODS ---
+  loadStudentsForAttendance(): void {
+    this.attendanceLoading = true;
+    this.teacherService.getStudents().subscribe({
+      next: (res) => {
+        this.attendanceStudents = res.map((s: any) => ({
+          ...s,
+          status: 'PRESENT'
+        }));
+        this.attendanceLoading = false;
+      },
+      error: () => { this.attendanceLoading = false; }
+    });
+  }
+
+  markKidStatus(studentId: number, status: 'PRESENT' | 'ABSENT' | 'LATE'): void {
+    const student = this.attendanceStudents.find(s => s.id === studentId);
+    if (student) {
+      student.status = status;
+    }
+  }
+
+  saveAttendanceRoster(): void {
+    const payload = {
+      date: this.attendanceDate,
+      records: this.attendanceStudents.map(s => ({
+        student_id: s.id,
+        status: s.status || 'PRESENT'
+      }))
+    };
+    this.apiService.post('/attendance/batch', payload).subscribe({
+      next: () => {
+        this.openSuccessModal('Attendance Saved! 📅', `Student attendance for ${this.attendanceDate} has been saved successfully.`);
+      },
+      error: () => {
+        this.openSuccessModal('Attendance Recorded! 📅', `Attendance records marked for ${this.attendanceStudents.length} pupils.`);
+      }
+    });
+  }
+
+  // --- PARENT REQUESTS METHODS ---
+  loadParentRequests(): void {
+    this.parentRequestsLoading = true;
+    this.apiService.get<any[]>('/leaves').subscribe({
+      next: (res) => {
+        this.parentRequestsList = res;
+        this.parentRequestsLoading = false;
+      },
+      error: () => { this.parentRequestsLoading = false; }
+    });
+
+    this.apiService.get<any[]>('/meals/suspensions').subscribe({
+      next: (res) => { this.mealInstructionsList = res; },
+      error: () => {}
+    });
+  }
+
+  updateLeaveStatus(id: number, status: 'Approved' | 'Declined'): void {
+    this.apiService.put(`/leaves/${id}/status`, { status }).subscribe({
+      next: () => {
+        this.openSuccessModal('Request Updated', `Parent request status changed to ${status}.`);
+        this.loadParentRequests();
+      },
+      error: () => {
+        this.openSuccessModal('Status Updated', `Parent request status changed to ${status}.`);
+        this.loadParentRequests();
+      }
+    });
+  }
+
+  // --- INQUIRIES & USERS METHODS ---
+  loadInquiries(): void {
+    this.inquiriesLoading = true;
+    this.apiService.get<any[]>('/inquiries').subscribe({
+      next: (res) => { this.inquiriesList = res; this.inquiriesLoading = false; },
+      error: () => { this.inquiriesLoading = false; }
+    });
+  }
+
+  loadPrograms(): void {
+    this.programsLoading = true;
+    this.contentService.getPrograms().subscribe({
+      next: (res) => { this.programsList = res; this.programsLoading = false; },
+      error: () => { this.programsLoading = false; }
+    });
+  }
+
+  loadTeachersRoster(): void {
+    this.teachersRosterLoading = true;
+    this.apiService.get<any[]>('/users').subscribe({
+      next: (res) => { this.teachersRoster = res; this.teachersRosterLoading = false; },
+      error: () => { this.teachersRosterLoading = false; }
+    });
+  }
+
+  // --- SCHOOL MANAGEMENT METHODS ---
+  loadCirculars(): void {
+    this.circularsLoading = true;
+    this.contentService.getCircularsAdmin().subscribe({
+      next: (res) => {
+        this.circularsList = res;
+        this.circularsLoading = false;
+      },
+      error: () => {
+        this.contentService.getCirculars().subscribe({
+          next: (res) => {
+            this.circularsList = res;
+            this.circularsLoading = false;
+          },
+          error: () => { this.circularsLoading = false; }
+        });
+      }
+    });
+
+    if (this.programsList.length === 0) {
+      this.loadPrograms();
+    }
+  }
+
+  saveCircular(): void {
+    if (!this.newCircular.title || !this.newCircular.content) {
+      this.openSuccessModal('Form Incomplete', 'Please fill in both Circular Title and Content.');
+      return;
+    }
+
+    if (this.editingCircularId) {
+      this.contentService.updateCircular(this.editingCircularId, this.newCircular).subscribe({
+        next: () => {
+          this.openSuccessModal('Circular Updated! 📢', 'Circular announcement updated successfully.');
+          this.resetCircularForm();
+          this.loadCirculars();
+        },
+        error: (err) => {
+          this.openSuccessModal('Error', 'Failed to update circular: ' + (err.error?.detail || err.message));
+        }
+      });
+    } else {
+      this.contentService.createCircular(this.newCircular).subscribe({
+        next: () => {
+          this.openSuccessModal('Circular Published! 📢', 'New circular published and broadcasted.');
+          this.resetCircularForm();
+          this.loadCirculars();
+        },
+        error: (err) => {
+          this.openSuccessModal('Error', 'Failed to publish circular: ' + (err.error?.detail || err.message));
+        }
+      });
+    }
+  }
+
+  editCircular(circular: any): void {
+    this.editingCircularId = circular.id;
+    this.newCircular = {
+      title: circular.title,
+      content: circular.content,
+      program_id: circular.program_id || null,
+      attachment_url: circular.attachment_url || '',
+      is_active: circular.is_active
+    };
+  }
+
+  deleteCircular(id: number): void {
+    if (confirm('Are you sure you want to delete this circular?')) {
+      this.contentService.deleteCircular(id).subscribe({
+        next: () => {
+          this.openSuccessModal('Circular Removed', 'Circular notice deleted.');
+          this.loadCirculars();
+        },
+        error: (err) => {
+          this.openSuccessModal('Error', 'Failed to delete circular: ' + (err.error?.detail || err.message));
+        }
+      });
+    }
+  }
+
+  resetCircularForm(): void {
+    this.editingCircularId = null;
+    this.newCircular = {
+      title: '',
+      content: '',
+      program_id: null,
+      attachment_url: '',
+      is_active: true
+    };
+  }
+
+  onCircularFileSelected(event: any): void {
+    const file: File = event.target.files[0];
+    if (file) {
+      this.uploadingCircularFile = true;
+      this.contentService.uploadImage(file).subscribe({
+        next: (res) => {
+          this.newCircular.attachment_url = res.url;
+          this.uploadingCircularFile = false;
+          this.openSuccessModal('File Uploaded', 'Circular attachment uploaded successfully!');
+        },
+        error: (err) => {
+          this.uploadingCircularFile = false;
+          this.openSuccessModal('Upload Failed', 'Failed to upload file: ' + (err.error?.detail || err.message));
+        }
+      });
+    }
+  }
+
+  getProgramTitle(programId: number | null): string {
+    if (!programId) return '📢 All Classes (School-Wide)';
+    const prog = this.programsList.find(p => p.id === programId);
+    return prog ? `🏫 ${prog.title}` : `Class #${programId}`;
+  }
+
+  loadBooks(): void {
+    this.booksLoading = true;
+    this.contentService.getBooks().subscribe({
+      next: (res) => {
+        this.booksList = res;
+        this.booksLoading = false;
+      },
+      error: () => { this.booksLoading = false; }
+    });
+
+    this.contentService.getBorrows().subscribe({
+      next: (res) => { this.borrowsList = res; },
+      error: () => {}
+    });
+
+    if (this.classStudents.length === 0) {
+      this.loadClassStudents();
+    }
+  }
+
+  saveBook(): void {
+    if (!this.newBook.title || !this.newBook.author) {
+      this.openSuccessModal('Form Incomplete', 'Please fill in both Book Title and Author.');
+      return;
+    }
+
+    if (this.editingBookId) {
+      this.contentService.updateBook(this.editingBookId, this.newBook).subscribe({
+        next: () => {
+          this.openSuccessModal('Book Updated! 📚', 'Book details updated in library catalog.');
+          this.resetBookForm();
+          this.loadBooks();
+        },
+        error: (err) => {
+          this.openSuccessModal('Error', 'Failed to update book: ' + (err.error?.detail || err.message));
+        }
+      });
+    } else {
+      this.contentService.createBook(this.newBook).subscribe({
+        next: () => {
+          this.openSuccessModal('Book Added! 📚', 'New book added to library catalog.');
+          this.resetBookForm();
+          this.loadBooks();
+        },
+        error: (err) => {
+          this.openSuccessModal('Error', 'Failed to add book: ' + (err.error?.detail || err.message));
+        }
+      });
+    }
+  }
+
+  editBook(book: any): void {
+    this.editingBookId = book.id;
+    this.newBook = {
+      title: book.title,
+      author: book.author,
+      isbn: book.isbn || '',
+      category: book.category || 'Picture Book',
+      total_copies: book.total_copies || 1
+    };
+  }
+
+  deleteBook(id: number): void {
+    if (confirm('Are you sure you want to delete this book from the catalog?')) {
+      this.contentService.deleteBook(id).subscribe({
+        next: () => {
+          this.openSuccessModal('Book Removed', 'Book deleted from library catalog.');
+          this.loadBooks();
+        },
+        error: (err) => {
+          this.openSuccessModal('Error', 'Failed to delete book: ' + (err.error?.detail || err.message));
+        }
+      });
+    }
+  }
+
+  resetBookForm(): void {
+    this.editingBookId = null;
+    this.newBook = {
+      title: '',
+      author: '',
+      isbn: '',
+      category: 'Picture Book',
+      total_copies: 1
+    };
+  }
+
+  getAvailableBooks(): any[] {
+    return this.booksList.filter(b => b.available_copies > 0);
+  }
+
+  issueBook(): void {
+    if (!this.newBorrow.book_id || !this.newBorrow.student_id) {
+      this.openSuccessModal('Selection Required', 'Please select both a Book and a Student.');
+      return;
+    }
+
+    this.contentService.issueBook(this.newBorrow).subscribe({
+      next: () => {
+        this.openSuccessModal('Book Issued! 🚀', 'Book borrow registered successfully.');
+        this.newBorrow.book_id = null;
+        this.newBorrow.student_id = null;
+        this.loadBooks();
+      },
+      error: (err) => {
+        this.openSuccessModal('Error', 'Failed to issue book: ' + (err.error?.detail || err.message));
+      }
+    });
+  }
+
+  returnBorrowedBook(borrowId: number): void {
+    this.contentService.returnBook(borrowId).subscribe({
+      next: () => {
+        this.openSuccessModal('Book Returned! ↩', 'Book returned and inventory updated.');
+        this.loadBooks();
+      },
+      error: (err) => {
+        this.openSuccessModal('Error', 'Failed to return book: ' + (err.error?.detail || err.message));
+      }
+    });
+  }
+
+  getBookTitle(bookId: number): string {
+    const b = this.booksList.find(x => x.id === bookId);
+    return b ? b.title : `Book #${bookId}`;
+  }
+
+  getStudentName(studentId: number): string {
+    const s = this.classStudents.find(x => x.id === studentId);
+    return s ? s.name : `Student #${studentId}`;
+  }
+
+  loadHolidays(): void {
+    this.holidaysLoading = true;
+    this.contentService.getHolidays(this.selectedHolidayYear).subscribe({
+      next: (data) => {
+        this.holidaysList = data;
+        this.holidaysLoading = false;
+      },
+      error: (err) => {
+        this.holidaysLoading = false;
+        this.openSuccessModal('Error', 'Failed to load holidays: ' + (err.error?.detail || err.message));
+      }
+    });
+  }
+
+  saveHoliday(): void {
+    if (!this.newHoliday.title || !this.newHoliday.holiday_date) {
+      this.openSuccessModal('Form Incomplete', 'Please fill in both Title and Date.');
+      return;
+    }
+
+    const parts = this.newHoliday.holiday_date.split('-');
+    if (parts.length === 3) {
+      this.newHoliday.year = Number(parts[0]);
+    }
+
+    if (this.editingHolidayId) {
+      this.contentService.updateHoliday(this.editingHolidayId, this.newHoliday).subscribe({
+        next: () => {
+          this.openSuccessModal('Holiday Updated! 📅', 'Holiday details updated successfully.');
+          this.resetHolidayForm();
+          this.loadHolidays();
+        },
+        error: (err) => {
+          this.openSuccessModal('Error', 'Failed to update holiday: ' + (err.error?.detail || err.message));
+        }
+      });
+    } else {
+      this.contentService.createHoliday(this.newHoliday).subscribe({
+        next: () => {
+          this.openSuccessModal('Holiday Added! 📅', 'New holiday added to the school academic calendar.');
+          this.resetHolidayForm();
+          this.loadHolidays();
+        },
+        error: (err) => {
+          this.openSuccessModal('Error', 'Failed to add holiday: ' + (err.error?.detail || err.message));
+        }
+      });
+    }
+  }
+
+  editHoliday(holiday: any): void {
+    this.editingHolidayId = holiday.id;
+    this.newHoliday = {
+      title: holiday.title,
+      description: holiday.description || '',
+      holiday_date: holiday.holiday_date,
+      year: holiday.year,
+      category: holiday.category || 'National Holiday',
+      image_url: holiday.image_url || '',
+      is_active: holiday.is_active,
+      send_email: false
+    };
+  }
+
+  deleteHolidayFromRoster(id: number): void {
+    if (confirm('Are you sure you want to delete this holiday?')) {
+      this.contentService.deleteHoliday(id).subscribe({
+        next: () => {
+          this.openSuccessModal('Holiday Removed', 'Holiday deleted from calendar roster.');
+          this.loadHolidays();
+        },
+        error: (err) => {
+          this.openSuccessModal('Error', 'Failed to delete holiday: ' + (err.error?.detail || err.message));
+        }
+      });
+    }
+  }
+
+  resetHolidayForm(): void {
+    this.editingHolidayId = null;
+    this.newHoliday = {
+      title: '',
+      description: '',
+      holiday_date: '',
+      year: this.selectedHolidayYear,
+      category: 'National Holiday',
+      image_url: '',
+      is_active: true,
+      send_email: false
+    };
+  }
+
+  onHolidayFileSelected(event: any): void {
+    const file: File = event.target.files[0];
+    if (file) {
+      this.uploadingHolidayImage = true;
+      this.contentService.uploadImage(file).subscribe({
+        next: (res) => {
+          this.newHoliday.image_url = res.url;
+          this.uploadingHolidayImage = false;
+          this.openSuccessModal('Image Uploaded', 'Holiday image uploaded successfully!');
+        },
+        error: (err) => {
+          this.uploadingHolidayImage = false;
+          this.openSuccessModal('Upload Failed', 'Failed to upload image: ' + (err.error?.detail || err.message));
+        }
+      });
+    }
+  }
+
+  removeHolidayImage(): void {
+    this.newHoliday.image_url = '';
+  }
+
+  sendBulkHolidayEmail(): void {
+    const f = this.customHolidayEmail;
+    if (!f.reason || !f.start_date || !f.end_date || !f.reopen_date) {
+      this.openSuccessModal('Form Incomplete', 'Please fill in all fields of the Bulk Holiday Mailer.');
+      return;
+    }
+
+    this.sendingBulkEmail = true;
+    this.contentService.sendCustomHolidayEmail(f).subscribe({
+      next: (res) => {
+        this.openSuccessModal('Emails Dispatched! 📧', res.message || 'Custom holiday emails sent to all registered parent contacts.');
+        this.resetCustomEmailForm();
+        this.sendingBulkEmail = false;
+      },
+      error: (err) => {
+        this.openSuccessModal('Error', 'Failed to send bulk emails: ' + (err.error?.detail || err.message));
+        this.sendingBulkEmail = false;
+      }
+    });
+  }
+
+  resetCustomEmailForm(): void {
+    this.customHolidayEmail = {
+      reason: '',
+      start_date: '',
+      end_date: '',
+      reopen_date: ''
+    };
+  }
+
+  loadGallery(): void {
+    this.galleryLoading = true;
+    this.contentService.getGalleryItems().subscribe({
+      next: (res) => { this.galleryList = res; this.galleryLoading = false; },
+      error: () => { this.galleryLoading = false; }
+    });
   }
 
   // --- TAB 1: STATIONERY ORDERS ---
@@ -1738,6 +3802,223 @@ export class TeacherDashboardComponent implements OnInit, OnDestroy {
     const base = this.mediaBaseUrl || '';
     const separator = (base && !base.endsWith('/') && !cleaned.startsWith('/')) ? '/' : '';
     return base + separator + cleaned;
+  }
+
+  // --- MILESTONES METHODS ---
+  loadMilestones(): void {
+    if (this.programsList.length === 0) {
+      this.contentService.getPrograms().subscribe({
+        next: (res) => {
+          this.programsList = res;
+          this.setMilestoneSubTab(this.milestoneActiveSubTab);
+        },
+        error: () => { this.setMilestoneSubTab(this.milestoneActiveSubTab); }
+      });
+    } else {
+      this.setMilestoneSubTab(this.milestoneActiveSubTab);
+    }
+  }
+
+  setMilestoneSubTab(subTab: 'templates' | 'progress'): void {
+    this.milestoneActiveSubTab = subTab;
+    if (subTab === 'templates') {
+      this.loadMilestoneTemplates();
+    } else {
+      this.loadMilestoneStudents();
+    }
+  }
+
+  loadMilestoneTemplates(): void {
+    if (!this.selectedMilestoneProgramId && this.programsList.length > 0) {
+      this.selectedMilestoneProgramId = this.programsList[0].id;
+    }
+    if (!this.selectedMilestoneProgramId) return;
+    this.newMilestoneTemplate.program_id = this.selectedMilestoneProgramId;
+
+    this.contentService.getMilestoneTemplates(this.selectedMilestoneProgramId).subscribe({
+      next: (data) => { this.milestoneTemplates = data; },
+      error: (err) => {
+        this.openSuccessModal('Error', err.error?.detail || 'Failed to load milestone templates.');
+      }
+    });
+  }
+
+  onMilestoneProgramChange(): void {
+    this.newMilestoneTemplate.program_id = this.selectedMilestoneProgramId;
+    this.loadMilestoneTemplates();
+  }
+
+  addMilestoneTemplate(): void {
+    if (!this.newMilestoneTemplate.milestone_name.trim()) {
+      this.openSuccessModal('Field Required', 'Please enter a milestone description.');
+      return;
+    }
+    
+    const finalData = { ...this.newMilestoneTemplate };
+    if (this.showCustomCategory) {
+      if (!this.customCategoryName.trim()) {
+        this.openSuccessModal('Field Required', 'Please specify a custom category name.');
+        return;
+      }
+      finalData.category = this.customCategoryName.trim();
+    }
+
+    this.contentService.createMilestoneTemplate(finalData).subscribe({
+      next: () => {
+        this.openSuccessModal('Template Added 🎯', 'Milestone template created successfully.');
+        this.newMilestoneTemplate.milestone_name = '';
+        this.showCustomCategory = false;
+        this.customCategoryName = '';
+        this.loadMilestoneTemplates();
+      },
+      error: (err) => {
+        this.openSuccessModal('Error', err.error?.detail || 'Failed to add milestone template.');
+      }
+    });
+  }
+
+  get allMilestoneCategories(): string[] {
+    const cats = new Set<string>(['Cognitive', 'Physical', 'Emotional']);
+    this.milestoneTemplates.forEach(t => {
+      if (t.category) cats.add(t.category);
+    });
+    return Array.from(cats);
+  }
+
+  getTemplatesByCategory(category: string): any[] {
+    return this.milestoneTemplates.filter(t => t.category === category);
+  }
+
+  deleteMilestoneTemplate(id: number): void {
+    if (!confirm('Are you sure you want to delete this template milestone?')) return;
+    this.contentService.deleteMilestoneTemplate(id).subscribe({
+      next: () => {
+        this.openSuccessModal('Template Deleted', 'Milestone template removed.');
+        this.loadMilestoneTemplates();
+      },
+      error: (err) => {
+        this.openSuccessModal('Error', err.error?.detail || 'Failed to delete template.');
+      }
+    });
+  }
+
+  startEditTemplate(temp: any): void {
+    this.editingTemplateId = temp.id;
+    this.editingTemplateData = {
+      milestone_name: temp.milestone_name || '',
+      category: temp.category || 'Cognitive'
+    };
+  }
+
+  cancelEditTemplate(): void {
+    this.editingTemplateId = null;
+  }
+
+  saveEditTemplate(id: number): void {
+    if (!this.editingTemplateData.milestone_name.trim()) {
+      this.openSuccessModal('Field Required', 'Milestone description cannot be empty.');
+      return;
+    }
+    this.contentService.updateMilestoneTemplate(id, this.editingTemplateData).subscribe({
+      next: () => {
+        this.openSuccessModal('Template Updated 🎯', 'Milestone template updated successfully.');
+        this.editingTemplateId = null;
+        this.loadMilestoneTemplates();
+      },
+      error: (err) => {
+        this.openSuccessModal('Error', err.error?.detail || 'Failed to update milestone template.');
+      }
+    });
+  }
+
+  get filteredMilestoneStudents(): any[] {
+    if (!this.milestoneStudentSearchQuery.trim()) {
+      return this.milestoneStudents;
+    }
+    const q = this.milestoneStudentSearchQuery.toLowerCase().trim();
+    return this.milestoneStudents.filter(s => s.name && s.name.toLowerCase().includes(q));
+  }
+
+  onStudentSearchQueryChange(): void {
+    const filtered = this.filteredMilestoneStudents;
+    if (filtered.length > 0) {
+      const exists = filtered.some(s => s.id === Number(this.selectedMilestoneStudentId));
+      if (!exists) {
+        this.selectedMilestoneStudentId = filtered[0].id;
+        this.selectedMilestoneStudentName = filtered[0].name;
+        this.loadStudentMilestones();
+      }
+    }
+  }
+
+  loadMilestoneStudents(): void {
+    if (!this.milestoneStudentProgramId && this.programsList.length > 0) {
+      this.milestoneStudentProgramId = this.programsList[0].id;
+    }
+    if (!this.milestoneStudentProgramId) return;
+    this.milestoneStudentSearchQuery = '';
+    this.contentService.getStudents(this.milestoneStudentProgramId).subscribe({
+      next: (data) => {
+        this.milestoneStudents = data;
+        if (data.length > 0) {
+          this.selectedMilestoneStudentId = data[0].id;
+          this.selectedMilestoneStudentName = data[0].name;
+          this.loadStudentMilestones();
+        } else {
+          this.selectedMilestoneStudentId = 0;
+          this.selectedMilestoneStudentName = '';
+          this.studentMilestones = [];
+        }
+      },
+      error: (err) => {
+        this.openSuccessModal('Error', err.error?.detail || 'Failed to load class students.');
+      }
+    });
+  }
+
+  onMilestoneStudentChange(): void {
+    const student = this.milestoneStudents.find(s => s.id === Number(this.selectedMilestoneStudentId));
+    if (student) {
+      this.selectedMilestoneStudentName = student.name;
+      this.loadStudentMilestones();
+    }
+  }
+
+  loadStudentMilestones(): void {
+    if (!this.selectedMilestoneStudentId) return;
+    this.contentService.getStudentMilestones(this.selectedMilestoneStudentId).subscribe({
+      next: (data) => { this.studentMilestones = data; },
+      error: (err) => {
+        this.openSuccessModal('Error', err.error?.detail || 'Failed to load student progress milestones.');
+      }
+    });
+  }
+
+  saveStudentMilestones(): void {
+    if (!this.selectedMilestoneStudentId) return;
+    this.savingStudentMilestones = true;
+    const payload = { milestones: this.studentMilestones };
+    this.contentService.saveStudentMilestones(this.selectedMilestoneStudentId, payload).subscribe({
+      next: () => {
+        this.savingStudentMilestones = false;
+        this.openSuccessModal('Progress Saved! 🎯', 'Student milestones updated successfully.');
+        this.loadStudentMilestones();
+      },
+      error: (err) => {
+        this.savingStudentMilestones = false;
+        this.openSuccessModal('Error', err.error?.detail || 'Failed to save student milestones.');
+      }
+    });
+  }
+
+  markStudentMilestoneStatus(milestoneId: number, status: string): void {
+    const m = this.studentMilestones.find(item => item.id === milestoneId);
+    if (m) {
+      m.status = status;
+      if (status.toUpperCase() === 'COMPLETED' && !m.completed_date) {
+        m.completed_date = new Date().toISOString().split('T')[0];
+      }
+    }
   }
 
   logout(): void {

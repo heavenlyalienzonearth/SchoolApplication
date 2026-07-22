@@ -618,3 +618,55 @@ def verify_parent_razorpay_payment(
     except Exception as e:
         raise HTTPException(status_code=400, detail=f"Signature verification failed: {str(e)}")
 
+
+# GET /parent/kudos
+@router.get("/kudos", response_model=List[schemas.StudentKudosResponse])
+def get_parent_student_kudos(
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user)
+):
+    if current_user.role.upper() != "PARENT":
+        raise HTTPException(status_code=403, detail="Only parents can view student kudos.")
+
+    if not current_user.student_id:
+        return []
+
+    kudos_list = db.query(models.StudentKudos).filter(
+        models.StudentKudos.student_id == current_user.student_id
+    ).order_by(models.StudentKudos.created_at.desc()).all()
+
+    result = []
+    for k in kudos_list:
+        res = schemas.StudentKudosResponse.from_orm(k)
+        res.student_name = k.student.name if k.student else "Student"
+        res.teacher_name = k.teacher.full_name if k.teacher else "Teacher"
+        result.append(res)
+
+    return result
+
+
+# GET /parent/incidents
+@router.get("/incidents", response_model=List[schemas.StudentIncidentLogResponse])
+def get_parent_student_incidents(
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user)
+):
+    if current_user.role.upper() != "PARENT":
+        raise HTTPException(status_code=403, detail="Only parents can view incident logs.")
+
+    if not current_user.student_id:
+        return []
+
+    incidents = db.query(models.StudentIncidentLog).filter(
+        models.StudentIncidentLog.student_id == current_user.student_id
+    ).order_by(models.StudentIncidentLog.created_at.desc()).all()
+
+    result = []
+    for i in incidents:
+        res = schemas.StudentIncidentLogResponse.from_orm(i)
+        res.student_name = i.student.name if i.student else "Student"
+        res.teacher_name = i.teacher.full_name if i.teacher else "Teacher"
+        result.append(res)
+
+    return result
+

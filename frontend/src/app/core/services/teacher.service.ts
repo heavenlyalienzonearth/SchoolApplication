@@ -49,4 +49,30 @@ export class TeacherService {
   getStudents(): Observable<any[]> {
     return this.apiService.get<any[]>('/teacher/students');
   }
+
+  // --- KUDOS & BADGES ---
+  awardKudos(kudosData: any): Observable<any> {
+    return this.apiService.post<any>('/teacher/kudos', kudosData);
+  }
+
+  getKudos(): Observable<any[]> {
+    return this.apiService.get<any[]>('/teacher/kudos');
+  }
+
+  deleteKudos(id: number): Observable<any> {
+    return this.apiService.delete<any>(`/teacher/kudos/${id}`);
+  }
+
+  // --- INCIDENT & HEALTH LOGS ---
+  logIncident(incidentData: any): Observable<any> {
+    return this.apiService.post<any>('/teacher/incidents', incidentData);
+  }
+
+  getIncidents(): Observable<any[]> {
+    return this.apiService.get<any[]>('/teacher/incidents');
+  }
+
+  deleteIncident(id: number): Observable<any> {
+    return this.apiService.delete<any>(`/teacher/incidents/${id}`);
+  }
 }

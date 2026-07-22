@@ -16,14 +16,11 @@ def get_circulars(
     program_id: Optional[int] = None,
     db: Session = Depends(get_db)
 ):
-    # Parents should see general circulars (program_id IS NULL) OR class-specific circulars (matching their child's program_id)
     query = db.query(models.Circular).filter(models.Circular.is_active == True)
     if program_id is not None:
         query = query.filter(
             (models.Circular.program_id == program_id) | (models.Circular.program_id.is_(None))
         )
-    else:
-        query = query.filter(models.Circular.program_id.is_(None))
         
     return query.order_by(models.Circular.created_at.desc()).all()
 

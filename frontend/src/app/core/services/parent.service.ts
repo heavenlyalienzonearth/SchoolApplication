@@ -79,4 +79,12 @@ export class ParentService {
       reason: reason
     });
   }
+
+  getKudos(): Observable<any[]> {
+    return this.apiService.get<any[]>('/parent/kudos');
+  }
+
+  getIncidents(): Observable<any[]> {
+    return this.apiService.get<any[]>('/parent/incidents');
+  }
 }

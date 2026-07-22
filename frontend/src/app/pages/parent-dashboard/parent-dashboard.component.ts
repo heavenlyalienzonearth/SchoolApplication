@@ -389,7 +389,65 @@ import { AssignmentService, ClassAssignment } from '../../core/services/assignme
                   </div>
                 </div>
 
+                <!-- Kudos Badges & Incident Care Reports Grid -->
+                <div style="display: flex; flex-direction: column; gap: 20px;">
+                  <!-- Star Badges Card -->
+                  <div class="card" style="padding: 20px; background: white; border-radius: 12px; border: 1.5px solid #FEF3C7;">
+                    <h3 class="card-title" style="display: flex; align-items: center; justify-content: space-between; margin: 0 0 12px 0; font-size: 1rem; color: #92400E;">
+                      <span>⭐ Child Star Badges & Kudos</span>
+                      <span style="font-size: 0.75rem; background: #FEF3C7; color: #D97706; padding: 2px 8px; border-radius: 12px; font-weight: 700;">
+                        {{ parentKudos.length }} Badges
+                      </span>
+                    </h3>
+                    <div *ngIf="parentKudos.length === 0" style="text-align: center; padding: 20px; color: #94A3B8; font-style: italic; font-size: 0.82rem;">
+                      No star badges awarded yet. Teacher will post badges for stellar classroom participation!
+                    </div>
+                    <div *ngIf="parentKudos.length > 0" style="display: flex; flex-direction: column; gap: 10px; max-height: 200px; overflow-y: auto;">
+                      <div *ngFor="let k of parentKudos" style="background: #FFFBEB; border: 1.5px solid #FCD34D; border-radius: 10px; padding: 12px;">
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                          <span style="font-weight: 800; font-size: 0.88rem; color: #92400E;">{{ k.badge_title }}</span>
+                          <span style="font-size: 0.7rem; color: #B45309; font-weight: 600;">{{ k.awarded_date }}</span>
+                        </div>
+                        <p *ngIf="k.comment" style="margin: 6px 0 0 0; font-size: 0.78rem; color: #78350F; font-style: italic;">
+                          "{{ k.comment }}"
+                        </p>
+                        <span style="font-size: 0.68rem; color: #A16207; display: block; margin-top: 4px;">Awarded by Teacher {{ k.teacher_name }}</span>
+                      </div>
+                    </div>
+                  </div>
 
+                  <!-- Incident & Health Log Card -->
+                  <div class="card" style="padding: 20px; background: white; border-radius: 12px; border: 1.5px solid #E0F2FE;">
+                    <h3 class="card-title" style="display: flex; align-items: center; justify-content: space-between; margin: 0 0 12px 0; font-size: 1rem; color: #0369A1;">
+                      <span>🩺 Daily Health & Incident Reports</span>
+                      <span style="font-size: 0.75rem; background: #E0F2FE; color: #0284C7; padding: 2px 8px; border-radius: 12px; font-weight: 700;">
+                        {{ parentIncidents.length }} Reports
+                      </span>
+                    </h3>
+                    <div *ngIf="parentIncidents.length === 0" style="text-align: center; padding: 20px; color: #94A3B8; font-style: italic; font-size: 0.82rem;">
+                      No incident reports logged. Your child is having a safe day at school!
+                    </div>
+                    <div *ngIf="parentIncidents.length > 0" style="display: flex; flex-direction: column; gap: 10px; max-height: 200px; overflow-y: auto;">
+                      <div *ngFor="let inc of parentIncidents" style="background: #F8FAFC; border: 1.5px solid #E2E8F0; border-radius: 10px; padding: 12px;">
+                        <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                          <div>
+                            <span [style.background]="inc.severity === 'HIGH' ? '#FEE2E2' : inc.severity === 'MEDIUM' ? '#FEF3C7' : '#DCFCE7'"
+                                  [style.color]="inc.severity === 'HIGH' ? '#991B1B' : inc.severity === 'MEDIUM' ? '#92400E' : '#166534'"
+                                  style="font-size: 0.65rem; font-weight: 800; padding: 2px 6px; border-radius: 4px; display: inline-block; text-transform: uppercase;">
+                              {{ inc.severity }}
+                            </span>
+                            <strong style="display: block; font-size: 0.86rem; color: #0F172A; margin-top: 2px;">{{ inc.title }}</strong>
+                          </div>
+                          <span style="font-size: 0.7rem; color: #94A3B8;">{{ inc.log_date }}</span>
+                        </div>
+                        <p style="margin: 6px 0; font-size: 0.78rem; color: #475569;">{{ inc.description }}</p>
+                        <div *ngIf="inc.action_taken" style="font-size: 0.74rem; color: #2563EB; font-weight: 600;">
+                          <strong>Action Taken:</strong> {{ inc.action_taken }}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
 
               </div>
             </div>
@@ -3304,6 +3362,10 @@ export class ParentDashboardComponent implements OnInit, OnDestroy {
   selectedDateStr: string = '';
   selectedDate: Date = new Date();
 
+  // Kudos & Incident Care State
+  parentKudos: any[] = [];
+  parentIncidents: any[] = [];
+
   constructor(
     public authService: AuthService,
     private apiService: ApiService,
@@ -3340,6 +3402,7 @@ export class ParentDashboardComponent implements OnInit, OnDestroy {
     this.loadCalendarData();
     this.loadStationaryOrders();
     this.loadStationaryCatalog();
+    this.loadParentKudosAndIncidents();
     this.loadRazorpayScript().then(() => {
       this.razorpayScriptLoaded = true;
     });
@@ -3498,6 +3561,17 @@ export class ParentDashboardComponent implements OnInit, OnDestroy {
         this.processingPayment = false;
         this.errorMessage = err.error?.detail || 'Failed to initialize payment gateway checkout.';
       }
+    });
+  }
+
+  loadParentKudosAndIncidents(): void {
+    this.parentService.getKudos().subscribe({
+      next: (res) => { this.parentKudos = res; },
+      error: () => {}
+    });
+    this.parentService.getIncidents().subscribe({
+      next: (res) => { this.parentIncidents = res; },
+      error: () => {}
     });
   }
 
