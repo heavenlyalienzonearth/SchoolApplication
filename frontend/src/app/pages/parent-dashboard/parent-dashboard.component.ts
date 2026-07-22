@@ -93,14 +93,15 @@ import { AssignmentService, ClassAssignment } from '../../core/services/assignme
               </p>
             </div>
             
-            <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 6px; min-width: 180px; text-align: right;">
-              <span style="background: #dcfce7; color: #16a34a; border: 1px solid #bbf7d0; padding: 4px 14px; border-radius: 9999px; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; display: inline-block;">
-                🌈 PARENT CPANEL
+            <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 6px; min-width: 220px; text-align: right;">
+              <span style="background: #EFF6FF; color: #1D4ED8; border: 1.5px solid #93C5FD; padding: 5px 14px; border-radius: 9999px; font-size: 0.8rem; font-weight: 800; display: inline-block;">
+                🏫 Class: {{ dashboardData.kid?.program_title || 'N/A' }}
               </span>
               <span style="font-size: 0.78rem; color: #475569; font-family: monospace; font-weight: 700;">
                 🕒 Session: {{ loginTime }}
               </span>
             </div>
+
           </div>
 
           <div class="dashboard-grid">

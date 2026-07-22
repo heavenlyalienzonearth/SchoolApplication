@@ -4,7 +4,8 @@ from typing import List, Optional, Dict, Any
 from app.core.database import get_db
 from app.api.v1.auth import get_current_user, require_permission
 from app import models, schemas
-from sqlalchemy import text
+from sqlalchemy import text, or_
+
 
 router = APIRouter(prefix="/attendance", tags=["Kid Attendance"])
 
@@ -382,19 +383,38 @@ def save_student_milestones(
 # --- LEAVE APPROVALS ---
 @router.get("/leaves")
 def get_all_leave_requests(
+    program_id: Optional[int] = None,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_permission("leaves"))
 ):
-    leaves = db.query(models.LeaveRequest).order_by(models.LeaveRequest.created_at.desc()).all()
+    query = db.query(models.LeaveRequest).join(
+        models.Student, models.LeaveRequest.student_id == models.Student.id
+    )
+    
+    if current_user.role and current_user.role.upper() == "TEACHER":
+        filters = []
+        if current_user.assigned_program_id:
+            filters.append(models.Student.program_id == current_user.assigned_program_id)
+        filters.append(models.Student.teacher_id == current_user.id)
+        if filters:
+            query = query.filter(or_(*filters))
+    elif program_id:
+        query = query.filter(models.Student.program_id == program_id)
+
+    if program_id and current_user.role and current_user.role.upper() == "TEACHER":
+        query = query.filter(models.Student.program_id == program_id)
+
+    leaves = query.order_by(models.LeaveRequest.created_at.desc()).all()
     
     leaves_list = []
     for l in leaves:
-        student = db.query(models.Student).filter(models.Student.id == l.student_id).first()
+        student = l.student
         leaves_list.append({
             "id": l.id,
             "student_id": l.student_id,
             "student_name": student.name if student else "Unknown Student",
             "program_title": student.program.title if student and student.program else "N/A",
+            "program_id": student.program_id if student else None,
             "start_date": l.start_date,
             "end_date": l.end_date,
             "reason": l.reason,
@@ -404,6 +424,7 @@ def get_all_leave_requests(
         })
         
     return leaves_list
+
 
 @router.put("/leaves/{leave_id}/status")
 def update_leave_request_status(

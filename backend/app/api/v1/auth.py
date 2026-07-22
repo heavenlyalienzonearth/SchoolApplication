@@ -149,6 +149,32 @@ def get_captcha(response: Response):
     
     return {"captcha_id": captcha_id, "captcha_svg": svg_content}
 
+@router.get("/parent-classes")
+def get_parent_accounts_by_class(db: Session = Depends(get_db)):
+    """Returns list of student classes (programs) along with student & parent accounts in each class."""
+    programs = db.query(models.Program).order_by(models.Program.id).all()
+    result = []
+    for prog in programs:
+        students = db.query(models.Student).filter(models.Student.program_id == prog.id).order_by(models.Student.name).all()
+        student_list = []
+        for s in students:
+            parent_user = db.query(models.User).filter(models.User.student_id == s.id).first()
+            student_list.append({
+                "student_id": s.id,
+                "student_name": s.name,
+                "parent_name": s.parent_name,
+                "parent_email": parent_user.email if parent_user else f"parent.{s.id}@kangarookids.com",
+                "default_password": "Parent@123"
+            })
+        result.append({
+            "program_id": prog.id,
+            "program_title": prog.title,
+            "age_group": prog.age_group,
+            "students": student_list
+        })
+    return result
+
+
 @router.post("/login", response_model=schemas.Token)
 def login(request: schemas.LoginRequest, db: Session = Depends(get_db)):
     # Validate captcha first

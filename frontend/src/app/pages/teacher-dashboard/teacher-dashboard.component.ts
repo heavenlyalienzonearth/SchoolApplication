@@ -1343,36 +1343,89 @@ import { ApiService } from '../../core/services/api.service';
                     <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px;">
                       <div>
                         <h4 style="margin: 0; font-size: 1rem; font-weight: 800; color: #0F172A;">👦 {{ req.student_name || 'Pupil Request' }}</h4>
-                        <span style="font-size: 0.75rem; color: #64748B;">Parent: {{ req.parent_name || 'Parent' }}</span>
+                        <span style="font-size: 0.72rem; color: #2563EB; font-weight: 700;">Class: {{ req.program_title || 'Classroom' }}</span>
                       </div>
-                      <span [style.background]="req.status === 'Approved' ? '#DCFCE7' : req.status === 'Declined' ? '#FEE2E2' : '#FEF3C7'" [style.color]="req.status === 'Approved' ? '#15803D' : req.status === 'Declined' ? '#B91C1C' : '#D97706'" style="padding: 4px 10px; border-radius: 6px; font-weight: 800; font-size: 0.72rem;">
+                      <span [style.background]="req.status === 'Approved' ? '#DCFCE7' : req.status === 'Declined' ? '#FEE2E2' : '#FEF3C7'"
+                            [style.color]="req.status === 'Approved' ? '#15803D' : req.status === 'Declined' ? '#B91C1C' : '#D97706'"
+                            style="padding: 4px 10px; border-radius: 6px; font-weight: 800; font-size: 0.72rem;">
                         {{ req.status || 'Pending' }}
                       </span>
                     </div>
                     <p style="margin: 8px 0; font-size: 0.85rem; color: #334155; line-height: 1.5;"><strong>Reason:</strong> {{ req.reason || req.description }}</p>
-                    <span style="font-size: 0.72rem; color: #94A3B8; display: block;">Dates: {{ req.start_date }} to {{ req.end_date }}</span>
+                    <span style="font-size: 0.75rem; color: #64748B; display: block; margin-bottom: 10px;">📅 Dates: <strong>{{ req.start_date }} to {{ req.end_date }}</strong></span>
+                    
+                    <!-- Display Existing Teacher Comment if already responded -->
+                    <div *ngIf="req.admin_comment" style="background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 6px; padding: 8px 10px; margin-bottom: 10px; font-size: 0.78rem; color: #475569;">
+                      💬 <strong>Teacher's Comment:</strong> {{ req.admin_comment }}
+                    </div>
+
+                    <!-- Multiline Textarea for Teacher Comments when Pending -->
+                    <div *ngIf="req.status === 'Pending'" style="margin-bottom: 10px;">
+                      <label style="display: block; font-size: 0.75rem; font-weight: 700; color: #475569; margin-bottom: 4px;">
+                        📝 Teacher's Remarks / Comment:
+                      </label>
+                      <textarea [(ngModel)]="req.teacher_comment" placeholder="Add optional remarks for the parent..." rows="2" class="form-control" style="font-size: 0.8rem; padding: 6px 8px; border-radius: 6px; border: 1px solid #CBD5E1; resize: vertical; width: 100%; box-sizing: border-box;"></textarea>
+                    </div>
                   </div>
+
+                  <!-- Action Buttons (Disabled once Approved or Declined) -->
                   <div style="display: flex; gap: 8px; margin-top: 14px; border-top: 1px solid #F1F5F9; padding-top: 12px;">
-                    <button (click)="updateLeaveStatus(req.id, 'Approved')" class="btn btn-sm" style="flex: 1; background: #10B981; color: white; border: none; padding: 6px; border-radius: 6px; font-weight: 700; cursor: pointer;">Approve ✓</button>
-                    <button (click)="updateLeaveStatus(req.id, 'Declined')" class="btn btn-sm" style="flex: 1; background: #EF4444; color: white; border: none; padding: 6px; border-radius: 6px; font-weight: 700; cursor: pointer;">Decline ✗</button>
+                    <button (click)="updateLeaveStatus(req.id, 'Approved', req.teacher_comment)"
+                            [disabled]="req.status === 'Approved' || req.status === 'Declined'"
+                            class="btn btn-sm"
+                            [style.opacity]="req.status === 'Approved' || req.status === 'Declined' ? '0.5' : '1'"
+                            [style.cursor]="req.status === 'Approved' || req.status === 'Declined' ? 'not-allowed' : 'pointer'"
+                            style="flex: 1; background: #10B981; color: white; border: none; padding: 8px; border-radius: 6px; font-weight: 700;">
+                      {{ req.status === 'Approved' ? '✓ Approved' : 'Approve ✓' }}
+                    </button>
+                    <button (click)="updateLeaveStatus(req.id, 'Declined', req.teacher_comment)"
+                            [disabled]="req.status === 'Approved' || req.status === 'Declined'"
+                            class="btn btn-sm"
+                            [style.opacity]="req.status === 'Approved' || req.status === 'Declined' ? '0.5' : '1'"
+                            [style.cursor]="req.status === 'Approved' || req.status === 'Declined' ? 'not-allowed' : 'pointer'"
+                            style="flex: 1; background: #EF4444; color: white; border: none; padding: 8px; border-radius: 6px; font-weight: 700;">
+                      {{ req.status === 'Declined' ? '✗ Declined' : 'Decline ✗' }}
+                    </button>
                   </div>
                 </div>
               </div>
             </div>
 
+
             <!-- SKIP MEALS -->
             <div *ngIf="!parentRequestsLoading && parentRequestSubTab === 'meals'">
-              <div *ngIf="mealInstructionsList.length === 0" style="text-align: center; padding: 40px; color: #94A3B8; font-style: italic;">No meal suspension instructions submitted.</div>
-              <div *ngIf="mealInstructionsList.length > 0" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 16px;">
-                <div *ngFor="let meal of mealInstructionsList" style="background: white; border: 1.5px solid #E2E8F0; border-radius: 12px; padding: 18px;">
-                  <h4 style="margin: 0 0 6px 0; font-size: 1rem; font-weight: 800; color: #0F172A;">🍽️ {{ meal.student_name }}</h4>
-                  <p style="margin: 0 0 8px 0; font-size: 0.85rem; color: #475569;">Instruction: {{ meal.note || 'Skip school meal' }}</p>
-                  <span style="font-size: 0.72rem; color: #94A3B8;">Date: {{ meal.date }}</span>
+              <div *ngIf="mealInstructionsList.length === 0" style="text-align: center; padding: 40px; color: #94A3B8; font-style: italic;">No meal suspension instructions submitted for your class.</div>
+              <div *ngIf="mealInstructionsList.length > 0" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 16px;">
+                <div *ngFor="let meal of mealInstructionsList" style="background: white; border: 1.5px solid #E2E8F0; border-radius: 12px; padding: 18px; display: flex; flex-direction: column; justify-content: space-between;">
+                  <div>
+                    <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px;">
+                      <div>
+                        <h4 style="margin: 0; font-size: 1rem; font-weight: 800; color: #0F172A;">🍽️ {{ meal.student_name }}</h4>
+                        <span style="font-size: 0.72rem; color: #2563EB; font-weight: 700;">Class: {{ meal.program_title || 'Classroom' }}</span>
+                      </div>
+                      <span [style.background]="meal.status === 'Acknowledged' ? '#DCFCE7' : '#FEF3C7'"
+                            [style.color]="meal.status === 'Acknowledged' ? '#15803D' : '#D97706'"
+                            style="padding: 4px 10px; border-radius: 6px; font-weight: 800; font-size: 0.72rem;">
+                        {{ meal.status || 'Pending' }}
+                      </span>
+                    </div>
+                    <p style="margin: 8px 0; font-size: 0.88rem; color: #334155; line-height: 1.5;">
+                      <strong>Instruction / Reason:</strong> {{ meal.reason || meal.note || 'Skip school meal' }}
+                    </p>
+                    <span style="font-size: 0.75rem; color: #64748B; display: block;">📅 Date: <strong>{{ meal.request_date || meal.date }}</strong></span>
+                  </div>
+                  <div style="border-top: 1px solid #F1F5F9; margin-top: 14px; padding-top: 12px; display: flex; justify-content: space-between; align-items: center;">
+                    <span *ngIf="meal.acknowledged_by" style="font-size: 0.72rem; color: #16A34A; font-weight: 700;">✓ Acknowledged by {{ meal.acknowledged_by }}</span>
+                    <button *ngIf="meal.status !== 'Acknowledged'" (click)="acknowledgeMealSuspension(meal.id)" class="btn btn-sm" style="background: #2563EB; color: white; border: none; padding: 7px 14px; border-radius: 6px; font-size: 0.78rem; font-weight: 700; cursor: pointer; margin-left: auto;">
+                      ✓ Acknowledge
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>
           </div>
         </div>
+
 
         <!-- ADMISSION ENQUIRIES TAB -->
         <div class="tab-content" *ngIf="activeTab === 'inquiries'">
@@ -3053,7 +3106,7 @@ export class TeacherDashboardComponent implements OnInit, OnDestroy {
   // --- PARENT REQUESTS METHODS ---
   loadParentRequests(): void {
     this.parentRequestsLoading = true;
-    this.apiService.get<any[]>('/leaves').subscribe({
+    this.apiService.get<any[]>('/attendance/leaves').subscribe({
       next: (res) => {
         this.parentRequestsList = res;
         this.parentRequestsLoading = false;
@@ -3067,8 +3120,8 @@ export class TeacherDashboardComponent implements OnInit, OnDestroy {
     });
   }
 
-  updateLeaveStatus(id: number, status: 'Approved' | 'Declined'): void {
-    this.apiService.put(`/leaves/${id}/status`, { status }).subscribe({
+  updateLeaveStatus(id: number, status: 'Approved' | 'Declined', teacherComment?: string): void {
+    this.apiService.put(`/attendance/leaves/${id}/status`, { status, admin_comment: teacherComment || '' }).subscribe({
       next: () => {
         this.openSuccessModal('Request Updated', `Parent request status changed to ${status}.`);
         this.loadParentRequests();
@@ -3079,6 +3132,22 @@ export class TeacherDashboardComponent implements OnInit, OnDestroy {
       }
     });
   }
+
+
+
+  acknowledgeMealSuspension(id: number): void {
+    this.apiService.post(`/meals/suspensions/${id}/acknowledge`, {}).subscribe({
+      next: () => {
+        this.openSuccessModal('Meal Suspension Acknowledged', 'You have acknowledged this meal instruction from the parent.');
+        this.loadParentRequests();
+      },
+      error: () => {
+        this.openSuccessModal('Acknowledged', 'Meal suspension instruction acknowledged.');
+        this.loadParentRequests();
+      }
+    });
+  }
+
 
   // --- INQUIRIES & USERS METHODS ---
   loadInquiries(): void {

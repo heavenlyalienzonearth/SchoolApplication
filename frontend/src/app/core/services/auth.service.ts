@@ -87,6 +87,11 @@ export class AuthService {
     return this.apiService.get<CaptchaResponse>('/auth/captcha?t=' + Date.now());
   }
 
+  getParentClasses(): Observable<any[]> {
+    return this.apiService.get<any[]>('/auth/parent-classes');
+  }
+
+
   login(email: string, password: string, captchaId: string, captchaCode: string): Observable<AuthResponse> {
     return this.apiService.post<AuthResponse>('/auth/login', {
       email,

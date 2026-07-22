@@ -13,175 +13,234 @@ import { AuthService } from '../../../core/services/auth.service';
       <div class="login-card animate-fade-in">
         <div class="brand">
           <img src="/assets/images/logo.png" alt="Logo" class="logo" />
-          <h2>School Admin Portal</h2>
-          <p>Login to manage site settings and view enquiries</p>
+          <h2>School Portal Sign In</h2>
+          <p>Select your portal, verify credentials and access your dashboard</p>
         </div>
 
         <div class="alert alert-danger" *ngIf="errorMessage">
           ⚠️ {{ errorMessage }}
         </div>
 
+        <!-- Portal Type Selector Tabs -->
+        <div style="display: flex; gap: 8px; margin-bottom: 14px; background: #F1F5F9; padding: 4px; border-radius: 8px;">
+          <button type="button" (click)="setPortalTab('staff')"
+                  [style.background]="activePortalTab === 'staff' ? 'white' : 'transparent'"
+                  [style.color]="activePortalTab === 'staff' ? '#0F172A' : '#64748B'"
+                  [style.box-shadow]="activePortalTab === 'staff' ? '0 1px 3px rgba(0,0,0,0.1)' : 'none'"
+                  style="flex: 1; padding: 7px; font-weight: 800; font-size: 0.85rem; border: none; border-radius: 6px; cursor: pointer; transition: all 0.2s;">
+            🛡️ Staff / Admin Login
+          </button>
+          <button type="button" (click)="setPortalTab('parent')"
+                  [style.background]="activePortalTab === 'parent' ? 'white' : 'transparent'"
+                  [style.color]="activePortalTab === 'parent' ? '#2563EB' : '#64748B'"
+                  [style.box-shadow]="activePortalTab === 'parent' ? '0 1px 3px rgba(0,0,0,0.1)' : 'none'"
+                  style="flex: 1; padding: 7px; font-weight: 800; font-size: 0.85rem; border: none; border-radius: 6px; cursor: pointer; transition: all 0.2s;">
+            👨‍👩‍👧 Parent Login by Class
+          </button>
+        </div>
+
+        <!-- Class-Based Parent Helper Selector -->
+        <div *ngIf="activePortalTab === 'parent' && !twoFactorRequired && !forgotPasswordActive"
+             style="background: #EFF6FF; border: 1.5px solid #BFDBFE; border-radius: 8px; padding: 10px 14px; margin-bottom: 14px;">
+          <div style="font-weight: 800; color: #1E40AF; font-size: 0.82rem; margin-bottom: 6px;">
+            🏫 Select Student Class & Parent Account
+          </div>
+          
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 4px;">
+            <div>
+              <label style="display: block; font-size: 0.72rem; font-weight: 700; color: #1E3A8A; margin-bottom: 3px;">1. Student Class</label>
+              <select [(ngModel)]="selectedParentClassId" (change)="onParentClassChange()" class="form-control" style="font-size: 0.8rem; padding: 5px 8px; background: white; border: 1px solid #93C5FD;">
+                <option *ngFor="let cls of parentClasses" [value]="cls.program_id">
+                  {{ cls.program_title }}
+                </option>
+              </select>
+            </div>
+
+            <div>
+              <label style="display: block; font-size: 0.72rem; font-weight: 700; color: #1E3A8A; margin-bottom: 3px;">2. Student / Child</label>
+              <select [(ngModel)]="selectedParentStudentId" (change)="onParentStudentChange()" class="form-control" style="font-size: 0.8rem; padding: 5px 8px; background: white; border: 1px solid #93C5FD;">
+                <option *ngFor="let std of selectedParentStudents" [value]="std.student_id">
+                  {{ std.student_name }} ({{ std.parent_name }})
+                </option>
+                <option *ngIf="selectedParentStudents.length === 0" disabled>No students registered</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
         <form (ngSubmit)="onSubmit()" #loginForm="ngForm" *ngIf="!twoFactorRequired && !forgotPasswordActive">
-          <div class="form-group">
-            <label class="form-label" for="email">Email Address</label>
-            <input type="email" id="email" name="email" [(ngModel)]="loginData.email" class="form-control" required placeholder="admin@school.com" />
+          <!-- Side-by-side Email & Password Grid -->
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 12px;">
+            <div class="form-group" style="margin-bottom: 0;">
+              <label class="form-label" for="email" style="font-size: 0.8rem; margin-bottom: 4px;">{{ activePortalTab === 'parent' ? 'Parent Email' : 'Email Address' }}</label>
+              <input type="email" id="email" name="email" [(ngModel)]="loginData.email" class="form-control" required [placeholder]="activePortalTab === 'parent' ? 'parent@school.com' : 'admin@school.com'" style="padding: 7px 10px; font-size: 0.88rem;" />
+            </div>
+
+            <div class="form-group" style="margin-bottom: 0;">
+              <label class="form-label" for="password" style="font-size: 0.8rem; margin-bottom: 4px;">Password</label>
+              <input type="password" id="password" name="password" [(ngModel)]="loginData.password" class="form-control" required placeholder="••••••••" style="padding: 7px 10px; font-size: 0.88rem;" />
+            </div>
           </div>
 
-          <div class="form-group">
-            <label class="form-label" for="password">Password</label>
-            <input type="password" id="password" name="password" [(ngModel)]="loginData.password" class="form-control" required placeholder="••••••••" />
-          </div>
-
-          <!-- Captcha Verification Field -->
-          <div class="form-group captcha-wrapper" style="margin-bottom: 24px;">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-              <label class="form-label" for="captcha" style="margin-bottom: 0; font-weight: 600; color: var(--primary); font-size: 0.9rem;">Security Verification</label>
-              <button type="button" (click)="loadCaptcha()" class="btn-refresh" style="background: none; border: none; color: var(--secondary); font-size: 0.8rem; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 4px; padding: 2px 6px; border-radius: 4px; transition: all 0.2s;">
+          <!-- Captcha Verification Field (Side-by-Side SVG & Input) -->
+          <div class="form-group captcha-wrapper" style="margin-bottom: 14px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+              <label class="form-label" for="captcha" style="margin-bottom: 0; font-weight: 700; color: var(--primary); font-size: 0.82rem;">Security Verification</label>
+              <button type="button" (click)="loadCaptcha()" class="btn-refresh" style="background: none; border: none; color: var(--secondary); font-size: 0.75rem; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 4px; padding: 2px 4px; border-radius: 4px;">
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" style="display: inline-block;"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/></svg>
                 Refresh Code
               </button>
             </div>
             
-            <div class="captcha-card" style="display: flex; flex-direction: column; gap: 12px; background-color: #F8FAFC; border: 1.5px solid #E2E8F0; border-radius: 8px; padding: 15px; margin-bottom: 12px; transition: all 0.2s; box-shadow: inset 0 1px 2px rgba(0,0,0,0.02);">
-              <div style="display: flex; justify-content: center; align-items: center; background: white; border-radius: 6px; padding: 8px; border: 1px solid #E2E8F0; cursor: pointer;" (click)="loadCaptcha()" title="Click to refresh">
-                <div [innerHTML]="captchaSvg" style="display: flex; align-items: center; justify-content: center; height: 50px;"></div>
+            <div class="captcha-card" style="display: flex; flex-direction: row; gap: 12px; align-items: center; background-color: #F8FAFC; border: 1.5px solid #E2E8F0; border-radius: 8px; padding: 8px 12px; transition: all 0.2s;">
+              <div style="flex: 1; display: flex; justify-content: center; align-items: center; background: white; border-radius: 6px; padding: 4px 8px; border: 1px solid #E2E8F0; cursor: pointer; height: 42px;" (click)="loadCaptcha()" title="Click to refresh">
+                <div [innerHTML]="captchaSvg" style="display: flex; align-items: center; justify-content: center; height: 38px;"></div>
               </div>
-              <input type="text" id="captcha" name="captcha" [(ngModel)]="captchaCodeInput" class="form-control captcha-input" required placeholder="Type the 5-char code" autocomplete="off" style="text-align: center; font-size: 1.1rem; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; border: 1.5px solid #CBD5E1; border-radius: 6px; padding: 10px;" />
+              <input type="text" id="captcha" name="captcha" [(ngModel)]="captchaCodeInput" class="form-control captcha-input" required placeholder="5-char code" autocomplete="off" style="flex: 1; height: 42px; text-align: center; font-size: 1rem; font-weight: 800; letter-spacing: 2px; text-transform: uppercase; border: 1.5px solid #CBD5E1; border-radius: 6px; padding: 6px;" />
             </div>
           </div>
 
           <!-- Remember Me & Forgot Password -->
-          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; margin-top: -10px;">
-            <label style="display: flex; align-items: center; gap: 8px; font-size: 0.85rem; color: var(--text-light); cursor: pointer; user-select: none;">
-              <input type="checkbox" [(ngModel)]="rememberMe" name="rememberMe" style="width: 15px; height: 15px; border-radius: 4px; border: 1px solid #CBD5E1; accent-color: var(--secondary);" />
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">
+            <label style="display: flex; align-items: center; gap: 8px; font-size: 0.8rem; color: var(--text-light); cursor: pointer; user-select: none;">
+              <input type="checkbox" [(ngModel)]="rememberMe" name="rememberMe" style="width: 14px; height: 14px; border-radius: 4px; border: 1px solid #CBD5E1; accent-color: var(--secondary);" />
               Remember Me
             </label>
-            <a (click)="toggleForgotPassword(true)" style="font-size: 0.85rem; color: var(--secondary); font-weight: 600; text-decoration: none; cursor: pointer; transition: all 0.2s;">
+            <a (click)="toggleForgotPassword(true)" style="font-size: 0.8rem; color: var(--secondary); font-weight: 700; text-decoration: none; cursor: pointer;">
               Forgot Password?
             </a>
           </div>
 
-          <button type="submit" class="btn btn-primary btn-block" [disabled]="loading">
+          <button type="submit" class="btn btn-primary btn-block" [disabled]="loading" style="padding: 10px; font-size: 0.95rem; font-weight: 800;">
             {{ loading ? 'Signing in...' : 'Sign In' }}
           </button>
         </form>
 
         <!-- Forgot Password Form -->
         <form (ngSubmit)="onSendResetLink()" #forgotForm="ngForm" *ngIf="forgotPasswordActive && !resetLinkSent">
-          <div class="form-group" style="margin-bottom: 20px;">
-            <label class="form-label" for="forgotEmail">Email Address</label>
-            <p style="font-size: 0.85rem; color: var(--text-light); margin-top: 4px; margin-bottom: 12px; line-height: 1.4;">
+          <div class="form-group" style="margin-bottom: 16px;">
+            <label class="form-label" for="forgotEmail" style="font-size: 0.82rem;">Email Address</label>
+            <p style="font-size: 0.8rem; color: var(--text-light); margin-top: 4px; margin-bottom: 10px; line-height: 1.4;">
               Enter your registered administrator email address and we will dispatch a secure password reset link.
             </p>
-            <input type="email" id="forgotEmail" name="forgotEmail" [(ngModel)]="forgotEmail" class="form-control" required placeholder="admin@school.com" />
+            <input type="email" id="forgotEmail" name="forgotEmail" [(ngModel)]="forgotEmail" class="form-control" required placeholder="admin@school.com" style="padding: 8px 10px;" />
           </div>
 
-          <button type="submit" class="btn btn-primary btn-block" [disabled]="loading">
+          <button type="submit" class="btn btn-primary btn-block" [disabled]="loading" style="padding: 10px; font-weight: 700;">
             {{ loading ? 'Sending link...' : 'Send Reset Link' }}
           </button>
 
-          <button type="button" class="btn btn-outline btn-block" (click)="toggleForgotPassword(false)" style="margin-top: 10px; border: 1px solid #CBD5E1; background: white; border-radius: 6px; cursor: pointer;">
+          <button type="button" class="btn btn-outline btn-block" (click)="toggleForgotPassword(false)" style="margin-top: 10px; border: 1px solid #CBD5E1; background: white; border-radius: 6px; cursor: pointer; padding: 8px;">
              Back to Login
           </button>
         </form>
 
         <!-- Forgot Password Success Screen -->
         <div *ngIf="forgotPasswordActive && resetLinkSent" style="text-align: center; padding: 10px 0;">
-          <div style="font-size: 3rem; margin-bottom: 15px;">✉️</div>
-          <h3 style="color: var(--primary); margin-bottom: 10px; font-weight: 700;">Reset Link Dispatched</h3>
-          <p style="font-size: 0.9rem; color: #475569; line-height: 1.6; margin-bottom: 20px;">
+          <div style="font-size: 2.5rem; margin-bottom: 10px;">✉️</div>
+          <h3 style="color: var(--primary); margin-bottom: 8px; font-weight: 700; font-size: 1.2rem;">Reset Link Dispatched</h3>
+          <p style="font-size: 0.85rem; color: #475569; line-height: 1.5; margin-bottom: 16px;">
             If the email address <strong>{{ forgotEmail }}</strong> is registered, a password reset link has been dispatched successfully.
           </p>
-          <div style="background-color: #F8FAFC; border: 1px solid #E2E8F0; padding: 12px; border-radius: 8px; font-size: 0.85rem; color: #64748B; margin-bottom: 25px; text-align: left; line-height: 1.5;">
-            💡 <strong>Developer Note:</strong> Since this is a local development instance, inspect the <strong>FastAPI server terminal logs</strong> to view the mock email reset link.
-          </div>
-          <button type="button" class="btn btn-primary btn-block" (click)="resetForgotState()">
+          <button type="button" class="btn btn-primary btn-block" (click)="resetForgotState()" style="padding: 9px;">
             Back to Login
           </button>
         </div>
 
         <!-- 2FA Form -->
         <form (ngSubmit)="onVerify2FA()" #twoFactorForm="ngForm" *ngIf="twoFactorRequired">
-          <div class="form-group" style="margin-bottom: 20px;">
-            <label class="form-label" for="2facode">Two-Factor Authentication Code</label>
-            <p style="font-size: 0.85rem; color: var(--text-light); margin-top: 4px; margin-bottom: 12px; line-height: 1.4;">
+          <div class="form-group" style="margin-bottom: 16px;">
+            <label class="form-label" for="2facode" style="font-size: 0.82rem;">Two-Factor Authentication Code</label>
+            <p style="font-size: 0.8rem; color: var(--text-light); margin-top: 4px; margin-bottom: 10px; line-height: 1.4;">
               Enter the 6-digit verification code from your Google Authenticator app.
             </p>
-            <input type="text" id="2facode" name="2facode" [(ngModel)]="twoFactorCode" class="form-control" required placeholder="123456" maxlength="6" autocomplete="off" style="text-align: center; letter-spacing: 6px; font-size: 1.4rem; font-weight: bold;" />
+            <input type="text" id="2facode" name="2facode" [(ngModel)]="twoFactorCode" class="form-control" required placeholder="123456" maxlength="6" autocomplete="off" style="text-align: center; letter-spacing: 6px; font-size: 1.3rem; font-weight: bold; padding: 8px;" />
           </div>
 
-          <button type="submit" class="btn btn-primary btn-block" [disabled]="loading">
+          <button type="submit" class="btn btn-primary btn-block" [disabled]="loading" style="padding: 10px; font-weight: 700;">
             {{ loading ? 'Verifying...' : 'Verify & Login' }}
           </button>
 
-          <button type="button" class="btn btn-outline btn-block" (click)="cancel2FA()" style="margin-top: 10px; border: 1px solid #CBD5E1; background: white; border-radius: 6px; cursor: pointer;">
+          <button type="button" class="btn btn-outline btn-block" (click)="cancel2FA()" style="margin-top: 10px; border: 1px solid #CBD5E1; background: white; border-radius: 6px; cursor: pointer; padding: 8px;">
             ← Back to Login
           </button>
         </form>
 
-        <div class="back-link">
-          <a routerLink="/">← Back to Home Page</a>
+        <div class="back-link" style="margin-top: 14px;">
+          <a routerLink="/" style="font-size: 0.82rem;">← Back to Home Page</a>
         </div>
       </div>
     </div>
   `,
   styles: [`
     .login-wrapper {
-      min-height: 100vh;
+      height: 100vh;
+      width: 100vw;
       display: flex;
       align-items: center;
       justify-content: center;
-      background-color: var(--bg-cream);
-      padding: 24px;
+      background: linear-gradient(135deg, rgba(15, 23, 42, 0.75), rgba(30, 58, 138, 0.65)), url('/assets/images/space_exploration.png') center/cover no-repeat;
+      padding: 16px;
+      overflow: hidden;
+      box-sizing: border-box;
+      position: relative;
     }
 
     .login-card {
-      background-color: var(--white);
-      padding: 40px;
-      border-radius: var(--border-radius-lg);
-      box-shadow: 0 10px 40px rgba(0,0,0,0.06);
+      background-color: rgba(255, 255, 255, 0.96);
+      backdrop-filter: blur(12px);
+      padding: 28px 40px;
+      border-radius: 24px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3), 0 0 25px rgba(59, 130, 246, 0.25);
       width: 100%;
-      max-width: 420px;
-      border: 3px solid var(--secondary);
+      max-width: 650px;
+      border: 3px solid #60A5FA;
+      box-sizing: border-box;
+      max-height: 98vh;
+      overflow-y: auto;
+      position: relative;
+      z-index: 2;
     }
+
 
     .brand {
       text-align: center;
-      margin-bottom: 30px;
+      margin-bottom: 16px;
     }
 
     .logo {
-      height: 70px;
-      margin-bottom: 12px;
+      height: 48px;
+      margin-bottom: 6px;
       object-fit: contain;
     }
 
     .brand h2 {
       color: var(--primary);
-      font-size: 1.6rem;
+      font-size: 1.35rem;
       font-family: var(--font-heading);
-      margin-bottom: 6px;
+      margin-bottom: 2px;
     }
 
     .brand p {
-      font-size: 0.9rem;
+      font-size: 0.82rem;
       color: var(--text-light);
+      margin: 0;
     }
 
     .alert {
-      padding: 12px;
+      padding: 10px;
       background-color: #FEE2E2;
       color: #991B1B;
       border-radius: var(--border-radius-sm);
-      font-size: 0.9rem;
-      margin-bottom: 20px;
+      font-size: 0.85rem;
+      margin-bottom: 14px;
       font-weight: 600;
     }
 
     .btn-block {
       width: 100%;
-      padding: 12px;
-      margin-top: 10px;
+      padding: 10px;
+      margin-top: 6px;
     }
 
     .btn-refresh:hover {
@@ -197,13 +256,13 @@ import { AuthService } from '../../../core/services/auth.service';
 
     .back-link {
       text-align: center;
-      margin-top: 24px;
+      margin-top: 12px;
     }
 
     .back-link a {
       color: var(--text-light);
       text-decoration: none;
-      font-size: 0.9rem;
+      font-size: 0.82rem;
       font-weight: 600;
       transition: var(--transition);
     }
@@ -212,6 +271,7 @@ import { AuthService } from '../../../core/services/auth.service';
       color: var(--primary);
     }
   `]
+
 })
 export class LoginComponent implements OnInit {
   loginData = { email: '', password: '' };
@@ -256,11 +316,60 @@ export class LoginComponent implements OnInit {
     }
   }
 
+  // Class-Based Parent Login State
+  activePortalTab: 'staff' | 'parent' = 'staff';
+  parentClasses: any[] = [];
+  selectedParentClassId: number | null = null;
+  selectedParentStudentId: number | null = null;
+  selectedParentStudents: any[] = [];
+
   ngOnInit(): void {
     this.loadCaptcha();
+    this.loadParentClasses();
+  }
+
+  setPortalTab(tab: 'staff' | 'parent'): void {
+    this.activePortalTab = tab;
+    if (tab === 'parent' && this.parentClasses.length === 0) {
+      this.loadParentClasses();
+    }
+  }
+
+  loadParentClasses(): void {
+    this.authService.getParentClasses().subscribe({
+      next: (res) => {
+        this.parentClasses = res;
+        if (res.length > 0) {
+          this.selectedParentClassId = res[0].program_id;
+          this.onParentClassChange();
+        }
+      },
+      error: () => {}
+    });
+  }
+
+  onParentClassChange(): void {
+    const cls = this.parentClasses.find(c => c.program_id === Number(this.selectedParentClassId));
+    if (cls && cls.students.length > 0) {
+      this.selectedParentStudents = cls.students;
+      this.selectedParentStudentId = cls.students[0].student_id;
+      this.onParentStudentChange();
+    } else {
+      this.selectedParentStudents = [];
+      this.selectedParentStudentId = null;
+    }
+  }
+
+  onParentStudentChange(): void {
+    const std = this.selectedParentStudents.find(s => s.student_id === Number(this.selectedParentStudentId));
+    if (std) {
+      this.loginData.email = std.parent_email;
+      this.loginData.password = std.default_password || 'Parent@123';
+    }
   }
 
   loadCaptcha(): void {
+
     this.authService.getCaptcha().subscribe({
       next: (res) => {
         this.captchaId = res.captcha_id;

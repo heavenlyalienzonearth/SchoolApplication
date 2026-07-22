@@ -3,7 +3,9 @@ from sqlalchemy.orm import Session
 from app.core.database import get_db
 from app.api.v1.auth import get_current_user, require_permission
 from app import models, schemas
-from typing import List
+from typing import List, Optional
+from sqlalchemy import or_
+
 
 router = APIRouter(prefix="/meals", tags=["Meal Planner"])
 
@@ -63,28 +65,48 @@ def delete_meal_plan(
 
 @router.get("/suspensions")
 def list_meal_suspensions(
+    program_id: Optional[int] = None,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_permission("leaves"))
 ):
-        
-    suspensions = db.query(models.MealSuspensionRequest).join(
+    query = db.query(models.MealSuspensionRequest).join(
         models.Student, models.MealSuspensionRequest.student_id == models.Student.id
-    ).order_by(models.MealSuspensionRequest.created_at.desc()).all()
+    )
+    
+    if current_user.role and current_user.role.upper() == "TEACHER":
+        filters = []
+        if current_user.assigned_program_id:
+            filters.append(models.Student.program_id == current_user.assigned_program_id)
+        filters.append(models.Student.teacher_id == current_user.id)
+        if filters:
+            query = query.filter(or_(*filters))
+    elif program_id:
+        query = query.filter(models.Student.program_id == program_id)
+
+    if program_id and current_user.role and current_user.role.upper() == "TEACHER":
+        query = query.filter(models.Student.program_id == program_id)
+        
+    suspensions = query.order_by(models.MealSuspensionRequest.created_at.desc()).all()
     
     res = []
     for s in suspensions:
         res.append({
             "id": s.id,
             "student_id": s.student_id,
-            "student_name": s.student.name,
+            "student_name": s.student.name if s.student else "Unknown Student",
+            "program_title": s.student.program.title if s.student and s.student.program else "N/A",
+            "program_id": s.student.program_id if s.student else None,
             "request_date": s.request_date,
+            "date": s.request_date,
             "reason": s.reason,
+            "note": s.reason,
             "status": s.status,
             "acknowledged_by": s.acknowledged_by,
             "acknowledged_at": s.acknowledged_at.isoformat() if s.acknowledged_at else None,
             "created_at": s.created_at.isoformat()
         })
     return res
+
 
 @router.post("/suspensions/{suspension_id}/acknowledge")
 def acknowledge_meal_suspension(
