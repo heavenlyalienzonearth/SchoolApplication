@@ -163,6 +163,11 @@ export class DashboardComponent implements OnInit, OnDestroy {
     is_active: true
   };
   editingCircularId: number | null = null;
+  // Circular Delete Confirmation Modal
+  showCircularDeleteModal = false;
+  circularDeleteId: number | null = null;
+  circularDeleteTitle = '';
+  deletingCircular = false;
 
   // Library State
   booksList: any[] = [];
@@ -176,6 +181,22 @@ export class DashboardComponent implements OnInit, OnDestroy {
     total_copies: 1
   };
   editingBookId: number | null = null;
+  // Library Delete Confirmation Modal
+  showLibraryDeleteModal = false;
+  libraryDeleteBookId: number | null = null;
+  libraryDeleteBookTitle = '';
+  deletingBook = false;
+  // Library Search
+  bookSearchQuery = '';
+  get filteredBooksList(): any[] {
+    const q = this.bookSearchQuery.trim().toLowerCase();
+    if (!q) return this.booksList;
+    return this.booksList.filter(b =>
+      (b.title || '').toLowerCase().includes(q) ||
+      (b.author || '').toLowerCase().includes(q) ||
+      (b.isbn || '').toLowerCase().includes(q)
+    );
+  }
   newBorrow: { book_id: number | null; student_id: number | null; borrow_date: string; due_date: string } = {
     book_id: null,
     student_id: null,
@@ -2739,18 +2760,44 @@ export class DashboardComponent implements OnInit, OnDestroy {
     };
   }
 
+  openCircularDeleteModal(id: number, title: string): void {
+    this.circularDeleteId = id;
+    this.circularDeleteTitle = title;
+    this.showCircularDeleteModal = true;
+  }
+
+  cancelCircularDelete(): void {
+    this.showCircularDeleteModal = false;
+    this.circularDeleteId = null;
+    this.circularDeleteTitle = '';
+    this.deletingCircular = false;
+  }
+
+  confirmCircularDelete(): void {
+    if (!this.circularDeleteId) return;
+    this.deletingCircular = true;
+    this.contentService.deleteCircular(this.circularDeleteId).subscribe({
+      next: () => {
+        this.deletingCircular = false;
+        this.showCircularDeleteModal = false;
+        this.circularDeleteId = null;
+        this.circularDeleteTitle = '';
+        this.showToast('🎉 Circular deleted successfully!');
+        this.loadCirculars();
+      },
+      error: (err) => {
+        this.deletingCircular = false;
+        this.showCircularDeleteModal = false;
+        this.circularDeleteId = null;
+        this.circularDeleteTitle = '';
+        this.showToast('❌ Failed to delete circular: ' + (err.error?.detail || err.message), 'error');
+      }
+    });
+  }
+
+  // Legacy alias
   deleteCircularFromRoster(id: number): void {
-    if (confirm('Are you sure you want to delete this circular?')) {
-      this.contentService.deleteCircular(id).subscribe({
-        next: () => {
-          this.showToast('🎉 Circular deleted successfully!');
-          this.loadCirculars();
-        },
-        error: (err) => {
-          this.showToast('❌ Failed to delete circular: ' + (err.error?.detail || err.message), 'error');
-        }
-      });
-    }
+    this.openCircularDeleteModal(id, '');
   }
 
   resetCircularForm(): void {
@@ -2819,16 +2866,44 @@ export class DashboardComponent implements OnInit, OnDestroy {
     };
   }
 
+  openLibraryDeleteModal(id: number, title: string): void {
+    this.libraryDeleteBookId = id;
+    this.libraryDeleteBookTitle = title;
+    this.showLibraryDeleteModal = true;
+  }
+
+  cancelLibraryDelete(): void {
+    this.showLibraryDeleteModal = false;
+    this.libraryDeleteBookId = null;
+    this.libraryDeleteBookTitle = '';
+    this.deletingBook = false;
+  }
+
+  confirmLibraryDelete(): void {
+    if (!this.libraryDeleteBookId) return;
+    this.deletingBook = true;
+    this.contentService.deleteBook(this.libraryDeleteBookId).subscribe({
+      next: () => {
+        this.deletingBook = false;
+        this.showLibraryDeleteModal = false;
+        this.libraryDeleteBookId = null;
+        this.libraryDeleteBookTitle = '';
+        this.showToast('🎉 Book deleted from catalog!');
+        this.loadLibraryData();
+      },
+      error: (err) => {
+        this.deletingBook = false;
+        this.showLibraryDeleteModal = false;
+        this.libraryDeleteBookId = null;
+        this.libraryDeleteBookTitle = '';
+        this.showToast('❌ Failed to delete book: ' + (err.error?.detail || err.message), 'error');
+      }
+    });
+  }
+
+  // Legacy alias
   deleteBookFromCatalog(id: number): void {
-    if (confirm('Are you sure you want to delete this book? This will also delete all its active borrows.')) {
-      this.contentService.deleteBook(id).subscribe({
-        next: () => {
-          this.showToast('🎉 Book deleted from catalog!');
-          this.loadLibraryData();
-        },
-        error: (err) => this.showToast('❌ Failed to delete book: ' + (err.error?.detail || err.message), 'error')
-      });
-    }
+    this.openLibraryDeleteModal(id, '');
   }
 
   resetBookForm(): void {

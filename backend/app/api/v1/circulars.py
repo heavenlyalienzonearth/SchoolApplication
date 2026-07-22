@@ -71,21 +71,24 @@ def create_circular(
         parent_emails = [p.email for p in parents if p.email]
         
     # Print outbox dispatch details to console
-    print("\n" + "="*60)
-    print("📢 EMAIL OUTBOX NOTIFICATION (NEW SCHOOL CIRCULAR)")
-    print(f"From: circulars@vidyankuram.edu")
-    print(f"Subject: 📢 Vidyankuram School Circular: {db_circular.title}")
-    print(f"Target Class: {target_class}")
-    if parent_emails:
-        print(f"Recipients ({len(parent_emails)}): {', '.join(parent_emails)}")
-    else:
-        print("Recipients: (No active parent email logins found for this class)")
-    print("-"*60)
-    print(f"Title: {db_circular.title}")
-    print(f"Content: {db_circular.content}")
-    if db_circular.attachment_url:
-        print(f"Attachment: {db_circular.attachment_url}")
-    print("="*60 + "\n")
+    try:
+        print("\n" + "="*60)
+        print("📢 EMAIL OUTBOX NOTIFICATION (NEW SCHOOL CIRCULAR)")
+        print(f"From: circulars@vidyankuram.edu")
+        print(f"Subject: 📢 Vidyankuram School Circular: {db_circular.title}")
+        print(f"Target Class: {target_class}")
+        if parent_emails:
+            print(f"Recipients ({len(parent_emails)}): {', '.join(parent_emails)}")
+        else:
+            print("Recipients: (No active parent email logins found for this class)")
+        print("-"*60)
+        print(f"Title: {db_circular.title}")
+        print(f"Content: {db_circular.content}")
+        if db_circular.attachment_url:
+            print(f"Attachment: {db_circular.attachment_url}")
+        print("="*60 + "\n")
+    except UnicodeEncodeError:
+        print("[CIRCULAR] New circular published - console emoji display unsupported on this terminal.")
     
     return db_circular
 
