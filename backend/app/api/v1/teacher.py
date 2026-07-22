@@ -97,12 +97,46 @@ def get_class_stationery_orders(
     if not program:
         return []
 
-    # Get parent orders matching student class
-    orders = db.query(models.StationaryOrder).filter(
-        models.StationaryOrder.class_name == program.title
-    ).order_by(models.StationaryOrder.order_date.desc()).all()
-
-    return orders
+    # Get all students in this program
+    program_students = db.query(models.Student).filter(models.Student.program_id == program.id).all()
+    
+    # Check if teacher assignments exist in this program
+    has_assignments = any(s.teacher_id is not None for s in program_students)
+    
+    if has_assignments:
+        # Get students specifically assigned to THIS logged-in teacher
+        assigned_students = [s for s in program_students if s.teacher_id == current_user.id]
+        if not assigned_students:
+            return []
+            
+        assigned_student_names = {s.name.strip().lower() for s in assigned_students if s.name}
+        assigned_student_ids = {s.id for s in assigned_students}
+        
+        # Get parent user IDs linked to these assigned students
+        parent_user_ids = {
+            u.id for u in db.query(models.User).filter(
+                models.User.student_id.in_(assigned_student_ids)
+            ).all()
+        }
+        
+        # Query orders matching program title AND belonging to assigned students/parents
+        all_class_orders = db.query(models.StationaryOrder).filter(
+            models.StationaryOrder.class_name == program.title
+        ).order_by(models.StationaryOrder.order_date.desc()).all()
+        
+        filtered_orders = []
+        for ord in all_class_orders:
+            ord_student_name = (ord.student_name or "").strip().lower()
+            if ord_student_name in assigned_student_names or ord.created_by_id in parent_user_ids:
+                filtered_orders.append(ord)
+                
+        return filtered_orders
+    else:
+        # Fallback: if no teacher assignments exist at all in this program, show all program orders
+        orders = db.query(models.StationaryOrder).filter(
+            models.StationaryOrder.class_name == program.title
+        ).order_by(models.StationaryOrder.order_date.desc()).all()
+        return orders
 
 # 3. GET /teacher/achievements
 @router.get("/achievements", response_model=List[schemas.TeacherAchievementResponse])
