@@ -298,8 +298,8 @@ import { AssignmentService, ClassAssignment } from '../../core/services/assignme
                         <span style="font-size: 0.72rem; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px; display: block; margin-bottom: 8px;">📎 Assignment Attachments</span>
                         <div style="display: flex; flex-direction: column; gap: 6px;">
                           <div *ngFor="let file of parseFilesList(assign.files_json)">
-                            <a [href]="mediaBaseUrl + file" target="_blank" [download]="getFileNameFromUrl(file)" style="display: inline-flex; align-items: center; gap: 6px; font-size: 0.76rem; font-weight: 700; color: var(--primary); text-decoration: none; padding: 6px 12px; background: white; border: 1.5px solid var(--primary); border-radius: 6px; transition: all 0.2s;" onmouseover="this.style.background='var(--primary)'; this.style.color='white'" onmouseout="this.style.background='white'; this.style.color='var(--primary)'">
-                              📥 {{ getFileNameFromUrl(file) | slice:0:30 }}
+                            <a [href]="mediaBaseUrl + file" target="_blank" [download]="getFileNameFromUrl(file)" [title]="getFileNameFromUrl(file)" style="display: inline-flex; align-items: center; gap: 6px; font-size: 0.76rem; font-weight: 700; color: var(--primary); text-decoration: none; padding: 6px 12px; background: white; border: 1.5px solid var(--primary); border-radius: 6px; transition: all 0.2s;" onmouseover="this.style.background='var(--primary)'; this.style.color='white'" onmouseout="this.style.background='white'; this.style.color='var(--primary)'">
+                              📥 {{ getFileNameFromUrl(file) }}
                             </a>
                           </div>
                         </div>

@@ -383,7 +383,7 @@ import { MomentsService, StudentMoment } from '../../core/services/moments.servi
                   
                   <div class="asg-files-list">
                     <div *ngFor="let file of parseFilesList(asg.files_json)" class="asg-file-pill">
-                      <a [href]="getMediaUrl(file, '')" target="_blank">📄 {{ getFileNameFromUrl(file) | slice:0:30 }}</a>
+                      <a [href]="getMediaUrl(file, '')" target="_blank" [title]="getFileNameFromUrl(file)">📄 {{ getFileNameFromUrl(file) }}</a>
                     </div>
                   </div>
 
@@ -547,6 +547,48 @@ import { MomentsService, StudentMoment } from '../../core/services/moments.servi
           <div style="padding: 16px 28px 24px; text-align: right; border-top: 1px solid #f1f5f9;">
             <button type="button" (click)="closePupilsModal()" style="padding: 10px 24px; background: #0f172a; color: white; border: none; border-radius: 8px; font-weight: 800; font-size: 0.88rem; cursor: pointer;">
               Close Roster
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- 1. CUSTOM SUCCESS / CONFIRMATION MODAL -->
+      <div class="custom-modal-backdrop animate-fade-in" *ngIf="showSuccessModal" (click)="closeSuccessModal()">
+        <div class="custom-modal-card animate-scale-up" (click)="$event.stopPropagation()" style="max-width: 440px; text-align: center; padding: 32px 28px; background: white; border-radius: 16px; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1), 0 10px 10px -5px rgba(0,0,0,0.04);">
+          <div style="width: 64px; height: 64px; border-radius: 50%; background: #DCFCE7; border: 2px solid #86EFAC; color: #16A34A; display: flex; align-items: center; justify-content: center; font-size: 2.2rem; margin: 0 auto 18px auto; box-shadow: 0 4px 12px rgba(22,163,74,0.15);">
+            ✨
+          </div>
+          <h3 style="margin: 0 0 8px 0; font-size: 1.35rem; font-weight: 800; color: #0F172A;">{{ successModalTitle }}</h3>
+          <p style="margin: 0 0 24px 0; font-size: 0.9rem; color: #475569; line-height: 1.55;">{{ successModalMessage }}</p>
+          <button (click)="closeSuccessModal()" class="btn btn-primary" style="width: 100%; padding: 12px; font-weight: 700; border-radius: 8px; font-size: 0.95rem; background: linear-gradient(135deg, #2563EB, #1D4ED8); border: none; color: white; cursor: pointer; box-shadow: 0 4px 12px rgba(37,99,235,0.25);">
+            Great, Got It! 👍
+          </button>
+        </div>
+      </div>
+
+      <!-- 2. CUSTOM DELETE CONFIRMATION MODAL -->
+      <div class="custom-modal-backdrop animate-fade-in" *ngIf="showDeleteModal" (click)="closeDeleteModal()">
+        <div class="custom-modal-card animate-scale-up" (click)="$event.stopPropagation()" style="max-width: 450px; padding: 28px; background: white; border-radius: 16px; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1), 0 10px 10px -5px rgba(0,0,0,0.04);">
+          <div style="display: flex; align-items: center; gap: 14px; margin-bottom: 16px; border-bottom: 1.5px solid #F1F5F9; padding-bottom: 14px;">
+            <div style="width: 48px; height: 48px; border-radius: 12px; background: #FEE2E2; border: 1.5px solid #FCA5A5; color: #DC2626; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; flex-shrink: 0;">
+              🗑️
+            </div>
+            <div>
+              <h3 style="margin: 0; font-size: 1.2rem; font-weight: 800; color: #991B1B;">{{ deleteModalTitle }}</h3>
+              <span style="font-size: 0.76rem; font-weight: 700; color: #EF4444; text-transform: uppercase; letter-spacing: 0.5px;">Confirmation Required</span>
+            </div>
+          </div>
+
+          <p style="margin: 0 0 24px 0; font-size: 0.9rem; color: #334155; line-height: 1.55;">
+            {{ deleteModalMessage }}
+          </p>
+
+          <div style="display: flex; justify-content: flex-end; gap: 12px;">
+            <button (click)="closeDeleteModal()" class="btn btn-secondary" style="padding: 10px 20px; font-weight: 700; border-radius: 8px; border: 1.5px solid #CBD5E1; background: #F8FAFC; color: #475569; cursor: pointer;">
+              Cancel
+            </button>
+            <button (click)="confirmDeleteAction()" class="btn btn-danger" style="padding: 10px 20px; font-weight: 700; border-radius: 8px; border: none; background: #DC2626; color: white; cursor: pointer; box-shadow: 0 4px 12px rgba(220,38,38,0.25);">
+              🗑️ Yes, Delete Permanently
             </button>
           </div>
         </div>
@@ -1136,6 +1178,42 @@ import { MomentsService, StudentMoment } from '../../core/services/moments.servi
       from { opacity: 0; transform: translateY(4px); }
       to { opacity: 1; transform: translateY(0); }
     }
+    /* Custom Modal Popup Backdrop & Card Styling */
+    .custom-modal-backdrop {
+      position: fixed !important;
+      top: 0 !important;
+      left: 0 !important;
+      right: 0 !important;
+      bottom: 0 !important;
+      width: 100vw !important;
+      height: 100vh !important;
+      background: rgba(15, 23, 42, 0.65) !important;
+      backdrop-filter: blur(8px) !important;
+      -webkit-backdrop-filter: blur(8px) !important;
+      z-index: 999999 !important;
+      display: flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+      padding: 20px !important;
+      box-sizing: border-box !important;
+    }
+    .custom-modal-card {
+      position: relative !important;
+      z-index: 1000000 !important;
+      width: 100% !important;
+      margin: auto !important;
+      animation: modalScaleUp 0.25s ease-out forwards;
+    }
+    @keyframes modalScaleUp {
+      from {
+        opacity: 0;
+        transform: scale(0.92) translateY(10px);
+      }
+      to {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+      }
+    }
     @media (max-width: 900px) {
       .grid-two-cols {
         grid-template-columns: 1fr;
@@ -1159,6 +1237,17 @@ export class TeacherDashboardComponent implements OnInit, OnDestroy {
 
   imageError = false;
   showPupilsModal = false;
+
+  // Custom Popups State
+  showSuccessModal = false;
+  successModalTitle = '';
+  successModalMessage = '';
+
+  showDeleteModal = false;
+  deleteModalTitle = '';
+  deleteModalMessage = '';
+  itemToDeleteType: 'assignment' | 'moment' | 'achievement' | null = null;
+  itemToDeleteId: number | null = null;
 
   activeTab: 'orders' | 'pupils' | 'achievements' | 'assignments' | 'moments' = 'orders';
   ordersLoading = false;
@@ -1201,6 +1290,79 @@ export class TeacherDashboardComponent implements OnInit, OnDestroy {
   momentSelectedStudentId: number | null = null;
   loginTime = '';
   clockInterval: any;
+
+  // --- CUSTOM POPUP MODAL HELPERS ---
+  openSuccessModal(title: string, message: string): void {
+    this.successModalTitle = title;
+    this.successModalMessage = message;
+    this.showSuccessModal = true;
+  }
+
+  closeSuccessModal(): void {
+    this.showSuccessModal = false;
+  }
+
+  openDeleteModal(type: 'assignment' | 'moment' | 'achievement', id: number, title?: string): void {
+    this.itemToDeleteType = type;
+    this.itemToDeleteId = id;
+    if (type === 'assignment') {
+      this.deleteModalTitle = 'Delete Class Assignment';
+      this.deleteModalMessage = `Are you sure you want to delete "${title || 'this assignment'}"? This action cannot be undone.`;
+    } else if (type === 'moment') {
+      this.deleteModalTitle = 'Delete Daily Moment';
+      this.deleteModalMessage = 'Are you sure you want to delete this daily moment media record? This action cannot be undone.';
+    } else if (type === 'achievement') {
+      this.deleteModalTitle = 'Delete Achievement Record';
+      this.deleteModalMessage = 'Are you sure you want to permanently delete this achievement record? This action cannot be undone.';
+    }
+    this.showDeleteModal = true;
+  }
+
+  closeDeleteModal(): void {
+    this.showDeleteModal = false;
+    this.itemToDeleteType = null;
+    this.itemToDeleteId = null;
+  }
+
+  confirmDeleteAction(): void {
+    if (!this.itemToDeleteType || !this.itemToDeleteId) return;
+
+    const type = this.itemToDeleteType;
+    const id = this.itemToDeleteId;
+    this.closeDeleteModal();
+
+    if (type === 'assignment') {
+      this.assignmentService.deleteAssignment(id).subscribe({
+        next: (res) => {
+          this.openSuccessModal('Assignment Deleted', res.message || 'Assignment deleted successfully.');
+          this.loadDashboardData();
+        },
+        error: (err) => {
+          this.openSuccessModal('Error', err.error?.detail || 'Failed to delete assignment.');
+        }
+      });
+    } else if (type === 'moment') {
+      this.momentsService.deleteMoment(id).subscribe({
+        next: (res: any) => {
+          this.openSuccessModal('Moment Deleted', res.message || 'Moment deleted successfully.');
+          this.loadMoments();
+        },
+        error: (err: any) => {
+          this.openSuccessModal('Error', err.error?.detail || 'Failed to delete moment.');
+        }
+      });
+    } else if (type === 'achievement') {
+      this.teacherService.deleteAchievement(id).subscribe({
+        next: (res) => {
+          this.openSuccessModal('Achievement Deleted', res.message || 'Achievement deleted successfully.');
+          this.loadDashboardData();
+        },
+        error: (err) => {
+          this.openSuccessModal('Error', err.error?.detail || 'Failed to delete achievement.');
+        }
+      });
+    }
+  }
 
   constructor(
     private authService: AuthService,
@@ -1360,28 +1522,19 @@ export class TeacherDashboardComponent implements OnInit, OnDestroy {
     this.teacherService.uploadAchievement(formData).subscribe({
       next: () => {
         this.savingAchievement = false;
-        alert('Achievement logged successfully!');
         this.resetAchievementForm();
         this.loadDashboardData();
+        this.openSuccessModal('Achievement Saved!', 'Teaching achievement portfolio record has been saved successfully.');
       },
       error: (err) => {
         this.savingAchievement = false;
-        alert(err.error?.detail || 'Failed to save achievement.');
+        this.openSuccessModal('Save Failed', err.error?.detail || 'Failed to save achievement.');
       }
     });
   }
 
   deleteAchievement(id: number): void {
-    if (!confirm('Are you sure you want to permanently delete this achievement record?')) return;
-    this.teacherService.deleteAchievement(id).subscribe({
-      next: (res) => {
-        alert(res.message || 'Achievement deleted successfully.');
-        this.loadDashboardData();
-      },
-      error: (err) => {
-        alert(err.error?.detail || 'Failed to delete achievement.');
-      }
-    });
+    this.openDeleteModal('achievement', id);
   }
 
   resetAchievementForm(): void {
@@ -1443,28 +1596,21 @@ export class TeacherDashboardComponent implements OnInit, OnDestroy {
     this.assignmentService.uploadAssignment(formData).subscribe({
       next: () => {
         this.uploadingAssignment = false;
-        alert('Worksheet uploaded successfully!');
         this.resetAssignmentForm();
         this.loadDashboardData();
+        this.openSuccessModal('Worksheet Uploaded!', 'Daily class assignment has been uploaded and shared with pupils/parents successfully.');
       },
       error: (err) => {
         this.uploadingAssignment = false;
-        alert(err.error?.detail || 'Failed to upload assignment.');
+        this.openSuccessModal('Upload Failed', err.error?.detail || 'Failed to upload assignment.');
       }
     });
   }
 
-  deleteAssignment(id: number): void {
-    if (!confirm('Are you sure you want to delete this class assignment?')) return;
-    this.assignmentService.deleteAssignment(id).subscribe({
-      next: (res) => {
-        alert(res.message || 'Assignment deleted successfully.');
-        this.loadDashboardData();
-      },
-      error: (err) => {
-        alert(err.error?.detail || 'Failed to delete assignment.');
-      }
-    });
+  deleteAssignment(asg: any): void {
+    const id = typeof asg === 'number' ? asg : asg.id;
+    const title = typeof asg === 'object' ? asg.title : '';
+    this.openDeleteModal('assignment', id, title);
   }
 
   resetAssignmentForm(): void {
@@ -1528,28 +1674,19 @@ export class TeacherDashboardComponent implements OnInit, OnDestroy {
     ).subscribe({
       next: () => {
         this.uploadingMoment = false;
-        alert('Daily moments shared successfully!');
         this.resetMomentForm();
         this.loadMoments();
+        this.openSuccessModal('Daily Moment Shared!', 'Daily class moment/photo has been uploaded and shared with pupil parents successfully.');
       },
       error: (err: any) => {
         this.uploadingMoment = false;
-        alert(err.error?.detail || 'Failed to upload moments.');
+        this.openSuccessModal('Upload Failed', err.error?.detail || 'Failed to upload moments.');
       }
     });
   }
 
   deleteMoment(id: number): void {
-    if (!confirm('Are you sure you want to delete this daily moment?')) return;
-    this.momentsService.deleteMoment(id).subscribe({
-      next: (res: any) => {
-        alert(res.message || 'Moment deleted successfully.');
-        this.loadMoments();
-      },
-      error: (err: any) => {
-        alert(err.error?.detail || 'Failed to delete moment.');
-      }
-    });
+    this.openDeleteModal('moment', id);
   }
 
   resetMomentForm(): void {
@@ -1572,7 +1709,11 @@ export class TeacherDashboardComponent implements OnInit, OnDestroy {
   }
 
   getFileNameFromUrl(url: string): string {
-    return url.substring(url.lastIndexOf('/') + 1);
+    if (!url) return '';
+    let name = url.substring(url.lastIndexOf('/') + 1);
+    name = name.replace(/^[a-f0-9]{32}_/i, '');
+    name = name.replace(/_[a-f0-9]{6}(\.[a-zA-Z0-9]+)$/i, '$1');
+    return name;
   }
 
   getMediaUrl(url: string | null | undefined, defaultUrl: string): string {

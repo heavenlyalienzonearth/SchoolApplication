@@ -1,6 +1,7 @@
 import os
 import json
 import uuid
+import re
 from datetime import datetime, timedelta
 from typing import List
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Form, status
@@ -59,17 +60,30 @@ def upload_assignment(
 
     uploaded_files = []
     for file in files:
-        # Generate safe unique filename
-        ext = os.path.splitext(file.filename)[1]
-        unique_filename = f"{uuid.uuid4().hex}{ext}"
-        file_path = os.path.join(UPLOAD_DIR, unique_filename)
+        # Preserve original filename while ensuring safety and avoiding collisions
+        raw_filename = os.path.basename(file.filename or "assignment")
+        base_name, ext = os.path.splitext(raw_filename)
+        
+        # Clean base_name to keep letters, digits, spaces, hyphens, underscores
+        clean_base = re.sub(r'[^\w\s\.\-]', '_', base_name).strip()
+        if not clean_base:
+            clean_base = "assignment"
+            
+        target_filename = f"{clean_base}{ext}"
+        file_path = os.path.join(UPLOAD_DIR, target_filename)
+        
+        # If file with exact name already exists in static/assignments, append a short 6-char hash to prevent overwrite
+        if os.path.exists(file_path):
+            unique_suffix = uuid.uuid4().hex[:6]
+            target_filename = f"{clean_base}_{unique_suffix}{ext}"
+            file_path = os.path.join(UPLOAD_DIR, target_filename)
         
         # Save file to static folder
         with open(file_path, "wb") as f:
             f.write(file.file.read())
             
         # Store relative url path (compatible with Hostinger VPS and local dev)
-        uploaded_files.append(f"/static/assignments/{unique_filename}")
+        uploaded_files.append(f"/static/assignments/{target_filename}")
 
     assignment = models.ClassAssignment(
         program_id=program_id,
