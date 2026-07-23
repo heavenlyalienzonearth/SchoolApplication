@@ -61,8 +61,12 @@ import { AssignmentService, ClassAssignment } from '../../core/services/assignme
           <button class="tab-btn-pill" [class.active]="activeTab === 'stationary'" (click)="setTab('stationary')" *ngIf="hasPermission('stationary')">
             <span>✏️</span> Stationery Store
           </button>
+          <button class="tab-btn-pill" [class.active]="activeTab === 'storybook'" (click)="setTab('storybook')" *ngIf="hasPermission('milestones')">
+            <span>📖</span> Weekly Storybook
+          </button>
         </div>
       </div>
+
 
       <!-- Alert banners -->
       <div class="alert alert-danger" *ngIf="errorMessage" style="margin: 20px auto; max-width: 1200px;">
@@ -1257,6 +1261,88 @@ import { AssignmentService, ClassAssignment } from '../../core/services/assignme
             </div>
           </div>
         </div>
+
+        <!-- 9. AI WEEKLY STORYBOOK & COMIC TAB -->
+        <div *ngIf="activeTab === 'storybook'" class="tab-content animate-fade-in" style="padding: 20px 0;">
+          <div style="text-align: center; margin-bottom: 30px;">
+            <span style="background: #EFF6FF; color: #2563EB; border: 1.5px solid #BFDBFE; padding: 4px 16px; border-radius: 9999px; font-size: 0.8rem; font-weight: 800; text-transform: uppercase; letter-spacing: 1.5px; display: inline-block; margin-bottom: 8px;">
+              ✨ AI Storyteller
+            </span>
+            <h2 style="margin: 0 0 6px 0; color: #0F172A; font-size: 1.8rem; font-weight: 900;">📖 {{ dashboardData?.kid?.name }}'s Weekly Comic Storybook</h2>
+            <p style="color: #64748B; font-size: 0.95rem; margin: 0;">Interactive illustrated 3-panel progress storybook generated from classroom milestones, kudos badges, and daily moments.</p>
+          </div>
+
+          <div *ngIf="loadingParentStories" style="text-align: center; padding: 60px; color: #64748B;">
+            <div class="spinner"></div>
+            <p style="margin-top: 15px; font-weight: 600;">Retrieving child's storybooks...</p>
+          </div>
+
+          <div *ngIf="!loadingParentStories && parentStories.length === 0" class="card" style="text-align: center; padding: 60px 20px; background: white; border-radius: 20px; border: 2px dashed #CBD5E1; max-width: 800px; margin: 0 auto;">
+            <div style="font-size: 3.5rem; margin-bottom: 15px;">📚</div>
+            <h3 style="color: #1E293B; margin-bottom: 8px; font-weight: 800;">No Storybooks Generated Yet</h3>
+            <p style="color: #64748B; font-size: 0.9rem; max-width: 500px; margin: 0 auto;">Your classroom teacher will generate a personalized 3-panel illustrated storybook summarizing {{ dashboardData?.kid?.name }}'s weekly achievements!</p>
+          </div>
+
+          <div *ngIf="!loadingParentStories && parentStories.length > 0" style="display: flex; flex-direction: column; gap: 40px; max-width: 900px; margin: 0 auto;">
+            <div *ngFor="let st of parentStories" 
+                 [style.background]="st.theme === 'space' ? 'linear-gradient(135deg, #0F172A, #1E3A8A)' : st.theme === 'jungle' ? 'linear-gradient(135deg, #064E3B, #15803D)' : st.theme === 'superhero' ? 'linear-gradient(135deg, #7F1D1D, #B91C1C)' : 'linear-gradient(135deg, #581C87, #7E22CE)'"
+                 style="border-radius: 24px; padding: 30px; color: white; box-shadow: 0 20px 50px rgba(0,0,0,0.15); position: relative; overflow: hidden; border: 3px solid rgba(255,255,255,0.2);">
+              
+              <!-- Header Bar -->
+              <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.2); padding-bottom: 16px; margin-bottom: 24px;">
+                <div>
+                  <span style="background: rgba(255,255,255,0.2); backdrop-filter: blur(8px); padding: 4px 12px; border-radius: 20px; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 1px;">
+                    {{ st.week_label }}
+                  </span>
+                  <h3 style="margin: 10px 0 0 0; font-size: 1.6rem; font-weight: 900; color: #FFFFFF; text-shadow: 0 2px 4px rgba(0,0,0,0.3);">
+                    {{ cleanTitle(st.story_title, st.theme) }}
+                  </h3>
+                </div>
+                <button type="button" (click)="printStory(st)" style="background: white; color: #0F172A; border: none; border-radius: 10px; padding: 10px 18px; font-weight: 800; font-size: 0.85rem; cursor: pointer; display: flex; align-items: center; gap: 6px; box-shadow: 0 4px 12px rgba(0,0,0,0.15);">
+                  🖨️ Print Storybook
+                </button>
+              </div>
+
+              <!-- 3 Comic Panels Grid -->
+              <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 18px; margin-bottom: 24px;">
+                <!-- Panel 1 -->
+                <div style="background: rgba(255,255,255,0.96); color: #0F172A; border-radius: 18px; padding: 20px; text-align: center; border: 3px solid #60A5FA; box-shadow: 0 10px 25px rgba(0,0,0,0.1);">
+                  <div style="font-size: 3.2rem; margin-bottom: 8px;">{{ cleanIcon(st.panel1_icon, st.theme, 1) }}</div>
+                  <span style="font-size: 0.7rem; font-weight: 800; color: #2563EB; text-transform: uppercase; letter-spacing: 1px; display: block; margin-bottom: 4px;">Panel 1</span>
+                  <h4 style="margin: 0 0 8px 0; font-size: 1rem; font-weight: 800; color: #1E3A8A;">{{ st.panel1_title }}</h4>
+                  <p style="margin: 0; font-size: 0.85rem; color: #334155; line-height: 1.5;">{{ st.panel1_text }}</p>
+                </div>
+
+                <!-- Panel 2 -->
+                <div style="background: rgba(255,255,255,0.96); color: #0F172A; border-radius: 18px; padding: 20px; text-align: center; border: 3px solid #FBBF24; box-shadow: 0 10px 25px rgba(0,0,0,0.1);">
+                  <div style="font-size: 3.2rem; margin-bottom: 8px;">{{ cleanIcon(st.panel2_icon, st.theme, 2) }}</div>
+                  <span style="font-size: 0.7rem; font-weight: 800; color: #D97706; text-transform: uppercase; letter-spacing: 1px; display: block; margin-bottom: 4px;">Panel 2</span>
+                  <h4 style="margin: 0 0 8px 0; font-size: 1rem; font-weight: 800; color: #92400E;">{{ st.panel2_title }}</h4>
+                  <p style="margin: 0; font-size: 0.85rem; color: #334155; line-height: 1.5;">{{ st.panel2_text }}</p>
+                </div>
+
+                <!-- Panel 3 -->
+                <div style="background: rgba(255,255,255,0.96); color: #0F172A; border-radius: 18px; padding: 20px; text-align: center; border: 3px solid #34D399; box-shadow: 0 10px 25px rgba(0,0,0,0.1);">
+                  <div style="font-size: 3.2rem; margin-bottom: 8px;">{{ cleanIcon(st.panel3_icon, st.theme, 3) }}</div>
+                  <span style="font-size: 0.7rem; font-weight: 800; color: #059669; text-transform: uppercase; letter-spacing: 1px; display: block; margin-bottom: 4px;">Panel 3</span>
+                  <h4 style="margin: 0 0 8px 0; font-size: 1rem; font-weight: 800; color: #065F46;">{{ st.panel3_title }}</h4>
+                  <p style="margin: 0; font-size: 0.85rem; color: #334155; line-height: 1.5;">{{ st.panel3_text }}</p>
+                </div>
+
+              </div>
+
+              <!-- Teacher Note Footnote -->
+              <div style="background: rgba(255,255,255,0.15); backdrop-filter: blur(10px); border-radius: 14px; padding: 16px 20px; display: flex; align-items: flex-start; gap: 12px; border: 1px solid rgba(255,255,255,0.25);">
+                <span style="font-size: 1.5rem; flex-shrink: 0;">👩‍🏫</span>
+                <div style="font-size: 0.88rem; line-height: 1.6; white-space: pre-wrap; word-break: break-word; flex: 1;">
+                  <strong>Classroom Supervisor Note:</strong> {{ st.teacher_note }}
+                </div>
+              </div>
+
+            </div>
+          </div>
+        </div>
+
 
         <!-- STATIONERY ORDER SUBMISSION MODAL -->
         <div class="modal-backdrop" *ngIf="showOrderModal">
@@ -3114,6 +3200,11 @@ export class ParentDashboardComponent implements OnInit, OnDestroy {
   dashboardData: any = null;
   activeTab = 'overview';
 
+  // AI Storyteller State
+  parentStories: any[] = [];
+  loadingParentStories = false;
+
+
   // Circulars State
   circularsList: any[] = [];
   selectedCircular: any = null;
@@ -3478,8 +3569,102 @@ export class ParentDashboardComponent implements OnInit, OnDestroy {
     } else if (tab === 'stationary') {
       this.loadStationaryOrders();
       this.loadStationaryCatalog();
+    } else if (tab === 'storybook') {
+      this.loadParentStories();
     }
   }
+
+  loadParentStories(): void {
+    if (!this.dashboardData?.kid?.id) return;
+    this.loadingParentStories = true;
+    this.apiService.get<any[]>(`/storyteller/student/${this.dashboardData.kid.id}`).subscribe({
+      next: (data) => {
+        this.parentStories = data;
+        this.loadingParentStories = false;
+      },
+      error: () => { this.loadingParentStories = false; }
+    });
+  }
+
+  printStory(story: any): void {
+    const printWin = window.open('', '_blank');
+    if (!printWin) return;
+    const title = this.cleanTitle(story.story_title, story.theme);
+    const p1Icon = this.cleanIcon(story.panel1_icon, story.theme, 1);
+    const p2Icon = this.cleanIcon(story.panel2_icon, story.theme, 2);
+    const p3Icon = this.cleanIcon(story.panel3_icon, story.theme, 3);
+
+    printWin.document.write(`
+      <html>
+        <head>
+          <title>${title}</title>
+          <style>
+            body { font-family: 'Segoe UI', Tahoma, sans-serif; padding: 40px; background: #fff; color: #0f172a; }
+            .header { text-align: center; margin-bottom: 30px; border-bottom: 3px solid #2563eb; padding-bottom: 15px; }
+            .header h1 { margin: 0; color: #1e3a8a; font-size: 28px; }
+            .header p { margin: 5px 0 0 0; color: #64748b; font-weight: bold; }
+            .panels { display: flex; gap: 20px; margin-bottom: 30px; }
+            .panel { flex: 1; border: 2px solid #cbd5e1; border-radius: 16px; padding: 20px; text-align: center; background: #f8fafc; }
+            .panel .icon { font-size: 48px; margin-bottom: 10px; }
+            .panel h3 { margin: 0 0 10px 0; color: #1e40af; font-size: 16px; }
+            .panel p { margin: 0; font-size: 14px; line-height: 1.5; color: #334155; }
+            .note { background: #eff6ff; border-left: 4px solid #2563eb; padding: 16px 20px; border-radius: 8px; font-size: 14px; color: #1e40af; white-space: pre-wrap; word-break: break-word; line-height: 1.6; }
+          </style>
+        </head>
+        <body>
+          <div class="header">
+            <h1>${title}</h1>
+            <p>${story.student_name || ''} • ${story.program_title || ''} • ${story.week_label || ''}</p>
+          </div>
+          <div class="panels">
+            <div class="panel">
+              <div class="icon">${p1Icon}</div>
+              <h3>${story.panel1_title}</h3>
+              <p>${story.panel1_text}</p>
+            </div>
+            <div class="panel">
+              <div class="icon">${p2Icon}</div>
+              <h3>${story.panel2_title}</h3>
+              <p>${story.panel2_text}</p>
+            </div>
+            <div class="panel">
+              <div class="icon">${p3Icon}</div>
+              <h3>${story.panel3_title}</h3>
+              <p>${story.panel3_text}</p>
+            </div>
+          </div>
+          <div class="note">
+            <strong style="display: block; margin-bottom: 6px;">👩‍🏫 Classroom Supervisor Note:</strong>${story.teacher_note}
+          </div>
+          <script>
+            window.onload = function() { window.print(); window.close(); }
+          </script>
+        </body>
+      </html>
+    `);
+    printWin.document.close();
+  }
+
+
+  cleanTitle(title: string, theme: string): string {
+    if (!title) return '';
+    let icon = theme === 'jungle' ? '🦁' : theme === 'superhero' ? '⚡' : theme === 'magic' ? '🏰' : '🚀';
+    let cleaned = title.replace(/^\?\?\s*/, '').replace(/^\?\s*/, '').trim();
+    if (!cleaned.startsWith(icon)) {
+      return `${icon} ${cleaned}`;
+    }
+    return cleaned;
+  }
+
+  cleanIcon(icon: string, theme: string, panelNum: number): string {
+    if (icon && icon !== '??' && !icon.includes('?')) return icon;
+    if (theme === 'jungle') return panelNum === 1 ? '🦁' : panelNum === 2 ? '🌴' : '👑';
+    if (theme === 'superhero') return panelNum === 1 ? '⚡' : panelNum === 2 ? '🛡️' : '🏆';
+    if (theme === 'magic') return panelNum === 1 ? '🏰' : panelNum === 2 ? '🪄' : '🌈';
+    return panelNum === 1 ? '🚀' : panelNum === 2 ? '🛸' : '⭐';
+  }
+
+
 
   loadCircularsData(): void {
     this.circularsLoading = true;

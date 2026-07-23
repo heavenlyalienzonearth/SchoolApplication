@@ -579,4 +579,34 @@ class StudentIncidentLog(Base):
     teacher = relationship("User")
 
 
+class StudentWeeklyStory(Base):
+    __tablename__ = "student_weekly_stories"
+
+    id = Column(Integer, primary_key=True, index=True)
+    student_id = Column(Integer, ForeignKey("students.id", ondelete="CASCADE"), nullable=False)
+    teacher_id = Column(Integer, ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
+    week_label = Column(String(100), nullable=False)
+    story_title = Column(String(255), nullable=False)
+    theme = Column(String(50), default="space", nullable=False)  # space, jungle, superhero, magic
+    
+    panel1_title = Column(String(255), nullable=False)
+    panel1_text = Column(Text, nullable=False)
+    panel1_icon = Column(String(50), default="🚀", nullable=False)
+
+    panel2_title = Column(String(255), nullable=False)
+    panel2_text = Column(Text, nullable=False)
+    panel2_icon = Column(String(50), default="🏆", nullable=False)
+
+    panel3_title = Column(String(255), nullable=False)
+    panel3_text = Column(Text, nullable=False)
+    panel3_icon = Column(String(50), default="🌟", nullable=False)
+
+    teacher_note = Column(Text, nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+
+    student = relationship("Student")
+    teacher = relationship("User")
+
+
+
 

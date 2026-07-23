@@ -1498,8 +1498,12 @@ import { ApiService } from '../../core/services/api.service';
               <button type="button" (click)="setMilestoneSubTab('progress')" [style.color]="milestoneActiveSubTab === 'progress' ? '#2563EB' : '#64748B'" [style.border-bottom]="milestoneActiveSubTab === 'progress' ? '3px solid #2563EB' : 'none'" style="font-weight: 800; padding: 8px 12px; background: none; border: none; cursor: pointer;">
                 ✍️ Track Student Milestones
               </button>
+              <button type="button" (click)="setMilestoneSubTab('storyteller')" [style.color]="milestoneActiveSubTab === 'storyteller' ? '#2563EB' : '#64748B'" [style.border-bottom]="milestoneActiveSubTab === 'storyteller' ? '3px solid #2563EB' : 'none'" style="font-weight: 800; padding: 8px 12px; background: none; border: none; cursor: pointer;">
+                📖 AI Weekly Storyteller & Comic
+              </button>
             </div>
           </div>
+
 
           <!-- Sub-Tab 1: Milestone Templates -->
           <div *ngIf="milestoneActiveSubTab === 'templates'" style="margin-top: 20px;">
@@ -1701,7 +1705,99 @@ import { ApiService } from '../../core/services/api.service';
               </div>
             </div>
           </div>
+
+          <!-- Sub-Tab 3: AI Weekly Storyteller -->
+          <div *ngIf="milestoneActiveSubTab === 'storyteller'" style="margin-top: 20px;">
+
+            <div style="display: grid; grid-template-columns: 1fr 2fr; gap: 24px;">
+              <!-- Left Side: Select Student & Generate Story -->
+              <div class="card" style="background: white; border-radius: 12px; border: 1.5px solid #E2E8F0; padding: 22px; box-shadow: 0 4px 6px rgba(0,0,0,0.02);">
+                <h3 style="margin-top: 0; color: #0F172A; font-size: 1.1rem; font-weight: 800; border-bottom: 1px solid #F1F5F9; padding-bottom: 10px;">✨ Generate Weekly Comic</h3>
+                
+                <div class="form-group" style="margin-top: 14px;">
+                  <label class="form-label" style="display: block; font-weight: 700; font-size: 0.82rem; color: #475569; margin-bottom: 5px;">1. Select Student</label>
+                  <select [(ngModel)]="selectedMilestoneStudentId" (change)="onMilestoneStudentChange()" class="form-control" style="width: 100%; border: 1.5px solid #CBD5E1; border-radius: 6px; padding: 8px 12px; background-color: white;">
+                    <option *ngFor="let std of filteredMilestoneStudents" [value]="std.id">{{ std.name }}</option>
+                  </select>
+                </div>
+
+                <div class="form-group" style="margin-top: 14px;">
+                  <label class="form-label" style="display: block; font-weight: 700; font-size: 0.82rem; color: #475569; margin-bottom: 5px;">2. Choose Story Theme</label>
+                  <select [(ngModel)]="storyActiveTheme" class="form-control" style="width: 100%; border: 1.5px solid #CBD5E1; border-radius: 6px; padding: 8px 12px; background-color: white;">
+                    <option value="space">🚀 Cosmic Space Explorer</option>
+                    <option value="jungle">🦁 Wild Jungle Safari</option>
+                    <option value="superhero">⚡ Super Hero League</option>
+                    <option value="magic">🏰 Enchanted Kingdom</option>
+                  </select>
+                </div>
+
+                <div class="form-group" style="margin-top: 14px;">
+                  <label class="form-label" style="display: block; font-weight: 700; font-size: 0.82rem; color: #475569; margin-bottom: 5px;">3. Custom Teacher Remarks (Optional)</label>
+                  <textarea [(ngModel)]="storyTeacherNote" class="form-control" rows="3" placeholder="Add a custom note or highlight for parents..." style="width: 100%; border: 1.5px solid #CBD5E1; border-radius: 6px; padding: 8px 12px; font-size: 0.82rem; box-sizing: border-box;"></textarea>
+                </div>
+
+                <button type="button" (click)="generateWeeklyStory()" class="btn btn-primary" [disabled]="generatingStory || !selectedMilestoneStudentId" style="width: 100%; margin-top: 18px; border: none; font-weight: 800; color: white; background: linear-gradient(135deg, #2563EB, #1D4ED8); padding: 12px; border-radius: 8px; cursor: pointer; box-shadow: 0 4px 12px rgba(37,99,235,0.25);">
+                  {{ generatingStory ? '✨ Synthesizing AI Storybook...' : '✨ Generate 3-Panel Comic Story' }}
+                </button>
+              </div>
+
+              <!-- Right Side: Preview & History Stories -->
+              <div class="card" style="background: white; border-radius: 12px; border: 1.5px solid #E2E8F0; padding: 22px; box-shadow: 0 4px 6px rgba(0,0,0,0.02);">
+                <h3 style="margin-top: 0; color: #0F172A; font-size: 1.1rem; font-weight: 800; border-bottom: 1px solid #F1F5F9; padding-bottom: 10px;">
+                  📖 Generated Storybooks for <span style="color: #2563EB;">{{ selectedMilestoneStudentName || 'Selected Pupil' }}</span>
+                </h3>
+
+                <div *ngIf="loadingStories" style="text-align: center; padding: 40px; color: #64748B;">Loading storybooks...</div>
+
+                <div *ngIf="!loadingStories && studentStories.length === 0" style="text-align: center; color: #94A3B8; font-style: italic; padding: 40px 0;">
+                  No weekly storybooks generated yet for this student. Click "Generate 3-Panel Comic Story" on the left!
+                </div>
+
+                <div *ngIf="!loadingStories && studentStories.length > 0" style="display: flex; flex-direction: column; gap: 20px;">
+                  <div *ngFor="let st of studentStories" style="border: 2px solid #3B82F6; border-radius: 16px; padding: 20px; background: #F8FAFC; box-shadow: 0 8px 20px rgba(0,0,0,0.04);">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; border-bottom: 1px solid #E2E8F0; padding-bottom: 10px;">
+                      <div>
+                        <h4 style="margin: 0; font-size: 1.15rem; font-weight: 800; color: #1E3A8A;">{{ cleanTitle(st.story_title, st.theme) }}</h4>
+                        <span style="font-size: 0.78rem; color: #64748B;">📅 {{ st.week_label }}</span>
+                      </div>
+                      <button type="button" (click)="deleteStory(st.id)" style="background: #FEE2E2; color: #991B1B; border: 1px solid #FCA5A5; border-radius: 6px; padding: 5px 10px; font-size: 0.75rem; font-weight: 700; cursor: pointer;">
+                        🗑️ Delete
+                      </button>
+                    </div>
+
+                    <!-- 3-Panel Grid -->
+                    <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 14px;">
+                      <div style="background: white; border: 1.5px solid #93C5FD; border-radius: 12px; padding: 12px; text-align: center;">
+                        <div style="font-size: 2.2rem; margin-bottom: 4px;">{{ cleanIcon(st.panel1_icon, st.theme, 1) }}</div>
+                        <h5 style="margin: 0 0 6px 0; font-size: 0.85rem; font-weight: 800; color: #1E40AF;">{{ st.panel1_title }}</h5>
+                        <p style="margin: 0; font-size: 0.78rem; color: #475569; line-height: 1.4;">{{ st.panel1_text }}</p>
+                      </div>
+
+                      <div style="background: white; border: 1.5px solid #FDE68A; border-radius: 12px; padding: 12px; text-align: center;">
+                        <div style="font-size: 2.2rem; margin-bottom: 4px;">{{ cleanIcon(st.panel2_icon, st.theme, 2) }}</div>
+                        <h5 style="margin: 0 0 6px 0; font-size: 0.85rem; font-weight: 800; color: #92400E;">{{ st.panel2_title }}</h5>
+                        <p style="margin: 0; font-size: 0.78rem; color: #475569; line-height: 1.4;">{{ st.panel2_text }}</p>
+                      </div>
+
+                      <div style="background: white; border: 1.5px solid #A7F3D0; border-radius: 12px; padding: 12px; text-align: center;">
+                        <div style="font-size: 2.2rem; margin-bottom: 4px;">{{ cleanIcon(st.panel3_icon, st.theme, 3) }}</div>
+                        <h5 style="margin: 0 0 6px 0; font-size: 0.85rem; font-weight: 800; color: #065F46;">{{ st.panel3_title }}</h5>
+                        <p style="margin: 0; font-size: 0.78rem; color: #475569; line-height: 1.4;">{{ st.panel3_text }}</p>
+                      </div>
+                    </div>
+
+
+                    <div style="background: #EFF6FF; border-left: 4px solid #2563EB; padding: 12px 16px; border-radius: 8px; font-size: 0.85rem; color: #1E40AF; white-space: pre-wrap; word-break: break-word; line-height: 1.6;">
+                      💬 <strong>Teacher Remarks:</strong> {{ st.teacher_note }}
+                    </div>
+
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
+
 
         </main>
       </div>
@@ -2594,7 +2690,7 @@ export class TeacherDashboardComponent implements OnInit, OnDestroy {
   };
 
   // Milestones State
-  milestoneActiveSubTab: 'templates' | 'progress' = 'templates';
+  milestoneActiveSubTab: 'templates' | 'progress' | 'storyteller' = 'templates';
   selectedMilestoneProgramId: number | null = null;
   milestoneStudentProgramId: number | null = null;
   milestoneTemplates: any[] = [];
@@ -2614,6 +2710,14 @@ export class TeacherDashboardComponent implements OnInit, OnDestroy {
   selectedMilestoneStudentName: string = '';
   studentMilestones: any[] = [];
   savingStudentMilestones: boolean = false;
+
+  // AI Storyteller State
+  storyActiveTheme: string = 'space';
+  storyTeacherNote: string = '';
+  generatingStory: boolean = false;
+  studentStories: any[] = [];
+  loadingStories: boolean = false;
+
 
   // Library State
   booksList: any[] = [];
@@ -3888,14 +3992,18 @@ export class TeacherDashboardComponent implements OnInit, OnDestroy {
     }
   }
 
-  setMilestoneSubTab(subTab: 'templates' | 'progress'): void {
+  setMilestoneSubTab(subTab: 'templates' | 'progress' | 'storyteller'): void {
     this.milestoneActiveSubTab = subTab;
     if (subTab === 'templates') {
       this.loadMilestoneTemplates();
-    } else {
+    } else if (subTab === 'progress') {
       this.loadMilestoneStudents();
+    } else if (subTab === 'storyteller') {
+      this.loadMilestoneStudents();
+      this.loadStudentStories();
     }
   }
+
 
   loadMilestoneTemplates(): void {
     if (!this.selectedMilestoneProgramId && this.programsList.length > 0) {
@@ -4050,8 +4158,77 @@ export class TeacherDashboardComponent implements OnInit, OnDestroy {
     if (student) {
       this.selectedMilestoneStudentName = student.name;
       this.loadStudentMilestones();
+      this.loadStudentStories();
     }
   }
+
+  loadStudentStories(): void {
+    if (!this.selectedMilestoneStudentId) return;
+    this.loadingStories = true;
+    this.apiService.get<any[]>(`/storyteller/student/${this.selectedMilestoneStudentId}`).subscribe({
+      next: (res) => {
+        this.studentStories = res;
+        this.loadingStories = false;
+      },
+      error: () => { this.loadingStories = false; }
+    });
+  }
+
+  generateWeeklyStory(): void {
+    if (!this.selectedMilestoneStudentId) {
+      this.openSuccessModal('Warning', 'Please select a student first.');
+      return;
+    }
+    this.generatingStory = true;
+    this.apiService.post<any>(`/storyteller/generate/${this.selectedMilestoneStudentId}`, {
+      theme: this.storyActiveTheme,
+      teacher_note: this.storyTeacherNote
+    }).subscribe({
+      next: (res) => {
+        this.generatingStory = false;
+        this.openSuccessModal('Storybook Generated! ✨', res.message || 'Weekly comic storybook generated successfully.');
+        this.storyTeacherNote = '';
+        this.loadStudentStories();
+      },
+      error: (err) => {
+        this.generatingStory = false;
+        this.openSuccessModal('Error', err.error?.detail || 'Failed to generate storybook.');
+      }
+    });
+  }
+
+  deleteStory(storyId: number): void {
+    if (!confirm('Are you sure you want to delete this weekly storybook?')) return;
+    this.apiService.delete<any>(`/storyteller/${storyId}`).subscribe({
+      next: () => {
+        this.openSuccessModal('Deleted', 'Storybook removed.');
+        this.loadStudentStories();
+      },
+      error: (err) => {
+        this.openSuccessModal('Error', err.error?.detail || 'Failed to delete storybook.');
+      }
+    });
+  }
+
+  cleanTitle(title: string, theme: string): string {
+    if (!title) return '';
+    let icon = theme === 'jungle' ? '🦁' : theme === 'superhero' ? '⚡' : theme === 'magic' ? '🏰' : '🚀';
+    let cleaned = title.replace(/^\?\?\s*/, '').replace(/^\?\s*/, '').trim();
+    if (!cleaned.startsWith(icon)) {
+      return `${icon} ${cleaned}`;
+    }
+    return cleaned;
+  }
+
+  cleanIcon(icon: string, theme: string, panelNum: number): string {
+    if (icon && icon !== '??' && !icon.includes('?')) return icon;
+    if (theme === 'jungle') return panelNum === 1 ? '🦁' : panelNum === 2 ? '🌴' : '👑';
+    if (theme === 'superhero') return panelNum === 1 ? '⚡' : panelNum === 2 ? '🛡️' : '🏆';
+    if (theme === 'magic') return panelNum === 1 ? '🏰' : panelNum === 2 ? '🪄' : '🌈';
+    return panelNum === 1 ? '🚀' : panelNum === 2 ? '🛸' : '⭐';
+  }
+
+
 
   loadStudentMilestones(): void {
     if (!this.selectedMilestoneStudentId) return;
