@@ -4168,13 +4168,17 @@ export class ParentDashboardComponent implements OnInit, OnDestroy {
 
   downloadAlbumZip(): void {
     if (this.parentMoments.length === 0) return;
-    const token = localStorage.getItem('token') || '';
-    fetch('/api/v1/moments/parent/download-album', {
+    const token = this.authService.getAccessToken() || localStorage.getItem('access_token') || '';
+
+    const baseUrl = (typeof window !== 'undefined' && window.location.hostname === 'localhost') 
+      ? 'http://localhost:8000/api/v1' 
+      : '/api/v1';
+
+    fetch(`${baseUrl}/moments/parent/download-album`, {
       headers: { Authorization: `Bearer ${token}` }
     })
-
     .then(res => {
-      if (!res.ok) throw new Error('Failed');
+      if (!res.ok) throw new Error('Failed to download album zip.');
       return res.blob();
     })
     .then(blob => {
@@ -4190,6 +4194,7 @@ export class ParentDashboardComponent implements OnInit, OnDestroy {
     })
     .catch(() => alert('Failed to download photo album zip.'));
   }
+
 
   downloadCollatedCollage(): void {
     if (this.parentMoments.length === 0) return;
