@@ -225,52 +225,66 @@ import { AssignmentService, ClassAssignment } from '../../core/services/assignme
              <!-- Right Column: Timetable, Checklists & Orders -->
             <div class="col-right">
               <!-- 📸 Daily Moments Card -->
-              <div class="card moments-card" style="margin-bottom: 30px; border: 2.5px solid var(--secondary);">
-                <h3 class="card-title" style="display: flex; align-items: center; justify-content: space-between;">
-                  <span>📸 Daily Moments</span>
-                  <button *ngIf="parentMoments.length > 0" (click)="downloadAllMoments()" class="btn btn-sm btn-secondary" style="font-size: 0.72rem; padding: 6px 10px; border: none; font-weight: 700; background: var(--secondary); color: white; border-radius: 4px; cursor: pointer;">
-                    📥 Download All
-                  </button>
-                </h3>
-                <p class="subtitle" style="margin-top: -15px; margin-bottom: 20px; font-size: 0.85rem; color: #64748B;">
-                  Daily snapshots and video clips shared by class teachers. Media automatically expires after 2 days.
-                </p>
+              <!-- 📸 Daily Moments Album Card -->
+              <div class="card moments-card" style="margin-bottom: 30px; border: 2.5px solid var(--secondary); background: white; border-radius: 16px; padding: 22px; box-shadow: 0 10px 25px rgba(0,0,0,0.04);">
+                <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 12px; border-bottom: 1.5px solid #F1F5F9; padding-bottom: 12px;">
+                  <div>
+                    <h3 class="card-title" style="margin: 0; font-size: 1.15rem; font-weight: 800; color: #0F172A;">
+                      📸 {{ dashboardData?.kid?.name }}'s Photo Album Collage
+                    </h3>
+                    <p style="margin: 4px 0 0 0; font-size: 0.8rem; color: #64748B;">
+                      Collated classroom photos and daily moments shared by teachers. Expirable in 2 days.
+                    </p>
+                  </div>
+                  
+                  <div *ngIf="parentMoments.length > 0" style="display: flex; gap: 8px; flex-wrap: wrap;">
+                    <button type="button" (click)="downloadAlbumZip()" class="btn btn-sm" style="font-size: 0.75rem; padding: 7px 12px; border: none; font-weight: 800; background: #2563EB; color: white; border-radius: 6px; cursor: pointer; display: inline-flex; align-items: center; gap: 5px; box-shadow: 0 2px 6px rgba(37,99,235,0.25);">
+                      📦 Download ZIP
+                    </button>
+                    <button type="button" (click)="downloadCollatedCollage()" class="btn btn-sm" style="font-size: 0.75rem; padding: 7px 12px; border: none; font-weight: 800; background: #10B981; color: white; border-radius: 6px; cursor: pointer; display: inline-flex; align-items: center; gap: 5px; box-shadow: 0 2px 6px rgba(16,185,129,0.25);">
+                      🖼️ Collated Image
+                    </button>
+                    <button type="button" (click)="printPhotoAlbum()" class="btn btn-sm" style="font-size: 0.75rem; padding: 7px 12px; border: none; font-weight: 800; background: #7C3AED; color: white; border-radius: 6px; cursor: pointer; display: inline-flex; align-items: center; gap: 5px; box-shadow: 0 2px 6px rgba(124,58,237,0.25);">
+                      🖨️ High-Res Print
+                    </button>
+                  </div>
+                </div>
 
-                <div *ngIf="parentMomentsLoading" style="text-align: center; padding: 20px; color: #64748b;">
-                  <p>Loading moments...</p>
+                <div *ngIf="parentMomentsLoading" style="text-align: center; padding: 30px; color: #64748b;">
+                  <div class="spinner"></div>
+                  <p style="margin-top: 10px; font-weight: 600;">Loading child photo album...</p>
                 </div>
 
                 <div *ngIf="!parentMomentsLoading">
-                  <!-- Grid of active Moments -->
-                  <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 15px;" *ngIf="parentMoments.length > 0">
-                    <div *ngFor="let moment of parentMoments" style="border: 1px solid #e2e8f0; border-radius: 8px; overflow: hidden; background: #f8fafc; display: flex; flex-direction: column;">
-                      <div style="position: relative; background: #0f172a; height: 130px; display: flex; align-items: center; justify-content: center;">
-                        <img *ngIf="moment.file_type === 'image'" [src]="mediaBaseUrl + moment.file_path" style="width: 100%; height: 100%; object-fit: cover;" />
-                        <video *ngIf="moment.file_type === 'video'" [src]="mediaBaseUrl + moment.file_path" controls style="width: 100%; height: 100%; object-fit: cover;"></video>
-                        
-                        <span style="position: absolute; bottom: 8px; right: 8px; background: rgba(239, 68, 68, 0.95); color: white; padding: 2px 6px; border-radius: 4px; font-size: 0.65rem; font-weight: 700;">
-                          ⏰ {{ moment.hours_remaining }}h left
-                        </span>
-                      </div>
-                      <div style="padding: 10px; display: flex; flex-direction: column; justify-content: space-between; flex: 1;">
-                        <div>
-                          <p style="margin: 0; font-size: 0.8rem; font-weight: 700; color: #1e293b; line-height: 1.3;">{{ moment.title }}</p>
-                          <span style="font-size: 0.68rem; color: #64748b; display: block; margin-top: 6px; font-weight: 600;">
-                            📅 {{ moment.created_at | date:'mediumDate' }} at {{ moment.created_at | date:'shortTime' }}
-                          </span>
-                        </div>
-                        <a [href]="mediaBaseUrl + moment.file_path" [download]="moment.title || 'moment'" target="_blank" style="margin-top: 10px; display: inline-flex; align-items: center; justify-content: center; gap: 4px; font-size: 0.72rem; font-weight: 700; color: var(--primary); text-decoration: none; padding: 5px; border: 1px solid var(--primary); border-radius: 4px; transition: all 0.2s;" onmouseover="this.style.background='var(--primary)'; this.style.color='white'" onmouseout="this.style.background='none'; this.style.color='var(--primary)'">
-                          📥 Download Media
-                        </a>
+                  <!-- Collated Photo Album Mosaic Grid -->
+                  <div *ngIf="parentMoments.length > 0" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 12px;">
+                    <div *ngFor="let moment of parentMoments; let idx = index" 
+                         [style.grid-column]="idx === 0 ? 'span 2' : 'span 1'"
+                         [style.grid-row]="idx === 0 ? 'span 2' : 'span 1'"
+                         style="border: 2px solid #E2E8F0; border-radius: 12px; overflow: hidden; background: #0F172A; position: relative; min-height: 140px; box-shadow: 0 4px 12px rgba(0,0,0,0.06); transition: transform 0.2s;"
+                         onmouseover="this.style.transform='scale(1.02)'"
+                         onmouseout="this.style.transform='scale(1)'">
+                      
+                      <img *ngIf="moment.file_type === 'image'" [src]="mediaBaseUrl + moment.file_path" style="width: 100%; height: 100%; object-fit: cover; cursor: pointer;" (click)="printPhotoAlbum()" [title]="'Click to view high-res high quality album'" />
+                      <video *ngIf="moment.file_type === 'video'" [src]="mediaBaseUrl + moment.file_path" controls style="width: 100%; height: 100%; object-fit: cover;"></video>
+                      
+                      <span style="position: absolute; top: 8px; right: 8px; background: rgba(239, 68, 68, 0.9); backdrop-filter: blur(4px); color: white; padding: 3px 8px; border-radius: 20px; font-size: 0.65rem; font-weight: 800;">
+                        ⏰ {{ moment.hours_remaining }}h left
+                      </span>
+
+                      <div *ngIf="moment.title" style="position: absolute; bottom: 0; inset-x: 0; background: linear-gradient(transparent, rgba(15,23,42,0.85)); padding: 12px 10px 8px 10px; color: white;">
+                        <p style="margin: 0; font-size: 0.76rem; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{ moment.title }}</p>
                       </div>
                     </div>
                   </div>
 
-                  <div *ngIf="parentMoments.length === 0" style="text-align: center; color: #94a3b8; font-style: italic; padding: 30px; border: 2px dashed #e2e8f0; border-radius: 6px; background: #fafafa;">
-                    No moments shared for today yet. Check back later!
+                  <div *ngIf="parentMoments.length === 0" style="text-align: center; color: #94a3b8; font-style: italic; padding: 35px 20px; border: 2px dashed #CBD5E1; border-radius: 12px; background: #F8FAFC;">
+                    <div style="font-size: 2.2rem; margin-bottom: 6px;">📸</div>
+                    No photos shared in {{ dashboardData?.kid?.name }}'s album today. Check back soon!
                   </div>
                 </div>
               </div>
+
 
               <!-- 📚 Class Assignments Card -->
               <div class="card assignments-card" style="margin-bottom: 30px; border: 2.5px solid var(--primary); background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);">
@@ -4149,18 +4163,223 @@ export class ParentDashboardComponent implements OnInit, OnDestroy {
   }
 
   downloadAllMoments(): void {
+    this.downloadAlbumZip();
+  }
+
+  downloadAlbumZip(): void {
     if (this.parentMoments.length === 0) return;
-    this.parentMoments.forEach((moment, idx) => {
-      const link = document.createElement('a');
-      link.href = this.mediaBaseUrl + moment.file_path;
-      const ext = moment.file_path.split('.').pop() || (moment.file_type === 'video' ? 'mp4' : 'jpg');
-      link.download = moment.title ? `${moment.title.replace(/\s+/g, '_')}.${ext}` : `moment_${moment.id || idx}.${ext}`;
-      link.target = '_blank';
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
+    const token = localStorage.getItem('token') || '';
+    fetch('/api/v1/moments/parent/download-album', {
+      headers: { Authorization: `Bearer ${token}` }
+    })
+
+    .then(res => {
+      if (!res.ok) throw new Error('Failed');
+      return res.blob();
+    })
+    .then(blob => {
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      const studentName = (this.dashboardData?.kid?.name || 'Pupil').replace(/\s+/g, '_');
+      a.download = `${studentName}_Photo_Album.zip`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      window.URL.revokeObjectURL(url);
+    })
+    .catch(() => alert('Failed to download photo album zip.'));
+  }
+
+  downloadCollatedCollage(): void {
+    if (this.parentMoments.length === 0) return;
+    const imagesToLoad = this.parentMoments.filter(m => m.file_type === 'image');
+    if (imagesToLoad.length === 0) {
+      alert('No photo images available to collate.');
+      return;
+    }
+
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    canvas.width = 1200;
+    canvas.height = 900;
+
+    // Dark sleek background gradient
+    const grad = ctx.createLinearGradient(0, 0, 1200, 900);
+    grad.addColorStop(0, '#0F172A');
+    grad.addColorStop(1, '#1E3A8A');
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, 1200, 900);
+
+    const studentName = this.dashboardData?.kid?.name || 'Vidyankuram Pupil';
+    ctx.fillStyle = '#FFFFFF';
+    ctx.font = 'bold 36px Segoe UI, sans-serif';
+    ctx.fillText(`📸 ${studentName}'s Photo Album Collage`, 50, 60);
+
+    ctx.fillStyle = '#94A3B8';
+    ctx.font = '18px Segoe UI, sans-serif';
+    ctx.fillText(`Vidyankuram Club & School • ${new Date().toLocaleDateString()}`, 50, 95);
+
+    let loadedCount = 0;
+    const totalToLoad = Math.min(imagesToLoad.length, 5);
+
+    // Non-overlapping slots grid
+    let slots = [
+      { x: 50, y: 130, w: 535, h: 345 },
+      { x: 615, y: 130, w: 535, h: 345 },
+      { x: 50, y: 505, w: 350, h: 345 },
+      { x: 425, y: 505, w: 350, h: 345 },
+      { x: 800, y: 505, w: 350, h: 345 }
+    ];
+
+    if (totalToLoad === 4) {
+      slots = [
+        { x: 50, y: 130, w: 535, h: 345 },
+        { x: 615, y: 130, w: 535, h: 345 },
+        { x: 50, y: 505, w: 535, h: 345 },
+        { x: 615, y: 505, w: 535, h: 345 }
+      ];
+    } else if (totalToLoad <= 3) {
+      slots = [
+        { x: 50, y: 130, w: 350, h: 720 },
+        { x: 425, y: 130, w: 350, h: 720 },
+        { x: 800, y: 130, w: 350, h: 720 }
+      ];
+    }
+
+    imagesToLoad.slice(0, totalToLoad).forEach((moment, idx) => {
+      const img = new Image();
+      img.crossOrigin = 'anonymous';
+      img.onload = () => {
+        const slot = slots[idx] || slots[0];
+
+        // Draw white frame border
+        ctx.fillStyle = '#FFFFFF';
+        ctx.fillRect(slot.x - 4, slot.y - 4, slot.w + 8, slot.h + 8);
+
+        // Draw slot dark inner container
+        ctx.fillStyle = '#1E293B';
+        ctx.fillRect(slot.x, slot.y, slot.w, slot.h);
+
+        // Aspect-fit scaling to prevent cutting off any part of the image
+        const scale = Math.min(slot.w / img.width, slot.h / img.height);
+        const drawW = img.width * scale;
+        const drawH = img.height * scale;
+        const drawX = slot.x + (slot.w - drawW) / 2;
+        const drawY = slot.y + (slot.h - drawH) / 2;
+
+        ctx.drawImage(img, drawX, drawY, drawW, drawH);
+
+        loadedCount++;
+        if (loadedCount === totalToLoad) {
+          const dataUrl = canvas.toDataURL('image/jpeg', 0.95);
+          const a = document.createElement('a');
+          a.href = dataUrl;
+          const cleanName = studentName.replace(/\s+/g, '_');
+          a.download = `${cleanName}_Collated_Album.jpg`;
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+        }
+      };
+      img.src = this.mediaBaseUrl + moment.file_path;
     });
   }
+
+  printPhotoAlbum(): void {
+    if (this.parentMoments.length === 0) return;
+    const printWin = window.open('', '_blank');
+    if (!printWin) return;
+
+    const studentName = this.dashboardData?.kid?.name || 'Pupil';
+    const programName = this.dashboardData?.student?.program_title || 'Vidyankuram School';
+    const totalPages = this.parentMoments.length;
+
+    const pagesHtml = this.parentMoments.map((m, idx) => `
+      <div class="page-container">
+        <div class="header">
+          <div>
+            <h1>📸 ${studentName}'s Photo Keepsake</h1>
+            <p>${programName} • High-Resolution Color Print (Photo ${idx + 1} of ${totalPages})</p>
+          </div>
+          <span class="badge">Vidyankuram Official</span>
+        </div>
+
+        <div class="photo-frame">
+          ${m.file_type === 'image' 
+            ? `<img src="${this.mediaBaseUrl + m.file_path}" alt="${m.title || 'Photo'}" />` 
+            : `<video src="${this.mediaBaseUrl + m.file_path}" controls></video>`}
+        </div>
+
+        ${m.title ? `<div class="caption">💬 <strong>Caption:</strong> ${m.title}</div>` : ''}
+
+        <div class="footer">
+          Vidyankuram Club & School • Student Keepsake Album • Page ${idx + 1} of ${totalPages}
+        </div>
+      </div>
+    `).join('');
+
+    printWin.document.write(`
+      <html>
+        <head>
+          <title>${studentName} - High-Res Photo Album (${totalPages} Pages)</title>
+          <style>
+            @page { size: A4 landscape; margin: 10mm; }
+            body { font-family: 'Segoe UI', Tahoma, sans-serif; background: #fff; color: #0f172a; margin: 0; padding: 0; }
+            .page-container {
+              width: 100%;
+              height: 95vh;
+              page-break-after: always;
+              break-after: page;
+              display: flex;
+              flex-direction: column;
+              justify-content: space-between;
+              box-sizing: border-box;
+              padding: 10px;
+            }
+            .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 3px solid #2563eb; padding-bottom: 10px; margin-bottom: 12px; }
+            .header h1 { margin: 0; color: #1e3a8a; font-size: 24px; font-weight: 800; }
+            .header p { margin: 3px 0 0 0; color: #64748b; font-weight: 600; font-size: 13px; }
+            .badge { background: #eff6ff; color: #2563eb; padding: 4px 12px; border-radius: 20px; font-weight: 800; font-size: 11px; text-transform: uppercase; border: 1px solid #bfdbfe; }
+            
+            .photo-frame {
+              flex: 1;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              background: #0f172a;
+              border: 3px solid #cbd5e1;
+              border-radius: 14px;
+              overflow: hidden;
+              padding: 10px;
+              box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+              max-height: 520px;
+            }
+            .photo-frame img, .photo-frame video {
+              max-width: 100%;
+              max-height: 100%;
+              object-fit: contain;
+            }
+            
+            .caption { background: #f8fafc; border-left: 4px solid #2563eb; color: #1e293b; padding: 10px 14px; border-radius: 6px; font-size: 14px; font-weight: 600; margin-top: 10px; }
+            .footer { text-align: center; color: #94a3b8; font-size: 11px; font-style: italic; border-top: 1px solid #e2e8f0; padding-top: 8px; margin-top: 10px; }
+          </style>
+        </head>
+        <body>
+          ${pagesHtml}
+          <script>
+            window.onload = function() { window.print(); window.close(); }
+          </script>
+        </body>
+      </html>
+    `);
+    printWin.document.close();
+  }
+
+
+
 
   getMilestonesCategories(): string[] {
     if (!this.milestonesGroup) return [];

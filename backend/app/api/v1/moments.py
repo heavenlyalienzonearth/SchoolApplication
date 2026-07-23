@@ -1,10 +1,15 @@
 import os
 import shutil
 import time
+import io
+import zipfile
 from datetime import datetime, timedelta
 from typing import List, Dict, Any
 from fastapi import APIRouter, Depends, HTTPException, status, UploadFile, File, Form
+from fastapi.responses import Response
+
 from sqlalchemy.orm import Session
+
 
 from app import models
 from app.core.database import get_db
@@ -229,3 +234,44 @@ def get_parent_moments(
         })
         
     return results
+
+@router.get("/parent/download-album")
+def download_parent_album_zip(
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user)
+):
+    if current_user.role.upper() != "PARENT":
+        raise HTTPException(status_code=403, detail="Access denied. Parent role required.")
+    if not current_user.student_id:
+        raise HTTPException(status_code=404, detail="No pupil associated with this parent account.")
+        
+    purge_expired_moments(db)
+    student = db.query(models.Student).filter(models.Student.id == current_user.student_id).first()
+    moments = db.query(models.StudentDailyMoment).filter(
+        models.StudentDailyMoment.student_id == current_user.student_id
+    ).all()
+    
+    if not moments:
+        raise HTTPException(status_code=404, detail="No active photos found in album to download.")
+
+    zip_buffer = io.BytesIO()
+    with zipfile.ZipFile(zip_buffer, "w", zipfile.ZIP_DEFLATED) as zip_file:
+        for idx, m in enumerate(moments):
+            filename = os.path.basename(m.file_path)
+            disk_path = os.path.join(MOMENTS_DIR, filename)
+            if os.path.exists(disk_path):
+                ext = os.path.splitext(filename)[1]
+                student_slug = (student.name if student else "Pupil").replace(" ", "_")
+                arcname = f"{student_slug}_Photo_{idx + 1}{ext}"
+                zip_file.write(disk_path, arcname=arcname)
+                
+    zip_buffer.seek(0)
+    student_slug = (student.name if student else "Student").replace(" ", "_")
+    download_filename = f"{student_slug}_Photo_Album.zip"
+    
+    return Response(
+        content=zip_buffer.getvalue(),
+        media_type="application/zip",
+        headers={"Content-Disposition": f"attachment; filename={download_filename}"}
+    )
+
