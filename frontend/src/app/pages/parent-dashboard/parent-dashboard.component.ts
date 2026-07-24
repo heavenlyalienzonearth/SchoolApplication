@@ -2,6 +2,7 @@ import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
+import { Subscription } from 'rxjs';
 import { AuthService } from '../../core/services/auth.service';
 import { ApiService } from '../../core/services/api.service';
 import { ParentService, Bill, Milestone, MilestoneGroup, LeaveRequest } from '../../core/services/parent.service';
@@ -9,6 +10,9 @@ import { MomentsService, StudentMoment } from '../../core/services/moments.servi
 import { ContentService } from '../../core/services/content.service';
 import { StationaryService, StationaryItem, StationaryOrder } from '../../core/services/stationary.service';
 import { AssignmentService, ClassAssignment } from '../../core/services/assignment.service';
+import { VoiceSpeechService } from '../../core/services/voice-speech.service';
+
+
 
 @Component({
   selector: 'app-parent-dashboard',
@@ -714,7 +718,41 @@ import { AssignmentService, ClassAssignment } from '../../core/services/assignme
           <div *ngIf="activeParentRequestSubTab === 'leaves'" class="leaves-layout animate-fade-in">
             <!-- Left Panel: Submission Form -->
             <div class="card leave-form-card">
-              <h3 class="card-title">📝 Apply for Absence Leave</h3>
+              <h3 class="card-title" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
+                <span>📝 Apply for Absence Leave</span>
+                <button type="button" (click)="toggleVoiceTyping()" 
+                        [style.background]="isListeningVoice ? '#EF4444' : 'linear-gradient(135deg, #2563EB, #1D4ED8)'"
+                        style="color: white; border: none; padding: 7px 14px; border-radius: 20px; font-weight: 800; font-size: 0.78rem; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; box-shadow: 0 4px 10px rgba(37,99,235,0.25); transition: all 0.2s;">
+                  <span *ngIf="isListeningVoice" style="display: inline-block; width: 10px; height: 10px; background: white; border-radius: 50%;"></span>
+                  {{ isListeningVoice ? '🔴 Stop Voice Recording' : '🎙️ Speak Note (AI Voice Typist)' }}
+                </button>
+              </h3>
+
+              <!-- Voice Recording Live Status Banner -->
+              <div *ngIf="isListeningVoice || voiceStatusMessage || identifiedStudentName" 
+                   style="background: #F0F9FF; border: 1.5px solid #BAE6FD; border-radius: 10px; padding: 12px 14px; margin-bottom: 16px; font-size: 0.82rem; color: #0369A1;">
+                <div style="display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap;">
+                  <div style="display: flex; align-items: center; gap: 8px;">
+                    <span style="font-size: 1.3rem;">🎙️</span>
+                    <div>
+                      <strong style="display: block; color: #0284C7; font-weight: 800;">
+                        {{ isListeningVoice ? 'AI Voice Typist Active — Speak Now...' : 'Voice Transcribed Note' }}
+                      </strong>
+                      <span *ngIf="voiceStatusMessage" style="font-size: 0.76rem; color: #0369A1; font-weight: 600;">{{ voiceStatusMessage }}</span>
+                    </div>
+                  </div>
+
+                  <div style="display: flex; align-items: center; gap: 8px;">
+                    <span *ngIf="identifiedStudentName" style="background: #D1FAE5; color: #065F46; border: 1px solid #A7F3D0; padding: 4px 10px; border-radius: 12px; font-weight: 800; font-size: 0.72rem; display: inline-flex; align-items: center; gap: 4px;">
+                      👶 Identified Pupil: {{ identifiedStudentName }}
+                    </span>
+                    <button *ngIf="recognizedTranscript || leaveForm.reason" type="button" (click)="clearVoiceNote()" style="background: none; border: none; color: #EF4444; font-size: 0.75rem; font-weight: 700; cursor: pointer; text-decoration: underline;">
+                      🧹 Clear
+                    </button>
+                  </div>
+                </div>
+              </div>
+
               <form (submit)="onLeaveSubmit($event)" class="leave-form">
                 <div class="form-group">
                   <label for="startDate">Start Date</label>
@@ -727,8 +765,11 @@ import { AssignmentService, ClassAssignment } from '../../core/services/assignme
                 </div>
 
                 <div class="form-group">
-                  <label for="reason">Absence Reason / medical Note</label>
-                  <textarea id="reason" name="reason" [(ngModel)]="leaveForm.reason" rows="4" required placeholder="Describe the reason for leave..." class="form-control"></textarea>
+                  <label for="reason">Absence Reason / Medical Note (Speak or Type)</label>
+                  <textarea id="reason" name="reason" [(ngModel)]="leaveForm.reason" rows="4" required placeholder="Speak note using microphone button above or type text here..." class="form-control" style="line-height: 1.5; font-size: 0.88rem;"></textarea>
+                  <span style="font-size: 0.72rem; color: #64748B; font-weight: 600; margin-top: 4px; display: block;">
+                    💡 Speak your note or make any manual rectifications in the text box above before submitting to the teacher.
+                  </span>
                 </div>
 
                 <button type="submit" class="btn-submit-leave" [disabled]="submittingLeave">
@@ -736,6 +777,7 @@ import { AssignmentService, ClassAssignment } from '../../core/services/assignme
                 </button>
               </form>
             </div>
+
 
             <!-- Right Panel: Leave Logs History -->
             <div class="card leave-history-card">
@@ -771,10 +813,44 @@ import { AssignmentService, ClassAssignment } from '../../core/services/assignme
           <div *ngIf="activeParentRequestSubTab === 'meals'" class="leaves-layout animate-fade-in">
             <!-- Left Panel: Skip Meal Form -->
             <div class="card leave-form-card">
-              <h3 class="card-title">🍽️ Skip Meal Request</h3>
+              <h3 class="card-title" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
+                <span>🍽️ Skip Meal Request</span>
+                <button type="button" (click)="toggleVoiceTyping()" 
+                        [style.background]="isListeningVoice ? '#EF4444' : 'linear-gradient(135deg, #E28743, #C2631C)'"
+                        style="color: white; border: none; padding: 7px 14px; border-radius: 20px; font-weight: 800; font-size: 0.78rem; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; box-shadow: 0 4px 10px rgba(226,135,67,0.25); transition: all 0.2s;">
+                  <span *ngIf="isListeningVoice" style="display: inline-block; width: 10px; height: 10px; background: white; border-radius: 50%;"></span>
+                  {{ isListeningVoice ? '🔴 Stop Voice Recording' : '🎙️ Speak Instruction (AI Voice Typist)' }}
+                </button>
+              </h3>
+              
               <p style="font-size: 0.8rem; color: #64748B; margin-bottom: 15px; line-height: 1.4;">
                 Intimate the classroom teacher not to provide meals (Breakfast, Lunch, or Snack) to your child on a specific day.
               </p>
+
+              <!-- Voice Recording Live Status Banner -->
+              <div *ngIf="isListeningVoice || voiceStatusMessage || identifiedStudentName" 
+                   style="background: #FFF7ED; border: 1.5px solid #FFEDD5; border-radius: 10px; padding: 12px 14px; margin-bottom: 16px; font-size: 0.82rem; color: #C2410C;">
+                <div style="display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap;">
+                  <div style="display: flex; align-items: center; gap: 8px;">
+                    <span style="font-size: 1.3rem;">🎙️</span>
+                    <div>
+                      <strong style="display: block; color: #EA580C; font-weight: 800;">
+                        {{ isListeningVoice ? 'AI Voice Typist Active — Speak Instruction...' : 'Voice Transcribed Instruction' }}
+                      </strong>
+                      <span *ngIf="voiceStatusMessage" style="font-size: 0.76rem; color: #C2410C; font-weight: 600;">{{ voiceStatusMessage }}</span>
+                    </div>
+                  </div>
+
+                  <div style="display: flex; align-items: center; gap: 8px;">
+                    <span *ngIf="identifiedStudentName" style="background: #D1FAE5; color: #065F46; border: 1px solid #A7F3D0; padding: 4px 10px; border-radius: 12px; font-weight: 800; font-size: 0.72rem; display: inline-flex; align-items: center; gap: 4px;">
+                      👶 Identified Pupil: {{ identifiedStudentName }}
+                    </span>
+                    <button *ngIf="recognizedTranscript || suspensionForm.reason" type="button" (click)="clearVoiceNote()" style="background: none; border: none; color: #EF4444; font-size: 0.75rem; font-weight: 700; cursor: pointer; text-decoration: underline;">
+                      🧹 Clear
+                    </button>
+                  </div>
+                </div>
+              </div>
               
               <form (submit)="onSuspensionSubmit($event)" class="leave-form">
                 <div class="form-group">
@@ -783,8 +859,11 @@ import { AssignmentService, ClassAssignment } from '../../core/services/assignme
                 </div>
 
                 <div class="form-group">
-                  <label for="suspensionReason">Reason / Special Instruction</label>
-                  <textarea id="suspensionReason" name="suspensionReason" [(ngModel)]="suspensionForm.reason" rows="4" required placeholder="E.g., Child is fasting / bringing home-cooked food today / has a doctor appointment..." class="form-control"></textarea>
+                  <label for="suspensionReason">Reason / Special Instruction (Speak or Type)</label>
+                  <textarea id="suspensionReason" name="suspensionReason" [(ngModel)]="suspensionForm.reason" rows="4" required placeholder="Speak instruction using microphone button above or type text here..." class="form-control" style="line-height: 1.5; font-size: 0.88rem;"></textarea>
+                  <span style="font-size: 0.72rem; color: #64748B; font-weight: 600; margin-top: 4px; display: block;">
+                    💡 Speak your instruction or make any manual rectifications in the text box above before submitting to the teacher.
+                  </span>
                 </div>
 
                 <button type="submit" class="btn-submit-leave" [disabled]="submittingSuspension" style="background: #e28743;">
@@ -792,6 +871,7 @@ import { AssignmentService, ClassAssignment } from '../../core/services/assignme
                 </button>
               </form>
             </div>
+
 
             <!-- Right Panel: Suspension Logs & Teacher Acknowledgment status -->
             <div class="card leave-history-card">
@@ -3472,6 +3552,14 @@ export class ParentDashboardComponent implements OnInit, OnDestroy {
   parentKudos: any[] = [];
   parentIncidents: any[] = [];
 
+  // AI Voice Note Synthesizer State
+  isListeningVoice = false;
+  recognizedTranscript = '';
+  identifiedStudentName = '';
+  voiceStatusMessage = '';
+  private voiceSubscription: Subscription | null = null;
+  private voiceStateSubscription: Subscription | null = null;
+
   constructor(
     public authService: AuthService,
     private apiService: ApiService,
@@ -3480,8 +3568,10 @@ export class ParentDashboardComponent implements OnInit, OnDestroy {
     private momentsService: MomentsService,
     private contentService: ContentService,
     private stationaryService: StationaryService,
-    private assignmentService: AssignmentService
+    private assignmentService: AssignmentService,
+    public voiceSpeechService: VoiceSpeechService
   ) {}
+
 
   hasPermission(feature: string): boolean {
     return this.authService.hasPermission(feature);
@@ -3512,7 +3602,60 @@ export class ParentDashboardComponent implements OnInit, OnDestroy {
     this.loadRazorpayScript().then(() => {
       this.razorpayScriptLoaded = true;
     });
+
+    if (this.voiceSpeechService && this.voiceSpeechService.isSupported()) {
+      this.voiceSubscription = this.voiceSpeechService.getSpeechResult().subscribe(res => {
+        this.recognizedTranscript = res.transcript;
+        
+        if (this.activeParentRequestSubTab === 'meals') {
+          this.suspensionForm.reason = res.transcript;
+        } else {
+          this.leaveForm.reason = res.transcript;
+        }
+
+        const kidName = this.dashboardData?.kid?.name || '';
+        const kidFirstName = kidName.split(' ')[0] || '';
+        
+        if (kidName && (res.transcript.toLowerCase().includes(kidName.toLowerCase()) || (kidFirstName.length > 2 && res.transcript.toLowerCase().includes(kidFirstName.toLowerCase())))) {
+          this.identifiedStudentName = kidName;
+          this.voiceStatusMessage = `Matched Pupil: ${kidName}`;
+        } else if (kidName) {
+          this.identifiedStudentName = kidName;
+        }
+      });
+
+      this.voiceStateSubscription = this.voiceSpeechService.getSpeechState().subscribe(isListening => {
+        this.isListeningVoice = isListening;
+        if (!isListening && this.recognizedTranscript) {
+          this.voiceStatusMessage = 'Voice note transcribed successfully! You can make any rectifications in the text box below.';
+        }
+      });
+    }
   }
+
+  toggleVoiceTyping(): void {
+    if (!this.voiceSpeechService || !this.voiceSpeechService.isSupported()) {
+      alert('Speech recognition is not supported in this browser. Please use Chrome, Edge, or Safari.');
+      return;
+    }
+    this.voiceSpeechService.toggleListening();
+    if (!this.isListeningVoice) {
+      this.voiceStatusMessage = 'Listening... Speak your note now (e.g. "Kavi Singh will be absent tomorrow due to fever").';
+    }
+  }
+
+  clearVoiceNote(): void {
+    this.recognizedTranscript = '';
+    this.identifiedStudentName = '';
+    this.voiceStatusMessage = '';
+    this.leaveForm.reason = '';
+    this.suspensionForm.reason = '';
+    if (this.voiceSpeechService) {
+      this.voiceSpeechService.stopListening();
+    }
+  }
+
+
 
   loadRazorpayScript(): Promise<void> {
     return new Promise((resolve) => {
@@ -4659,5 +4802,15 @@ export class ParentDashboardComponent implements OnInit, OnDestroy {
     if (this.clockInterval) {
       clearInterval(this.clockInterval);
     }
+    if (this.voiceSubscription) {
+      this.voiceSubscription.unsubscribe();
+    }
+    if (this.voiceStateSubscription) {
+      this.voiceStateSubscription.unsubscribe();
+    }
+    if (this.voiceSpeechService) {
+      this.voiceSpeechService.stopListening();
+    }
   }
 }
+
