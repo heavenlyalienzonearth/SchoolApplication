@@ -3638,11 +3638,13 @@ export class ParentDashboardComponent implements OnInit, OnDestroy {
       alert('Speech recognition is not supported in this browser. Please use Chrome, Edge, or Safari.');
       return;
     }
-    this.voiceSpeechService.toggleListening();
+    const currentText = (this.activeParentRequestSubTab === 'meals') ? this.suspensionForm.reason : this.leaveForm.reason;
+    this.voiceSpeechService.toggleListening(currentText || '');
     if (!this.isListeningVoice) {
-      this.voiceStatusMessage = 'Listening... Speak your note now (e.g. "Kavi Singh will be absent tomorrow due to fever").';
+      this.voiceStatusMessage = 'Listening... Speak naturally. Pauses are automatically preserved!';
     }
   }
+
 
   clearVoiceNote(): void {
     this.recognizedTranscript = '';

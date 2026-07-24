@@ -14,6 +14,7 @@ export class VoiceSpeechService {
   private isListening = false;
   private speechResult$ = new Subject<SpeechResult>();
   private speechState$ = new Subject<boolean>();
+  private accumulatedFinalText = '';
 
   constructor(private zone: NgZone) {
     this.initRecognition();
@@ -30,37 +31,46 @@ export class VoiceSpeechService {
       this.recognition.lang = 'en-US';
 
       this.recognition.onresult = (event: any) => {
-        let interimTranscript = '';
-        let finalTranscript = '';
+        let currentSessionText = '';
+        let isFinalSegment = false;
 
-        for (let i = event.resultIndex; i < event.results.length; ++i) {
+        for (let i = 0; i < event.results.length; ++i) {
+          currentSessionText += event.results[i][0].transcript;
           if (event.results[i].isFinal) {
-            finalTranscript += event.results[i][0].transcript;
-          } else {
-            interimTranscript += event.results[i][0].transcript;
+            isFinalSegment = true;
           }
         }
 
-        const text = finalTranscript || interimTranscript;
-        if (text) {
-          this.zone.run(() => {
-            this.speechResult$.next({
-              transcript: text,
-              isFinal: !!finalTranscript
-            });
+        const combinedText = (this.accumulatedFinalText ? (this.accumulatedFinalText + ' ') : '') + currentSessionText;
+
+        this.zone.run(() => {
+          this.speechResult$.next({
+            transcript: combinedText.replace(/\s+/g, ' ').trim(),
+            isFinal: isFinalSegment
           });
-        }
+        });
       };
 
       this.recognition.onerror = (event: any) => {
         console.warn('Speech recognition error:', event.error);
+        if (event.error === 'no-speech' || event.error === 'network') {
+          return;
+        }
         this.stopListening();
       };
 
       this.recognition.onend = () => {
         this.zone.run(() => {
-          this.isListening = false;
-          this.speechState$.next(false);
+          if (this.isListening) {
+            try {
+              this.recognition.start();
+            } catch {
+              this.isListening = false;
+              this.speechState$.next(false);
+            }
+          } else {
+            this.speechState$.next(false);
+          }
         });
       };
     }
@@ -71,15 +81,16 @@ export class VoiceSpeechService {
     return !!((window as any).SpeechRecognition || (window as any).webkitSpeechRecognition);
   }
 
-  startListening(): void {
+  startListening(initialExistingText: string = ''): void {
+    this.accumulatedFinalText = initialExistingText.trim();
     if (!this.recognition) {
       this.initRecognition();
     }
     if (this.recognition && !this.isListening) {
       try {
-        this.recognition.start();
         this.isListening = true;
         this.speechState$.next(true);
+        this.recognition.start();
       } catch (err) {
         console.error('Failed to start speech recognition:', err);
       }
@@ -87,22 +98,22 @@ export class VoiceSpeechService {
   }
 
   stopListening(): void {
-    if (this.recognition && this.isListening) {
+    this.isListening = false;
+    if (this.recognition) {
       try {
         this.recognition.stop();
       } catch (err) {
         console.error('Error stopping recognition:', err);
       }
-      this.isListening = false;
       this.speechState$.next(false);
     }
   }
 
-  toggleListening(): void {
+  toggleListening(initialExistingText: string = ''): void {
     if (this.isListening) {
       this.stopListening();
     } else {
-      this.startListening();
+      this.startListening(initialExistingText);
     }
   }
 
