@@ -699,7 +699,7 @@ import { VoiceSpeechService } from '../../core/services/voice-speech.service';
         <!-- 4. PARENT REQUESTS TAB (LEAVES & MEAL SUSPENSIONS) -->
         <div *ngIf="activeTab === 'leaves'" class="tab-content animate-fade-in">
           <!-- Parent Requests Inner Sub-Tabs Navigation -->
-          <div class="parent-requests-subtabs" style="display: flex; gap: 15px; margin-bottom: 20px; border-bottom: 2px solid #E2E8F0; padding-bottom: 10px;">
+          <div class="parent-requests-subtabs" style="display: flex; gap: 15px; margin-bottom: 20px; border-bottom: 2px solid #E2E8F0; padding-bottom: 10px; flex-wrap: wrap;">
             <button (click)="activeParentRequestSubTab = 'leaves'" 
                     [style.color]="activeParentRequestSubTab === 'leaves' ? '#EE5A24' : '#64748B'" 
                     [style.border-bottom]="activeParentRequestSubTab === 'leaves' ? '3px solid #EE5A24' : 'none'"
@@ -712,7 +712,14 @@ import { VoiceSpeechService } from '../../core/services/voice-speech.service';
                     style="background: none; border: none; padding: 10px 15px; font-weight: 700; font-size: 0.95rem; cursor: pointer; transition: all 0.2s;">
               🍽️ Skip Meal Requests
             </button>
+            <button (click)="activeParentRequestSubTab = 'lost-items'" 
+                    [style.color]="activeParentRequestSubTab === 'lost-items' ? '#EE5A24' : '#64748B'" 
+                    [style.border-bottom]="activeParentRequestSubTab === 'lost-items' ? '3px solid #EE5A24' : 'none'"
+                    style="background: none; border: none; padding: 10px 15px; font-weight: 700; font-size: 0.95rem; cursor: pointer; transition: all 0.2s;">
+              🎒 Lost & Found / Belongings
+            </button>
           </div>
+
 
           <!-- SUB-TAB 1: ABSENCE LEAVE REQUESTS -->
           <div *ngIf="activeParentRequestSubTab === 'leaves'" class="leaves-layout animate-fade-in">
@@ -905,7 +912,117 @@ import { VoiceSpeechService } from '../../core/services/voice-speech.service';
               </div>
             </div>
           </div>
+
+          <!-- SUB-TAB 3: LOST & FOUND / BELONGINGS REPORT -->
+          <div *ngIf="activeParentRequestSubTab === 'lost-items'" class="leaves-layout animate-fade-in">
+            <!-- Left Panel: Lost Item Form -->
+            <div class="card leave-form-card">
+              <h3 class="card-title" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
+                <span>🎒 Report Lost / Forgotten Item</span>
+                <button type="button" (click)="toggleVoiceTyping()" 
+                        [style.background]="isListeningVoice ? '#EF4444' : 'linear-gradient(135deg, #8B5CF6, #6D28D9)'"
+                        style="color: white; border: none; padding: 7px 14px; border-radius: 20px; font-weight: 800; font-size: 0.78rem; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; box-shadow: 0 4px 10px rgba(139,92,246,0.25); transition: all 0.2s;">
+                  <span *ngIf="isListeningVoice" style="display: inline-block; width: 10px; height: 10px; background: white; border-radius: 50%;"></span>
+                  {{ isListeningVoice ? '🔴 Stop Voice Recording' : '🎙️ Speak Report (AI Voice Typist)' }}
+                </button>
+              </h3>
+              
+              <p style="font-size: 0.8rem; color: #64748B; margin-bottom: 15px; line-height: 1.4;">
+                Report an item lost, exchanged, or forgotten at school. Speak or type details to alert the class teacher.
+              </p>
+
+              <!-- Voice Recording Live Status Banner -->
+              <div *ngIf="isListeningVoice || voiceStatusMessage || identifiedStudentName" 
+                   style="background: #F3E8FF; border: 1.5px solid #E9D5FF; border-radius: 10px; padding: 12px 14px; margin-bottom: 16px; font-size: 0.82rem; color: #6B21A8;">
+                <div style="display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap;">
+                  <div style="display: flex; align-items: center; gap: 8px;">
+                    <span style="font-size: 1.3rem;">🎙️</span>
+                    <div>
+                      <strong style="display: block; color: #7E22CE; font-weight: 800;">
+                        {{ isListeningVoice ? 'AI Voice Typist Active — Speak Lost Item Details...' : 'Voice Transcribed Report' }}
+                      </strong>
+                      <span *ngIf="voiceStatusMessage" style="font-size: 0.76rem; color: #6B21A8; font-weight: 600;">{{ voiceStatusMessage }}</span>
+                    </div>
+                  </div>
+
+                  <div style="display: flex; align-items: center; gap: 8px;">
+                    <span *ngIf="identifiedStudentName" style="background: #D1FAE5; color: #065F46; border: 1px solid #A7F3D0; padding: 4px 10px; border-radius: 12px; font-weight: 800; font-size: 0.72rem; display: inline-flex; align-items: center; gap: 4px;">
+                      👶 Identified Pupil: {{ identifiedStudentName }}
+                    </span>
+                    <button *ngIf="recognizedTranscript || lostItemForm.description" type="button" (click)="clearVoiceNote()" style="background: none; border: none; color: #EF4444; font-size: 0.75rem; font-weight: 700; cursor: pointer; text-decoration: underline;">
+                      🧹 Clear
+                    </button>
+                  </div>
+                </div>
+              </div>
+              
+              <form (submit)="onLostItemSubmit($event)" class="leave-form">
+                <div class="form-group">
+                  <label for="itemCategory">Belonging Category</label>
+                  <select id="itemCategory" name="itemCategory" [(ngModel)]="lostItemForm.category" required class="form-control">
+                    <option value="Water Bottle">🍾 Water Bottle / Flask</option>
+                    <option value="Jacket/Sweater">🧥 Jacket / Sweater / Cardigan</option>
+                    <option value="Lunchbox">🍱 Lunchbox / Water Bottle</option>
+                    <option value="Book/Stationary">📚 Book / Stationary / Pencil Box</option>
+                    <option value="Uniform">👕 School Uniform / Cap / Belt</option>
+                    <option value="Shoes">👟 Shoes / Socks / Accessories</option>
+                    <option value="Other">🎒 Other Personal Belonging</option>
+                  </select>
+                </div>
+
+                <div class="form-group">
+                  <label for="dateLost">Date Lost / Left at School</label>
+                  <input type="date" id="dateLost" name="dateLost" [(ngModel)]="lostItemForm.dateLost" required class="form-control" />
+                </div>
+
+                <div class="form-group">
+                  <label for="lostDescription">Description & Identifiers (Speak or Type)</label>
+                  <textarea id="lostDescription" name="lostDescription" [(ngModel)]="lostItemForm.description" rows="4" required placeholder="E.g., Blue Tupperware water bottle with yellow cap and child name written on tag..." class="form-control" style="line-height: 1.5; font-size: 0.88rem;"></textarea>
+                  <span style="font-size: 0.72rem; color: #64748B; font-weight: 600; margin-top: 4px; display: block;">
+                    💡 Speak your report or make any manual rectifications in the text box above before submitting to the teacher.
+                  </span>
+                </div>
+
+                <button type="submit" class="btn-submit-leave" [disabled]="submittingLostItem" style="background: #8B5CF6;">
+                  {{ submittingLostItem ? 'Submitting report...' : '🚀 Alert Class Teacher' }}
+                </button>
+              </form>
+            </div>
+
+            <!-- Right Panel: Lost Item Logs & Teacher Status -->
+            <div class="card leave-history-card">
+              <h3 class="card-title">📜 Lost Item Reports History</h3>
+              
+              <div class="leaves-timeline">
+                <div class="leave-log-box" *ngFor="let item of lostItemsList" style="border: 1px solid #e2e8f0; border-radius: 8px; padding: 12px; margin-bottom: 12px; background: white;">
+                  <div class="log-hdr" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                    <span class="dates-range" style="font-weight: 700; font-size: 0.82rem; color: #1e293b;">🎒 {{ item.item_category }} (Lost: {{ item.date_lost | date:'mediumDate' }})</span>
+                    <span class="badge" [ngClass]="{
+                      'badge-present': item.status === 'Found' || item.status === 'Returned',
+                      'badge-late': item.status === 'Pending'
+                    }" style="font-weight: 700; font-size: 0.72rem; padding: 3px 8px; border-radius: 4px;">{{ item.status }}</span>
+                  </div>
+                  <p class="reason-txt" style="margin: 4px 0; font-size: 0.78rem; color: #475569;"><strong>Description:</strong> {{ item.description }}</p>
+                  
+                  <!-- Teacher Remark / Status -->
+                  <div *ngIf="item.status === 'Found' || item.status === 'Returned'" style="margin-top: 8px; padding: 8px; background: #f0fdf4; border-left: 3px solid #22c55e; border-radius: 4px; font-size: 0.75rem; color: #15803d; font-weight: 700;">
+                    ✓ Status: {{ item.status }}
+                    <span *ngIf="item.teacher_remark" style="font-size: 0.72rem; color: #16a34a; font-weight: normal; display: block; margin-top: 2px;">Teacher Remark: "{{ item.teacher_remark }}"</span>
+                  </div>
+                  <div *ngIf="item.status === 'Pending'" style="margin-top: 8px; padding: 8px; background: #fffbeb; border-left: 3px solid #d97706; border-radius: 4px; font-size: 0.75rem; color: #b45309;">
+                    ⏳ Teacher searching classroom & school lost-and-found bin...
+                  </div>
+
+                  <span class="submitted-time" style="font-size: 0.65rem; color: #94a3b8; display: block; margin-top: 8px;">Reported: {{ item.created_at | date:'short' }}</span>
+                </div>
+                <div *ngIf="lostItemsList.length === 0" class="no-records" style="padding: 40px 0;">
+                  No lost item reports submitted yet.
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
+
 
         <!-- 5. CALENDAR & EVENTS TAB -->
         <div *ngIf="activeTab === 'calendar'" class="tab-content animate-fade-in calendar-tab-wrapper">
@@ -3502,7 +3619,17 @@ export class ParentDashboardComponent implements OnInit, OnDestroy {
     requestDate: '',
     reason: ''
   };
-  activeParentRequestSubTab: 'leaves' | 'meals' = 'leaves';
+  activeParentRequestSubTab: 'leaves' | 'meals' | 'lost-items' = 'leaves';
+
+  // Lost & Found State
+  submittingLostItem = false;
+  lostItemForm = {
+    category: 'Water Bottle',
+    dateLost: new Date().toISOString().substring(0, 10),
+    description: ''
+  };
+  lostItemsList: any[] = [];
+
 
 
   // Parent Moments State
@@ -3599,6 +3726,7 @@ export class ParentDashboardComponent implements OnInit, OnDestroy {
     this.loadStationaryOrders();
     this.loadStationaryCatalog();
     this.loadParentKudosAndIncidents();
+    this.loadParentLostItems();
     this.loadRazorpayScript().then(() => {
       this.razorpayScriptLoaded = true;
     });
@@ -3607,7 +3735,9 @@ export class ParentDashboardComponent implements OnInit, OnDestroy {
       this.voiceSubscription = this.voiceSpeechService.getSpeechResult().subscribe(res => {
         this.recognizedTranscript = res.transcript;
         
-        if (this.activeParentRequestSubTab === 'meals') {
+        if (this.activeParentRequestSubTab === 'lost-items') {
+          this.lostItemForm.description = res.transcript;
+        } else if (this.activeParentRequestSubTab === 'meals') {
           this.suspensionForm.reason = res.transcript;
         } else {
           this.leaveForm.reason = res.transcript;
@@ -3638,13 +3768,19 @@ export class ParentDashboardComponent implements OnInit, OnDestroy {
       alert('Speech recognition is not supported in this browser. Please use Chrome, Edge, or Safari.');
       return;
     }
-    const currentText = (this.activeParentRequestSubTab === 'meals') ? this.suspensionForm.reason : this.leaveForm.reason;
+    let currentText = '';
+    if (this.activeParentRequestSubTab === 'lost-items') {
+      currentText = this.lostItemForm.description;
+    } else if (this.activeParentRequestSubTab === 'meals') {
+      currentText = this.suspensionForm.reason;
+    } else {
+      currentText = this.leaveForm.reason;
+    }
     this.voiceSpeechService.toggleListening(currentText || '');
     if (!this.isListeningVoice) {
       this.voiceStatusMessage = 'Listening... Speak naturally. Pauses are automatically preserved!';
     }
   }
-
 
   clearVoiceNote(): void {
     this.recognizedTranscript = '';
@@ -3652,10 +3788,44 @@ export class ParentDashboardComponent implements OnInit, OnDestroy {
     this.voiceStatusMessage = '';
     this.leaveForm.reason = '';
     this.suspensionForm.reason = '';
+    this.lostItemForm.description = '';
     if (this.voiceSpeechService) {
       this.voiceSpeechService.stopListening();
     }
   }
+
+  loadParentLostItems(): void {
+    this.apiService.get<any[]>('/parent/lost-items').subscribe({
+      next: (res) => { this.lostItemsList = res; },
+      error: () => {}
+    });
+  }
+
+  onLostItemSubmit(event: Event): void {
+    event.preventDefault();
+    if (!this.lostItemForm.dateLost || !this.lostItemForm.description) {
+      alert('Please fill in the date lost and description.');
+      return;
+    }
+    this.submittingLostItem = true;
+    this.apiService.post<any>('/parent/lost-items', {
+      item_category: this.lostItemForm.category,
+      date_lost: this.lostItemForm.dateLost,
+      description: this.lostItemForm.description
+    }).subscribe({
+      next: (res) => {
+        this.submittingLostItem = false;
+        alert(res.message || 'Lost item report submitted successfully!');
+        this.lostItemForm.description = '';
+        this.loadParentLostItems();
+      },
+      error: (err) => {
+        this.submittingLostItem = false;
+        alert(err.error?.detail || 'Failed to submit lost item report.');
+      }
+    });
+  }
+
 
 
 

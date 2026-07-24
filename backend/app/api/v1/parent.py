@@ -670,3 +670,66 @@ def get_parent_student_incidents(
 
     return result
 
+
+class LostItemCreateSchema(BaseModel):
+    item_category: str
+    date_lost: str
+    description: str
+
+
+@router.get("/lost-items")
+def get_parent_lost_items(
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user)
+):
+    if current_user.role.upper() != "PARENT":
+        raise HTTPException(status_code=403, detail="Only parents can view lost items.")
+
+    if not current_user.student_id:
+        return []
+
+    items = db.query(models.StudentLostItem).filter(
+        models.StudentLostItem.student_id == current_user.student_id
+    ).order_by(models.StudentLostItem.created_at.desc()).all()
+
+    return [
+        {
+            "id": item.id,
+            "student_id": item.student_id,
+            "student_name": item.student.name if item.student else "Student",
+            "item_category": item.item_category,
+            "date_lost": item.date_lost,
+            "description": item.description,
+            "status": item.status,
+            "teacher_remark": item.teacher_remark,
+            "created_at": item.created_at.isoformat() if item.created_at else None
+        }
+        for item in items
+    ]
+
+
+@router.post("/lost-items")
+def create_parent_lost_item(
+    payload: LostItemCreateSchema,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user)
+):
+    if current_user.role.upper() != "PARENT":
+        raise HTTPException(status_code=403, detail="Only parents can submit lost item reports.")
+
+    if not current_user.student_id:
+        raise HTTPException(status_code=400, detail="No pupil associated with this parent account.")
+
+    new_item = models.StudentLostItem(
+        student_id=current_user.student_id,
+        item_category=payload.item_category or "Other",
+        date_lost=payload.date_lost,
+        description=payload.description,
+        status="Pending"
+    )
+    db.add(new_item)
+    db.commit()
+    db.refresh(new_item)
+    return {"message": "Lost item report submitted successfully!", "id": new_item.id}
+
+

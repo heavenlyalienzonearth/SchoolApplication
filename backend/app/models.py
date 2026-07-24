@@ -608,5 +608,21 @@ class StudentWeeklyStory(Base):
     teacher = relationship("User")
 
 
+class StudentLostItem(Base):
+    __tablename__ = "student_lost_items"
+
+    id = Column(Integer, primary_key=True, index=True)
+    student_id = Column(Integer, ForeignKey("students.id", ondelete="CASCADE"), nullable=False)
+    item_category = Column(String(100), default="Other", nullable=False)
+    date_lost = Column(String(50), nullable=False)
+    description = Column(Text, nullable=False)
+    status = Column(String(50), default="Pending", nullable=False)  # Pending, Found, Returned
+    teacher_remark = Column(Text, nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+
+    student = relationship("Student")
+
+
+
 
 

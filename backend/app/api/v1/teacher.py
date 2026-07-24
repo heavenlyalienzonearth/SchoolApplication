@@ -8,6 +8,8 @@ from sqlalchemy.orm import Session
 from app.core.database import get_db
 from app.api.v1.auth import get_current_user
 from app import models, schemas
+from pydantic import BaseModel
+
 
 router = APIRouter(prefix="/teacher", tags=["Teacher"])
 
@@ -431,3 +433,58 @@ def delete_student_incident(
     db.delete(incident)
     db.commit()
     return {"message": "Incident log entry deleted successfully."}
+
+
+class LostItemStatusUpdateSchema(BaseModel):
+    status: str  # Pending, Found, Returned
+    teacher_remark: Optional[str] = None
+
+
+@router.get("/lost-items")
+def get_teacher_lost_items(
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user)
+):
+    if current_user.role.upper() not in ["TEACHER", "ADMIN"]:
+        raise HTTPException(status_code=403, detail="Only teachers or admins can view lost items.")
+
+    items = db.query(models.StudentLostItem).order_by(models.StudentLostItem.created_at.desc()).all()
+
+    return [
+        {
+            "id": item.id,
+            "student_id": item.student_id,
+            "student_name": item.student.name if item.student else "Student",
+            "program_title": item.student.program.title if (item.student and item.student.program) else "N/A",
+            "item_category": item.item_category,
+            "date_lost": item.date_lost,
+            "description": item.description,
+            "status": item.status,
+            "teacher_remark": item.teacher_remark,
+            "created_at": item.created_at.isoformat() if item.created_at else None
+        }
+        for item in items
+    ]
+
+
+@router.put("/lost-items/{item_id}/status")
+def update_teacher_lost_item_status(
+    item_id: int,
+    payload: LostItemStatusUpdateSchema,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user)
+):
+    if current_user.role.upper() not in ["TEACHER", "ADMIN"]:
+        raise HTTPException(status_code=403, detail="Only teachers or admins can update lost item status.")
+
+    item = db.query(models.StudentLostItem).filter(models.StudentLostItem.id == item_id).first()
+    if not item:
+        raise HTTPException(status_code=404, detail="Lost item record not found.")
+
+    item.status = payload.status
+    if payload.teacher_remark is not None:
+        item.teacher_remark = payload.teacher_remark
+    db.commit()
+    db.refresh(item)
+    return {"message": "Lost item status updated successfully!", "status": item.status}
+

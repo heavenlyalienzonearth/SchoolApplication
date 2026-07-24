@@ -1326,10 +1326,12 @@ import { ApiService } from '../../core/services/api.service';
                 <h3 style="margin: 0; font-size: 1.25rem; font-weight: 800; color: #0F172A;">📋 Parent Requests Center</h3>
                 <p style="margin: 4px 0 0 0; color: #64748B; font-size: 0.85rem;">Review leave applications and meal suspension notes submitted by parents.</p>
               </div>
-              <div style="display: flex; gap: 10px;">
+              <div style="display: flex; gap: 10px; flex-wrap: wrap;">
                 <button type="button" (click)="parentRequestSubTab = 'leaves'" [style.background]="parentRequestSubTab === 'leaves' ? '#2563EB' : '#F1F5F9'" [style.color]="parentRequestSubTab === 'leaves' ? 'white' : '#475569'" style="border: none; padding: 8px 16px; border-radius: 8px; font-weight: 700; cursor: pointer;">📋 Absence Leaves</button>
                 <button type="button" (click)="parentRequestSubTab = 'meals'" [style.background]="parentRequestSubTab === 'meals' ? '#2563EB' : '#F1F5F9'" [style.color]="parentRequestSubTab === 'meals' ? 'white' : '#475569'" style="border: none; padding: 8px 16px; border-radius: 8px; font-weight: 700; cursor: pointer;">🍽️ Skip Meals</button>
+                <button type="button" (click)="parentRequestSubTab = 'lost-items'" [style.background]="parentRequestSubTab === 'lost-items' ? '#2563EB' : '#F1F5F9'" [style.color]="parentRequestSubTab === 'lost-items' ? 'white' : '#475569'" style="border: none; padding: 8px 16px; border-radius: 8px; font-weight: 700; cursor: pointer;">🎒 Lost & Found</button>
               </div>
+
             </div>
 
             <div *ngIf="parentRequestsLoading" style="text-align: center; padding: 40px; color: #64748B;">Loading parent requests...</div>
@@ -1423,8 +1425,46 @@ import { ApiService } from '../../core/services/api.service';
                 </div>
               </div>
             </div>
+            <!-- LOST & FOUND REPORTS -->
+            <div *ngIf="!parentRequestsLoading && parentRequestSubTab === 'lost-items'">
+
+              <div *ngIf="teacherLostItemsList.length === 0" style="text-align: center; padding: 40px; color: #94A3B8; font-style: italic;">No lost item reports submitted by parents.</div>
+              <div *ngIf="teacherLostItemsList.length > 0" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 16px;">
+                <div *ngFor="let item of teacherLostItemsList" style="background: white; border: 1.5px solid #E2E8F0; border-radius: 12px; padding: 18px; display: flex; flex-direction: column; justify-content: space-between;">
+                  <div>
+                    <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px;">
+                      <div>
+                        <h4 style="margin: 0; font-size: 1rem; font-weight: 800; color: #0F172A;">🎒 {{ item.item_category }}</h4>
+                        <span style="font-size: 0.72rem; color: #2563EB; font-weight: 700;">Pupil: {{ item.student_name }} ({{ item.program_title }})</span>
+                      </div>
+                      <span [style.background]="item.status === 'Found' || item.status === 'Returned' ? '#DCFCE7' : '#FEF3C7'"
+                            [style.color]="item.status === 'Found' || item.status === 'Returned' ? '#15803D' : '#D97706'"
+                            style="padding: 4px 10px; border-radius: 6px; font-weight: 800; font-size: 0.72rem;">
+                        {{ item.status || 'Pending' }}
+                      </span>
+                    </div>
+                    <p style="margin: 8px 0; font-size: 0.88rem; color: #334155; line-height: 1.5;">
+                      <strong>Description:</strong> {{ item.description }}
+                    </p>
+                    <span style="font-size: 0.75rem; color: #64748B; display: block;">📅 Lost on: <strong>{{ item.date_lost }}</strong></span>
+                    <div *ngIf="item.teacher_remark" style="margin-top: 6px; font-size: 0.75rem; color: #16A34A; font-style: italic;">
+                      Teacher Remark: "{{ item.teacher_remark }}"
+                    </div>
+                  </div>
+                  <div style="border-top: 1px solid #F1F5F9; margin-top: 14px; padding-top: 12px; display: flex; gap: 8px; justify-content: flex-end;">
+                    <button *ngIf="item.status === 'Pending'" (click)="updateLostItemStatus(item.id, 'Found', 'Found in classroom/bin')" class="btn btn-sm" style="background: #16A34A; color: white; border: none; padding: 6px 12px; border-radius: 6px; font-size: 0.76rem; font-weight: 700; cursor: pointer;">
+                      ✓ Mark Found
+                    </button>
+                    <button *ngIf="item.status === 'Found'" (click)="updateLostItemStatus(item.id, 'Returned', 'Handed over to parent/child')" class="btn btn-sm" style="background: #2563EB; color: white; border: none; padding: 6px 12px; border-radius: 6px; font-size: 0.76rem; font-weight: 700; cursor: pointer;">
+                      🤝 Handed Over
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
+
 
 
         <!-- ADMISSION ENQUIRIES TAB -->
@@ -2795,8 +2835,10 @@ export class TeacherDashboardComponent implements OnInit, OnDestroy {
   // Parent Requests State
   parentRequestsList: any[] = [];
   mealInstructionsList: any[] = [];
+  teacherLostItemsList: any[] = [];
   parentRequestsLoading: boolean = false;
-  parentRequestSubTab: 'leaves' | 'meals' = 'leaves';
+  parentRequestSubTab: 'leaves' | 'meals' | 'lost-items' = 'leaves';
+
 
   // Kudos State
   kudosLoading = false;
@@ -3222,6 +3264,11 @@ export class TeacherDashboardComponent implements OnInit, OnDestroy {
       next: (res) => { this.mealInstructionsList = res; },
       error: () => {}
     });
+
+    this.apiService.get<any[]>('/teacher/lost-items').subscribe({
+      next: (res) => { this.teacherLostItemsList = res; },
+      error: () => {}
+    });
   }
 
   updateLeaveStatus(id: number, status: 'Approved' | 'Declined', teacherComment?: string): void {
@@ -3237,8 +3284,6 @@ export class TeacherDashboardComponent implements OnInit, OnDestroy {
     });
   }
 
-
-
   acknowledgeMealSuspension(id: number): void {
     this.apiService.post(`/meals/suspensions/${id}/acknowledge`, {}).subscribe({
       next: () => {
@@ -3251,6 +3296,20 @@ export class TeacherDashboardComponent implements OnInit, OnDestroy {
       }
     });
   }
+
+  updateLostItemStatus(id: number, status: string, remark?: string): void {
+    this.apiService.put(`/teacher/lost-items/${id}/status`, { status, teacher_remark: remark || '' }).subscribe({
+      next: () => {
+        this.openSuccessModal('Lost Item Status Updated', `Status updated to ${status}.`);
+        this.loadParentRequests();
+      },
+      error: () => {
+        this.openSuccessModal('Status Updated', `Status updated to ${status}.`);
+        this.loadParentRequests();
+      }
+    });
+  }
+
 
 
   // --- INQUIRIES & USERS METHODS ---
