@@ -75,7 +75,11 @@ import { ApiService } from '../../core/services/api.service';
               <li [class.active]="activeTab === 'moments'" (click)="switchTab('moments')" class="submenu-item">
                 <span class="icon">📸</span> Daily Moments
               </li>
+              <li [class.active]="activeTab === 'art'" (click)="switchTab('art')" class="submenu-item">
+                <span class="icon">🎨</span> AI Art Storyteller
+              </li>
             </ng-container>
+
 
             <!-- 2. SCHOOL MANAGEMENT GROUP -->
             <li class="sidebar-header" (click)="toggleSchoolManagement()" style="cursor: pointer; display: flex; justify-content: space-between; align-items: center; border-top: 1px solid rgba(255,255,255,0.08); margin-top: 14px; padding-top: 14px;">
@@ -1838,8 +1842,123 @@ import { ApiService } from '../../core/services/api.service';
           </div>
         </div>
 
+        <!-- MAGIC ART STORYTELLER -->
+        <div class="tab-content animate-fade-in" *ngIf="activeTab === 'art'">
+          <div class="card" style="padding: 24px; margin-bottom: 24px; border-top: 4px solid #8B5CF6;">
+            <div style="margin-bottom: 20px;">
+              <h3 style="margin: 0; font-size: 1.3rem; font-weight: 800; color: #4C1D95; display: flex; align-items: center; gap: 8px;">
+                🎨 AI Art Storyteller
+              </h3>
+              <p style="margin: 4px 0 0 0; color: #6B21A8; font-size: 0.85rem;">
+                Transform hand-drawn student artwork into AI story narrations spoken in clear Indian English!
+              </p>
+            </div>
+
+            <!-- Upload Drawing & Generate Story Form -->
+            <div style="background: #F8FAFC; border: 1.5px solid #E2E8F0; border-radius: 14px; padding: 20px; max-width: 600px; margin: 0;">
+              <h4 style="margin: 0 0 14px 0; font-size: 1rem; font-weight: 800; color: #1E293B;">
+                ✨ Create AI Story Narration
+              </h4>
+
+              <form (ngSubmit)="submitArtAnimation($event)">
+                <div class="form-group" style="margin-bottom: 14px;">
+                  <label style="font-weight: 700; font-size: 0.82rem; color: #475569; display: block; margin-bottom: 4px;">1. Select Student Pupil</label>
+                  <select [(ngModel)]="artSelectedStudentId" name="artSelectedStudentId" class="form-control" style="font-size: 0.88rem; width: 100%;">
+                    <option [ngValue]="null">-- Choose Pupil --</option>
+                    <option *ngFor="let s of classStudents" [ngValue]="s.id">{{ s.name }} (Roll #{{ s.roll_number || s.id }})</option>
+                  </select>
+                </div>
+
+                <div class="form-group" style="margin-bottom: 18px;">
+                  <label style="font-weight: 700; font-size: 0.82rem; color: #475569; display: block; margin-bottom: 4px;">2. Upload Photo of Child's Artwork / Drawing</label>
+                  <input type="file" (change)="onArtDrawingFileSelected($event)" accept="image/*" class="form-control" style="font-size: 0.82rem;" />
+                  <span style="font-size: 0.72rem; color: #64748B; margin-top: 4px; display: block;">
+                    💡 Snap a photo of drawing or deity shrine. Gemini 2.5 Flash Vision directly analyzes the picture!
+                  </span>
+                </div>
+
+                <button type="button" (click)="submitArtAnimation($event)" [disabled]="rendering15sArt" 
+                        style="width: 100%; background: linear-gradient(135deg, #10B981, #059669); color: white; border: none; padding: 12px; border-radius: 10px; font-weight: 800; font-size: 0.95rem; cursor: pointer; box-shadow: 0 4px 12px rgba(16,185,129,0.3); transition: all 0.2s;">
+                  {{ rendering15sArt ? '🪄 Analyzing Artwork & Generating Story...' : '✨ Generate AI Story Narration' }}
+                </button>
+              </form>
+            </div>
+          </div>
+
+          <div class="card" style="padding: 24px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; margin-bottom: 16px;">
+              <h3 style="margin: 0; font-size: 1.2rem; font-weight: 800; color: #1E293B;">
+                🎙️ AI Art Story Narrations Gallery
+              </h3>
+              <button *ngIf="teacherArtList.length > 0" type="button" (click)="deleteAllArtAnimations()" style="background: #EF4444; color: white; border: none; padding: 7px 14px; border-radius: 8px; font-weight: 800; font-size: 0.78rem; cursor: pointer;">
+                🗑️ Delete All
+              </button>
+            </div>
+
+            <div *ngIf="teacherArtList.length === 0" style="text-align: center; padding: 40px; color: #94A3B8; font-style: italic;">
+              No stories yet. Upload a drawing above to generate an AI narration!
+            </div>
+
+            <div *ngIf="teacherArtList.length > 0" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px;">
+              <div *ngFor="let item of teacherArtList"
+                   style="border-radius: 16px; overflow: hidden; box-shadow: 0 8px 24px rgba(0,0,0,0.12); position: relative; min-height: 360px; background: #0F172A;">
+
+                <!-- FULL BACKGROUND IMAGE — still, no movement -->
+                <img [src]="mediaBaseUrl + item.original_photo_url" alt="{{ item.title }}"
+                     style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: contain; object-position: center; background: #F8FAFC;" />
+
+                <!-- AI Badge top-right -->
+                <span style="position: absolute; top: 12px; right: 12px; background: rgba(99,102,241,0.92); color: white; padding: 4px 10px; border-radius: 20px; font-weight: 800; font-size: 0.68rem; backdrop-filter: blur(4px); z-index: 2;">
+                  🤖 Gemini Vision
+                </span>
+
+                <!-- BOTTOM OVERLAY — audio player floats over the image -->
+                <div style="position: absolute; bottom: 0; left: 0; right: 0; z-index: 2;
+                            background: linear-gradient(to top, rgba(15,23,42,0.97) 60%, rgba(15,23,42,0.6) 85%, transparent 100%);
+                            padding: 14px 14px 12px 14px; border-radius: 0 0 16px 16px;">
+
+                  <!-- Title & Pupil -->
+                  <h4 style="margin: 0 0 2px 0; font-size: 0.9rem; font-weight: 800; color: #F1F5F9; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                    🎨 {{ item.title }}
+                  </h4>
+                  <span style="font-size: 0.7rem; color: #93C5FD; font-weight: 700; display: block; margin-bottom: 8px;">
+                    👦 {{ item.student_name }}
+                  </span>
+
+                  <!-- Audio Player -->
+                  <audio #artAudio [src]="mediaBaseUrl + item.animated_video_url"
+                         style="width: 100%; height: 32px; border-radius: 6px; accent-color: #818CF8; margin-bottom: 8px;" controls>
+                  </audio>
+
+                  <!-- Speed Controls + Download + Delete -->
+                  <div style="display: flex; gap: 6px; align-items: center; flex-wrap: wrap;">
+                    <span style="font-size: 0.65rem; color: #94A3B8; font-weight: 700;">Speed:</span>
+                    <button type="button" (click)="artAudio.playbackRate = 1.0"
+                            style="background: rgba(255,255,255,0.12); color: #E2E8F0; border: 1px solid rgba(255,255,255,0.18); padding: 3px 8px; border-radius: 6px; font-size: 0.67rem; font-weight: 800; cursor: pointer;">1×</button>
+                    <button type="button" (click)="artAudio.playbackRate = 1.25"
+                            style="background: rgba(255,255,255,0.12); color: #E2E8F0; border: 1px solid rgba(255,255,255,0.18); padding: 3px 8px; border-radius: 6px; font-size: 0.67rem; font-weight: 800; cursor: pointer;">1.25×</button>
+                    <button type="button" (click)="artAudio.playbackRate = 1.5"
+                            style="background: rgba(255,255,255,0.12); color: #E2E8F0; border: 1px solid rgba(255,255,255,0.18); padding: 3px 8px; border-radius: 6px; font-size: 0.67rem; font-weight: 800; cursor: pointer;">1.5×</button>
+                    <div style="flex: 1;"></div>
+                    <a [href]="mediaBaseUrl + item.animated_video_url" download target="_blank"
+                       style="background: rgba(139,92,246,0.85); color: white; text-decoration: none; padding: 4px 10px; border-radius: 6px; font-weight: 800; font-size: 0.68rem; cursor: pointer;">📥</a>
+                    <button type="button" (click)="deleteSingleArtAnimation(item.id)"
+                            style="background: rgba(239,68,68,0.8); color: white; border: none; padding: 4px 10px; border-radius: 6px; font-weight: 800; font-size: 0.68rem; cursor: pointer;">
+                      🗑️
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+
+        </div>
+
 
         </main>
+
+
       </div>
     </div>
 
@@ -2692,9 +2811,27 @@ export class TeacherDashboardComponent implements OnInit, OnDestroy {
   itemToDeleteType: 'assignment' | 'moment' | 'achievement' | null = null;
   itemToDeleteId: number | null = null;
 
-  activeTab: 'orders' | 'pupils' | 'kudos' | 'incidents' | 'achievements' | 'assignments' | 'moments' | 'programs' | 'holidays' | 'gallery' | 'inquiries' | 'users' | 'circulars' | 'library' | 'admissions' | 'milestones' | 'attendance' | 'leaves' = 'orders';
+  activeTab: 'orders' | 'pupils' | 'kudos' | 'incidents' | 'achievements' | 'assignments' | 'moments' | 'programs' | 'holidays' | 'gallery' | 'inquiries' | 'users' | 'circulars' | 'library' | 'admissions' | 'milestones' | 'attendance' | 'leaves' | 'art' = 'orders';
   ordersLoading = false;
   ordersList: any[] = [];
+
+  // Art Animator State
+  motionStylesList: any[] = [];
+  teacherArtList: any[] = [];
+  artSelectedStudentId: number | null = null;
+  artDrawingFile: File | null = null;
+  artSelectedStyleId: number | null = null;
+  artDrawingTitle: string = "Magic Drawing";
+  rendering15sArt: boolean = false;
+  showMotionStyleModal: boolean = false;
+  uploadingBgFile: boolean = false;
+  motionStyleForm = {
+    id: 0,
+    title: '',
+    motion_preset: 'dance_loop',
+    background_image_url: '/static/art_backgrounds/stage_bg.jpg'
+  };
+
 
   // Sidebar Group Collapse States
   teacherConsoleExpanded = true;
@@ -3154,10 +3291,14 @@ export class TeacherDashboardComponent implements OnInit, OnDestroy {
       next: (students) => {
         this.classStudents = students;
         this.stats.students_count = students.length;
+        if (students.length > 0 && !this.artSelectedStudentId) {
+          this.artSelectedStudentId = students[0].id;
+        }
       },
       error: () => {}
     });
   }
+
 
   openPupilsModal(): void {
     this.loadClassStudents();
@@ -3200,6 +3341,9 @@ export class TeacherDashboardComponent implements OnInit, OnDestroy {
       this.loadParentRequests();
     } else if (tab === 'inquiries') {
       this.loadInquiries();
+    } else if (tab === 'art') {
+      this.loadClassStudents();
+      this.loadArtStudioData();
     } else if (tab === 'users') {
       this.loadTeachersRoster();
     } else if (tab === 'programs') {
@@ -3208,6 +3352,178 @@ export class TeacherDashboardComponent implements OnInit, OnDestroy {
       this.loadMilestones();
     }
   }
+
+  // --- MAGIC ART STUDIO METHODS ---
+  loadArtStudioData(): void {
+    this.apiService.get<any[]>('/art/motion-styles').subscribe({
+      next: (res) => {
+        this.motionStylesList = res;
+        if (res.length > 0 && !this.artSelectedStyleId) {
+          this.artSelectedStyleId = res[0].id;
+        }
+      },
+      error: () => {}
+    });
+
+    this.apiService.get<any[]>('/art/teacher').subscribe({
+      next: (res) => { this.teacherArtList = res; },
+      error: () => {}
+    });
+  }
+
+  onArtDrawingFileSelected(event: any): void {
+    const file = event.target.files[0];
+    if (file) {
+      this.artDrawingFile = file;
+    }
+  }
+
+  submitArtAnimation(event?: Event): void {
+    if (event) event.preventDefault();
+    if (!this.artSelectedStudentId) {
+      alert('Please select a student pupil from the dropdown first.');
+      return;
+    }
+    if (!this.artDrawingFile) {
+      alert('Please click "Choose File" and upload a photo of the child\'s drawing first.');
+      return;
+    }
+    this.rendering15sArt = true;
+    const formData = new FormData();
+    formData.append('title', this.artDrawingTitle || 'Magic Drawing');
+    if (this.artSelectedStyleId) {
+      formData.append('motion_style_id', this.artSelectedStyleId.toString());
+    }
+
+    formData.append('drawing', this.artDrawingFile);
+
+    this.apiService.post<any>(`/art/animate/${this.artSelectedStudentId}`, formData).subscribe({
+      next: (res) => {
+        this.rendering15sArt = false;
+        alert(res.message || '15-second magic animated story reel rendered!');
+        this.artDrawingFile = null;
+        this.loadArtStudioData();
+      },
+      error: (err) => {
+        this.rendering15sArt = false;
+        alert(err.error?.detail || 'Failed to generate 15-second animation reel.');
+      }
+    });
+  }
+
+  openMotionStyleModal(): void {
+    this.resetMotionStyleForm();
+    this.showMotionStyleModal = true;
+  }
+
+  editMotionStyle(style: any): void {
+    this.motionStyleForm = {
+      id: style.id,
+      title: style.title,
+      motion_preset: style.motion_preset,
+      background_image_url: style.background_image_url
+    };
+    this.showMotionStyleModal = true;
+  }
+
+  resetMotionStyleForm(): void {
+    this.motionStyleForm = {
+      id: 0,
+      title: '',
+      motion_preset: 'dance_loop',
+      background_image_url: '/static/art_backgrounds/stage_bg.jpg'
+    };
+  }
+
+  saveMotionStyle(event: Event): void {
+    event.preventDefault();
+    if (!this.motionStyleForm.title || !this.motionStyleForm.background_image_url) {
+      alert('Please enter a style title and background image.');
+      return;
+    }
+    if (this.motionStyleForm.id > 0) {
+      this.apiService.put(`/art/motion-styles/${this.motionStyleForm.id}`, this.motionStyleForm).subscribe({
+        next: () => {
+          alert('Motion style updated successfully!');
+          this.resetMotionStyleForm();
+          this.loadArtStudioData();
+        },
+        error: () => alert('Failed to update motion style.')
+      });
+    } else {
+      this.apiService.post('/art/motion-styles', this.motionStyleForm).subscribe({
+        next: () => {
+          alert('New 15-second motion style created!');
+          this.resetMotionStyleForm();
+          this.loadArtStudioData();
+        },
+        error: () => alert('Failed to create motion style.')
+      });
+    }
+  }
+
+  deleteMotionStyle(id: number): void {
+    if (!confirm('Are you sure you want to delete this motion style?')) return;
+    this.apiService.delete(`/art/motion-styles/${id}`).subscribe({
+      next: () => {
+        alert('Motion style deleted.');
+        this.loadArtStudioData();
+      },
+      error: () => alert('Failed to delete motion style.')
+    });
+  }
+
+  onBgFileSelected(event: any): void {
+    const file = event.target.files[0];
+    if (!file) return;
+    this.uploadingBgFile = true;
+    const formData = new FormData();
+    formData.append('file', file);
+    this.apiService.post<any>('/art/upload-background', formData).subscribe({
+      next: (res) => {
+        this.uploadingBgFile = false;
+        this.motionStyleForm.background_image_url = res.url;
+      },
+      error: () => {
+        this.uploadingBgFile = false;
+        alert('Failed to upload background image.');
+      }
+    });
+  }
+
+  deleteSingleArtAnimation(id: number): void {
+    if (!confirm('Are you sure you want to delete this animated video reel?')) return;
+    this.apiService.delete(`/art/${id}`).subscribe({
+      next: (res: any) => {
+        alert(res.message || 'Video deleted successfully.');
+        this.loadArtStudioData();
+      },
+      error: () => alert('Failed to delete video.')
+    });
+  }
+
+  deleteAllArtAnimations(): void {
+    if (!confirm('⚠️ Are you sure you want to delete ALL rendered video reels for the class? This cannot be undone.')) return;
+    if (this.teacherArtList.length === 0) return;
+    
+    const studentIds = Array.from(new Set(this.teacherArtList.map(a => a.student_id)));
+    let deletedCount = 0;
+    studentIds.forEach(sId => {
+      this.apiService.delete(`/art/student/${sId}/all`).subscribe({
+        next: () => {
+          deletedCount++;
+          if (deletedCount === studentIds.length) {
+            alert('All animated video reels deleted successfully.');
+            this.loadArtStudioData();
+          }
+        },
+        error: () => {}
+      });
+    });
+  }
+
+
+
 
   // --- ATTENDANCE METHODS ---
   loadStudentsForAttendance(): void {

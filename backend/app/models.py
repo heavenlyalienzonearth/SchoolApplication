@@ -623,6 +623,40 @@ class StudentLostItem(Base):
     student = relationship("Student")
 
 
+class ArtMotionStyle(Base):
+    __tablename__ = "art_motion_styles"
+
+    id = Column(Integer, primary_key=True, index=True)
+    title = Column(String(255), nullable=False)
+    key_name = Column(String(100), nullable=False)
+    background_image_url = Column(String(500), nullable=False)
+    motion_preset = Column(String(100), default="dance_loop", nullable=False)  # rocket_launch, dance_loop, bounce_float, walk_across, spin_fly
+    sound_effect_url = Column(String(500), nullable=True)
+    duration_seconds = Column(Integer, default=15, nullable=False)
+    is_active = Column(Boolean, default=True, nullable=False)
+    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+
+
+class StudentArtAnimation(Base):
+    __tablename__ = "student_art_animations"
+
+    id = Column(Integer, primary_key=True, index=True)
+    student_id = Column(Integer, ForeignKey("students.id", ondelete="CASCADE"), nullable=False)
+    teacher_id = Column(Integer, ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
+    motion_style_id = Column(Integer, ForeignKey("art_motion_styles.id", ondelete="SET NULL"), nullable=True)
+    original_photo_url = Column(String(500), nullable=False)
+    extracted_cutout_url = Column(String(500), nullable=True)
+    animated_video_url = Column(String(500), nullable=False)
+    duration = Column(Integer, default=15, nullable=False)
+    title = Column(String(255), nullable=False)
+    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+
+    student = relationship("Student")
+    teacher = relationship("User")
+    motion_style = relationship("ArtMotionStyle")
+
+
+
 
 
 

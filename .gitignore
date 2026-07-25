@@ -159,3 +159,10 @@ input.date
 *.njsproj
 *.sln
 *.sw?
+
+# Art Media Outputs
+backend/static/art_animations/*
+!backend/static/art_animations/.gitkeep
+backend/static/art_audio/*
+!backend/static/art_audio/.gitkeep
+

@@ -289,8 +289,85 @@ import { VoiceSpeechService } from '../../core/services/voice-speech.service';
                 </div>
               </div>
 
+              <!-- 🎨 Child's Magic Animated Artwork (15s Story Reels) Card -->
+
+
+              <div class="card art-card" *ngIf="parentArtAnimations.length > 0" style="margin-bottom: 30px; border: 2.5px solid #8B5CF6; background: #FAF5FF; padding: 24px; border-radius: 14px; box-shadow: 0 4px 14px rgba(139,92,246,0.12);">
+                <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; margin-bottom: 16px;">
+                  <div>
+                    <h3 style="margin: 0; font-size: 1.15rem; font-weight: 800; color: #4C1D95; display: flex; align-items: center; gap: 8px;">
+                      🎨 {{ dashboardData?.kid?.name }}'s Magic Animated Artwork (15s Story Reels)
+                    </h3>
+                    <p style="margin: 4px 0 0 0; font-size: 0.85rem; color: #6B21A8; font-weight: 600;">
+                      Hand-drawn paper artwork brought to life with 15-second multi-stage animations and soundscapes!
+                    </p>
+                  </div>
+
+                  <div style="display: flex; align-items: center; gap: 8px;">
+                    <span style="background: #8B5CF6; color: white; padding: 5px 12px; border-radius: 20px; font-weight: 800; font-size: 0.78rem;">
+                      ✨ {{ parentArtAnimations.length }} Keepsake Reels
+                    </span>
+                    <button type="button" (click)="deleteAllArtAnimations()" style="background: #EF4444; color: white; border: none; padding: 5px 12px; border-radius: 20px; font-weight: 800; font-size: 0.78rem; cursor: pointer; display: flex; align-items: center; gap: 4px;">
+                      🗑️ Delete All
+                    </button>
+                  </div>
+                </div>
+
+                <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px;">
+                  <div *ngFor="let item of parentArtAnimations"
+                       style="border-radius: 16px; overflow: hidden; box-shadow: 0 8px 24px rgba(0,0,0,0.12); position: relative; min-height: 360px; background: #0F172A;">
+
+                    <!-- FULL BACKGROUND IMAGE — still, no movement -->
+                    <img [src]="mediaBaseUrl + item.original_photo_url" alt="{{ item.title }}"
+                         style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: contain; object-position: center; background: #F8FAFC;" />
+
+                    <!-- AI Badge top-right -->
+                    <span style="position: absolute; top: 12px; right: 12px; background: rgba(124,58,237,0.92); color: white; padding: 4px 10px; border-radius: 20px; font-weight: 800; font-size: 0.68rem; backdrop-filter: blur(4px); z-index: 2;">
+                      🤖 Gemini Story
+                    </span>
+
+                    <!-- BOTTOM OVERLAY — audio player floats over the image -->
+                    <div style="position: absolute; bottom: 0; left: 0; right: 0; z-index: 2;
+                                background: linear-gradient(to top, rgba(15,23,42,0.97) 60%, rgba(15,23,42,0.6) 85%, transparent 100%);
+                                padding: 14px 14px 12px 14px; border-radius: 0 0 16px 16px;">
+
+                      <!-- Title & Date -->
+                      <h4 style="margin: 0 0 2px 0; font-size: 0.9rem; font-weight: 800; color: #F1F5F9; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                        🎨 {{ item.title }}
+                      </h4>
+                      <span style="font-size: 0.7rem; color: #C084FC; font-weight: 700; display: block; margin-bottom: 8px;">
+                        Created: {{ item.created_at | date:'mediumDate' }}
+                      </span>
+
+                      <!-- Audio Player -->
+                      <audio #parentArtAudio [src]="mediaBaseUrl + item.animated_video_url"
+                             style="width: 100%; height: 32px; border-radius: 6px; accent-color: #C084FC; margin-bottom: 8px;" controls>
+                      </audio>
+
+                      <!-- Speed Controls + Download + Delete -->
+                      <div style="display: flex; gap: 6px; align-items: center; flex-wrap: wrap;">
+                        <span style="font-size: 0.65rem; color: #94A3B8; font-weight: 700;">Speed:</span>
+                        <button type="button" (click)="parentArtAudio.playbackRate = 1.0"
+                                style="background: rgba(255,255,255,0.12); color: #E2E8F0; border: 1px solid rgba(255,255,255,0.18); padding: 3px 8px; border-radius: 6px; font-size: 0.67rem; font-weight: 800; cursor: pointer;">1×</button>
+                        <button type="button" (click)="parentArtAudio.playbackRate = 1.25"
+                                style="background: rgba(255,255,255,0.12); color: #E2E8F0; border: 1px solid rgba(255,255,255,0.18); padding: 3px 8px; border-radius: 6px; font-size: 0.67rem; font-weight: 800; cursor: pointer;">1.25×</button>
+                        <button type="button" (click)="parentArtAudio.playbackRate = 1.5"
+                                style="background: rgba(255,255,255,0.12); color: #E2E8F0; border: 1px solid rgba(255,255,255,0.18); padding: 3px 8px; border-radius: 6px; font-size: 0.67rem; font-weight: 800; cursor: pointer;">1.5×</button>
+                        <div style="flex: 1;"></div>
+                        <a [href]="mediaBaseUrl + item.animated_video_url" download target="_blank"
+                           style="background: rgba(139,92,246,0.85); color: white; text-decoration: none; padding: 4px 10px; border-radius: 6px; font-weight: 800; font-size: 0.68rem; cursor: pointer;">📥</a>
+                        <button type="button" (click)="deleteSingleArtAnimation(item.id)"
+                                style="background: rgba(239,68,68,0.8); color: white; border: none; padding: 4px 10px; border-radius: 6px; font-weight: 800; font-size: 0.68rem; cursor: pointer;">
+                          🗑️
+                        </button>
+                      </div>
+                  </div>
+                </div>
+              </div>
+            </div>
 
               <!-- 📚 Class Assignments Card -->
+
               <div class="card assignments-card" style="margin-bottom: 30px; border: 2.5px solid var(--primary); background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);">
                 <h3 class="card-title" style="display: flex; align-items: center; justify-content: space-between; font-size: 1.15rem; font-weight: 800; color: #1e293b; margin: 0 0 8px 0;">
                   <span>📚 Class Assignments</span>
@@ -3630,10 +3707,48 @@ export class ParentDashboardComponent implements OnInit, OnDestroy {
   };
   lostItemsList: any[] = [];
 
+  // Parent Art Animations State
+
+  parentArtAnimations: any[] = [];
+
+  loadParentArtAnimations(): void {
+    const studentId = this.dashboardData?.kid?.id;
+    if (!studentId) return;
+    this.apiService.get<any[]>(`/art/parent/${studentId}`).subscribe({
+      next: (data) => { this.parentArtAnimations = data; },
+      error: () => {}
+    });
+  }
+
+  deleteSingleArtAnimation(id: number): void {
+    if (!confirm('Are you sure you want to delete this animated video reel?')) return;
+    this.apiService.delete(`/art/${id}`).subscribe({
+      next: (res: any) => {
+        alert(res.message || 'Video deleted successfully.');
+        this.loadParentArtAnimations();
+      },
+      error: () => alert('Failed to delete video.')
+    });
+  }
+
+  deleteAllArtAnimations(): void {
+    const studentId = this.dashboardData?.kid?.id;
+    if (!studentId) return;
+    if (!confirm(`⚠️ Are you sure you want to delete ALL animated video reels for ${this.dashboardData?.kid?.name}? This cannot be undone.`)) return;
+    
+    this.apiService.delete(`/art/student/${studentId}/all`).subscribe({
+      next: (res: any) => {
+        alert(res.message || 'All video reels deleted.');
+        this.loadParentArtAnimations();
+      },
+      error: () => alert('Failed to delete video reels.')
+    });
+  }
 
 
   // Parent Moments State
   parentMoments: StudentMoment[] = [];
+
   parentMomentsLoading = false;
 
   // Parent Class Assignments State
@@ -3854,7 +3969,9 @@ export class ParentDashboardComponent implements OnInit, OnDestroy {
       next: (data) => {
         this.dashboardData = data;
         this.loading = false;
+        this.loadParentArtAnimations();
       },
+
       error: (err) => {
         this.loading = false;
         this.errorMessage = err.error?.detail || 'Failed to retrieve portal dashboard details.';
