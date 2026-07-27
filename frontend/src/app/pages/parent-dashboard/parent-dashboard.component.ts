@@ -3478,7 +3478,7 @@ import { VoiceSpeechService } from '../../core/services/voice-speech.service';
   `]
 })
 export class ParentDashboardComponent implements OnInit, OnDestroy {
-  mediaBaseUrl = (typeof window !== 'undefined' && window.location.hostname === 'localhost') ? 'http://localhost:8000' : '';
+  mediaBaseUrl = (typeof window !== 'undefined' && (window.location.port === '4200' || (window.location.hostname === 'localhost' && window.location.port !== '80') || (window.location.hostname === '127.0.0.1' && window.location.port !== '80'))) ? 'http://localhost:8000' : '';
   parentName = '';
   loginTime = '';
   clockInterval: any;

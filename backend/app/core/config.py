@@ -10,14 +10,14 @@ class Settings(BaseSettings):
     REFRESH_TOKEN_EXPIRE_DAYS: int = 7
     API_PORT: int = 8000
     API_HOST: str = "127.0.0.1"
-    CORS_ORIGINS: str = '["http://localhost:4200"]'
+    CORS_ORIGINS: str = '["http://localhost:4200", "http://127.0.0.1:4200", "http://localhost", "https://localhost", "http://200.97.168.156", "https://200.97.168.156", "http://deepfusion.cloud", "https://deepfusion.cloud", "http://www.deepfusion.cloud", "https://www.deepfusion.cloud", "*"]'
     RAZORPAY_KEY_ID: str = ""
     RAZORPAY_KEY_SECRET: str = ""
 
     @property
     def cors_origins_list(self) -> List[str]:
         if not self.CORS_ORIGINS:
-            return ["http://localhost:4200"]
+            return ["*"]
             
         raw = self.CORS_ORIGINS.strip()
         
