@@ -1,49 +1,51 @@
 # =============================================================
 # Vidyankuram School App — Backend Requirements
-# Platform: Ubuntu 24.04 LTS (Python 3.12)
-# Strategy: Pin only DIRECT dependencies.
-#           Let pip resolve transitive versions automatically.
+# Platform: Windows (Python 3.13)
+# Strategy: Pin only direct dependencies used by the backend.
 # =============================================================
 
-# ── Web Framework ─────────────────────────────────────────────
+# Web API
 fastapi==0.115.0
 uvicorn[standard]==0.32.1
 python-multipart==0.0.12
+setuptools==80.9.0
 
-# ── Database ──────────────────────────────────────────────────
+# Database
 SQLAlchemy==2.0.36
 pyodbc==5.2.0
 
-# ── Authentication & Security ─────────────────────────────────
+# Authentication and security
 python-jose[cryptography]==3.3.0
 passlib[bcrypt]==1.7.4
+bcrypt==4.1.2
 PyOTP==2.9.0
 
-# ── Settings & Config ─────────────────────────────────────────
+# Settings and config
 pydantic==2.9.2
 pydantic-settings==2.5.2
 python-dotenv==1.0.1
+email-validator==2.3.0
 
-# ── Excel / File Handling ─────────────────────────────────────
+# File and document processing
 openpyxl==3.1.5
 python-pptx==1.0.2
 lxml==5.3.0
 
-# ── Image Processing (AI Art Animator) ───────────────────────
+# Image processing
 Pillow==10.4.0
 numpy==1.26.4
 
-# ── Text-to-Speech ────────────────────────────────────────────
+# Text-to-speech
 gTTS==2.5.3
 edge-tts==6.1.12
 
-# ── AI Vision (Google Gemini) ────────────────────────────────
+# AI vision
 google-generativeai==0.8.3
 
-# ── Payments ─────────────────────────────────────────────────
+# Payments
 razorpay==1.3.0
 
-# ── HTTP ─────────────────────────────────────────────────────
+# HTTP clients
 httpx==0.27.2
 requests==2.32.3
 aiohttp==3.10.10

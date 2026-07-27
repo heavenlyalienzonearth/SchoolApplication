@@ -38,6 +38,7 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
         response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
         
         # 7. Permissions-Policy (Restricts browser feature usage)
-        response.headers["Permissions-Policy"] = "camera=(), microphone=(), geolocation=()"
+        # Allow microphone for the same-origin parent portal voice input feature.
+        response.headers["Permissions-Policy"] = "camera=(), microphone=(self), geolocation=()"
         
         return response

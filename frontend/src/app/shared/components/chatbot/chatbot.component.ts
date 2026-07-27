@@ -1,4 +1,4 @@
-import { Component, ElementRef, ViewChild, AfterViewChecked, OnInit } from '@angular/core';
+import { Component, ElementRef, ViewChild, AfterViewChecked, OnInit, NgZone, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ApiService } from '../../../core/services/api.service';
@@ -63,6 +63,7 @@ interface Message {
         </div>
 
         <!-- Input Area -->
+        <div class="voice-status" *ngIf="voiceStatus">{{ voiceStatus }}</div>
         <form class="chat-input-area" (ngSubmit)="sendMessage()">
           <input 
             type="text" 
@@ -73,6 +74,10 @@ interface Message {
             autocomplete="off"
             [disabled]="isTyping"
           />
+          <button type="button" class="voice-btn" [class.listening]="isListening" (click)="startVoiceInput()" [disabled]="isTyping" [attr.aria-label]="isListening ? 'Stop voice input' : 'Start voice input'">
+            <span *ngIf="!isListening">🎤</span>
+            <span *ngIf="isListening">⏹</span>
+          </button>
           <button type="submit" class="send-btn" [disabled]="!userInput.trim() || isTyping">
             ➤
           </button>
@@ -355,12 +360,50 @@ interface Message {
     }
 
     /* Input panel */
+    .voice-status {
+      padding: 8px 12px 0;
+      font-size: 0.75rem;
+      color: #4b5563;
+      background-color: #F8FAFC;
+    }
+
     .chat-input-area {
       display: flex;
       padding: 12px;
       background-color: var(--white);
       border-top: 1px solid #F1F5F9;
       gap: 8px;
+    }
+
+    .voice-btn {
+      background-color: #F3F4F6;
+      color: var(--primary);
+      border: 1px solid #E5E7EB;
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.95rem;
+      transition: var(--transition);
+    }
+
+    .voice-btn:hover:not(:disabled) {
+      background-color: #FDE7F3;
+      transform: scale(1.05);
+    }
+
+    .voice-btn.listening {
+      background-color: #FECACA;
+      color: #B91C1C;
+      animation: pulse-listening 1.2s infinite;
+    }
+
+    .voice-btn:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
     }
 
     .chat-input {
@@ -404,6 +447,11 @@ interface Message {
       cursor: not-allowed;
     }
 
+    @keyframes pulse-listening {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.08); }
+    }
+
     @media (max-width: 480px) {
       .chatbot-wrapper {
         bottom: 20px;
@@ -422,6 +470,11 @@ export class ChatbotComponent implements OnInit, AfterViewChecked {
   isOpen = false;
   userInput = '';
   isTyping = false;
+  isListening = false;
+  voiceStatus = '';
+  private recognition: any = null;
+  private readonly voiceScopeKey = 'chatbot-voice-scope';
+  private activeVoiceSession = false;
   
   onboardingStep: 'CHILD_NAME' | 'PARENT_NAME' | 'EMAIL' | 'PHONE' | 'COMPLETE' = 'CHILD_NAME';
   leadData = {
@@ -434,9 +487,16 @@ export class ChatbotComponent implements OnInit, AfterViewChecked {
   messages: Message[] = [];
   quickReplies: string[] = ["Our Programs", "Admissions Info", "School Contact Info"];
 
-  constructor(private apiService: ApiService) {}
+  constructor(
+    private apiService: ApiService,
+    private ngZone: NgZone,
+    private cdr: ChangeDetectorRef
+  ) {}
 
   ngOnInit(): void {
+    this.initializeVoiceRecognition();
+    this.resetVoiceScope();
+
     // Initial welcome onboarding message
     this.messages.push({
       sender: 'bot',
@@ -460,6 +520,157 @@ export class ChatbotComponent implements OnInit, AfterViewChecked {
   selectQuickReply(pill: string): void {
     this.userInput = pill;
     this.sendMessage();
+  }
+
+  private resetVoiceScope(): void {
+    this.activeVoiceSession = false;
+    if (typeof window !== 'undefined') {
+      sessionStorage.removeItem(this.voiceScopeKey);
+    }
+  }
+
+  private initializeVoiceRecognition(): void {
+    const SpeechRecognitionCtor = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    if (!SpeechRecognitionCtor) {
+      this.setVoiceStatus('Voice input is not supported in this browser. Please use Chrome or Edge and allow microphone access.');
+      return;
+    }
+
+    this.recognition = new SpeechRecognitionCtor();
+    this.recognition.lang = 'en-IN';
+    this.recognition.continuous = false;
+    this.recognition.interimResults = true;
+    this.recognition.maxAlternatives = 1;
+
+    this.recognition.onstart = () => {
+      this.ngZone.run(() => {
+        this.isListening = true;
+        this.voiceStatus = 'Listening... speak now';
+        this.cdr.detectChanges();
+      });
+    };
+
+    this.recognition.onresult = (event: any) => {
+      this.ngZone.run(() => {
+        let interimTranscript = '';
+        let finalTranscript = '';
+
+        for (let index = event.resultIndex; index < event.results.length; index++) {
+          const result = event.results[index];
+          const transcript = result[0].transcript.trim();
+          if (result.isFinal) {
+            finalTranscript += `${transcript} `;
+          } else {
+            interimTranscript += `${transcript} `;
+          }
+        }
+
+        const combinedTranscript = `${finalTranscript}${interimTranscript}`.trim();
+        if (combinedTranscript) {
+          this.userInput = combinedTranscript;
+          this.voiceStatus = finalTranscript ? 'Voice captured. You can send it now.' : 'Listening...';
+        }
+
+        if (finalTranscript) {
+          this.stopVoiceInput();
+        }
+
+        this.cdr.detectChanges();
+      });
+    };
+
+    this.recognition.onerror = (event: any) => {
+      this.ngZone.run(() => {
+        this.isListening = false;
+        const errorMessage = this.getVoiceErrorMessage(event.error);
+        this.setVoiceStatus(errorMessage);
+        this.cdr.detectChanges();
+      });
+    };
+
+    this.recognition.onend = () => {
+      this.ngZone.run(() => {
+        this.isListening = false;
+        if (!this.userInput.trim()) {
+          this.voiceStatus = 'Tap the mic to start speaking.';
+        }
+        this.cdr.detectChanges();
+      });
+    };
+  }
+
+  async startVoiceInput(): Promise<void> {
+    if (!this.recognition) {
+      this.setVoiceStatus('Voice input is not supported in this browser. Please use Chrome or Edge and allow microphone access.');
+      return;
+    }
+
+    if (this.isListening) {
+      this.stopVoiceInput();
+      return;
+    }
+
+    const activeVoiceFlag = typeof window !== 'undefined' ? sessionStorage.getItem(this.voiceScopeKey) : null;
+    if (activeVoiceFlag && activeVoiceFlag !== this.voiceScopeKey) {
+      this.setVoiceStatus('Voice is already active in another view. Close that session before starting a new one.');
+      return;
+    }
+
+    try {
+      this.userInput = '';
+      this.setVoiceStatus('Requesting microphone access...');
+
+      if (typeof navigator !== 'undefined' && navigator.mediaDevices?.getUserMedia) {
+        await navigator.mediaDevices.getUserMedia({ audio: true });
+      }
+
+      if (typeof window !== 'undefined') {
+        sessionStorage.setItem(this.voiceScopeKey, this.voiceScopeKey);
+      }
+      this.activeVoiceSession = true;
+      this.recognition.start();
+    } catch (error) {
+      this.isListening = false;
+      this.activeVoiceSession = false;
+      if (typeof window !== 'undefined') {
+        sessionStorage.removeItem(this.voiceScopeKey);
+      }
+      this.setVoiceStatus('Microphone access was blocked or unavailable. Please allow it in the browser and try again.');
+    }
+  }
+
+  stopVoiceInput(): void {
+    if (this.recognition && this.isListening) {
+      this.recognition.stop();
+    }
+    this.isListening = false;
+    this.activeVoiceSession = false;
+    if (typeof window !== 'undefined') {
+      sessionStorage.removeItem(this.voiceScopeKey);
+    }
+    if (this.userInput.trim()) {
+      this.setVoiceStatus('Voice captured. You can send it now.');
+    } else {
+      this.setVoiceStatus('Tap the mic to start speaking.');
+    }
+  }
+
+  private setVoiceStatus(message: string): void {
+    this.voiceStatus = message;
+    this.cdr.detectChanges();
+  }
+
+  private getVoiceErrorMessage(error: string): string {
+    switch (error) {
+      case 'not-allowed':
+        return 'Microphone permission was denied. Please allow microphone access and try again.';
+      case 'audio-capture':
+        return 'The microphone could not be started. Please check your device settings.';
+      case 'network':
+        return 'Voice recognition is temporarily unavailable. Please try again.';
+      default:
+        return `Voice input error: ${error || 'unknown error'}`;
+    }
   }
 
   sendMessage(): void {
