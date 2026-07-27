@@ -253,7 +253,7 @@ def get_2fa_setup(current_user: models.User = Depends(get_current_user)):
     # Create provisioning URI for Google Authenticator
     provisioning_uri = pyotp.totp.TOTP(secret).provisioning_uri(
         name=current_user.email,
-        issuer_name="Vidyankuram School"
+        issuer_name=settings.TWO_FA_ISSUER_NAME
     )
     # Generate Google Charts / QR Server URL
     qr_code_url = f"https://api.qrserver.com/v1/create-qr-code/?size=200x200&data={urllib.parse.quote(provisioning_uri)}"
@@ -321,7 +321,7 @@ def get_user_2fa_setup(
     secret = pyotp.random_base32()
     provisioning_uri = pyotp.totp.TOTP(secret).provisioning_uri(
         name=user.email,
-        issuer_name="Vidyankuram School"
+        issuer_name=settings.TWO_FA_ISSUER_NAME
     )
     qr_code_url = f"https://api.qrserver.com/v1/create-qr-code/?size=200x200&data={urllib.parse.quote(provisioning_uri)}"
     return {"secret": secret, "qr_code_url": qr_code_url}
@@ -680,21 +680,21 @@ def forgot_password(request: schemas.ForgotPasswordRequest, db: Session = Depend
     to_encode = {"exp": expire, "sub": user.email, "type": "password_reset"}
     reset_token = jwt.encode(to_encode, settings.JWT_SECRET, algorithm=settings.JWT_ALGORITHM)
     
-    reset_url = f"http://localhost:4200/admin/reset-password?token={reset_token}"
+    reset_url = f"{settings.FRONTEND_URL}/admin/reset-password?token={reset_token}"
     
     # Print a beautiful mock email template to stdout/console
     print("\n" + "="*80)
     print("📧 MOCK EMAIL NOTIFICATION: PASSWORD RESET REQUEST")
     print(f"Recipient: {user.full_name} ({user.email})")
-    print(f"Subject: Reset Your Kangaroo Kids Portal Password")
+    print(f"Subject: Reset Your {settings.SCHOOL_SHORT_NAME} Portal Password")
     print("-"*80)
     print(f"Dear {user.full_name or 'User'},")
-    print("We received a request to reset your password for the Kangaroo Kids Admin Portal.")
+    print(f"We received a request to reset your password for the {settings.SCHOOL_SHORT_NAME} Admin Portal.")
     print("To choose a new password, click the link below or copy and paste it into your browser:")
     print(f"\n👉 {reset_url}\n")
     print("Note: This reset link is valid for 15 minutes only.")
     print("If you did not request this reset, please ignore this email.")
-    print("\nKangaroo Kids Portal Security Desk")
+    print(f"\n{settings.SCHOOL_SHORT_NAME} Portal Security Desk")
     print("="*80 + "\n")
     
     return {"message": "If this email is registered in our portal, a password reset link has been dispatched."}
@@ -741,14 +741,14 @@ async def upload_teacher_cv(
             detail="Only PDF, Word Document (.doc, .docx), or Image files are allowed."
         )
         
-    MAX_SIZE = 100 * 1024 * 1024 # 100 MB
+    MAX_SIZE = settings.MAX_UPLOAD_SIZE_MB * 1024 * 1024
     
     try:
         content = await file.read()
         if len(content) > MAX_SIZE:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail="File size exceeds the maximum limit of 100 MB."
+                detail=f"File size exceeds the maximum limit of {settings.MAX_UPLOAD_SIZE_MB} MB."
             )
             
         import uuid

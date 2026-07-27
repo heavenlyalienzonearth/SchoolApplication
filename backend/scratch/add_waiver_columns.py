@@ -1,8 +1,12 @@
 import sys
+import os
 from sqlalchemy import create_engine, text, inspect
 
-local_url = "mssql+pyodbc://@localhost/SchoolDB?driver=ODBC+Driver+17+for+SQL+Server&trusted_connection=yes"
-prod_url = "mssql+pyodbc://sa:M0_tre_141@200.97.168.156/SchoolDB?driver=ODBC+Driver+17+for+SQL+Server&TrustServerCertificate=yes"
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+# Load database URL from .env via settings
+from app.core.config import settings
+db_url = settings.DATABASE_URL
 
 def sync_db(db_url, db_name):
     print(f"\nConnecting to {db_name} database...")
@@ -32,8 +36,7 @@ def sync_db(db_url, db_name):
         print(f"Error syncing {db_name}: {str(e)}")
 
 def main():
-    sync_db(prod_url, "Production SQL Server")
-    sync_db(local_url, "Local MS SQL Server")
+    sync_db(db_url, "Database (from .env)")
 
 if __name__ == "__main__":
     main()

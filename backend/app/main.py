@@ -82,9 +82,9 @@ def startup_event():
         super_admin = db.query(models.User).filter(models.User.role == "SuperAdmin").first()
         if not super_admin:
             print("[Startup] Seeding SuperAdmin user...")
-            hashed_pw = get_password_hash("superadmin@123")
+            hashed_pw = get_password_hash(settings.SUPERADMIN_PASSWORD)
             new_super = models.User(
-                email="superadmin@school.com",
+                email=settings.SUPERADMIN_EMAIL,
                 full_name="Super Administrator",
                 hashed_password=hashed_pw,
                 role="SuperAdmin",
@@ -189,7 +189,7 @@ def startup_event():
             print("[Startup] Safety 2FA reset complete!")
             
         # 4. CORS & DB Security configurations checks
-        is_prod_db = "200.97.168.156" in settings.DATABASE_URL
+        is_prod_db = settings.PRODUCTION_DB_HOST in settings.DATABASE_URL
         cors_origins = settings.cors_origins_list
         print(f"[Security] Active CORS Whitelist: {cors_origins}", flush=True)
         if is_prod_db:

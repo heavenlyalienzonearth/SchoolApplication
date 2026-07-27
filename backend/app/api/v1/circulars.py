@@ -8,6 +8,7 @@ from datetime import datetime
 from app.core.database import get_db
 from app.api.v1.auth import get_current_user, require_permission
 from app import models, schemas
+from app.core.config import settings
 
 router = APIRouter(tags=["School Circulars"])
 
@@ -71,8 +72,8 @@ def create_circular(
     try:
         print("\n" + "="*60)
         print("📢 EMAIL OUTBOX NOTIFICATION (NEW SCHOOL CIRCULAR)")
-        print(f"From: circulars@vidyankuram.edu")
-        print(f"Subject: 📢 Vidyankuram School Circular: {db_circular.title}")
+        print(f"From: {settings.SCHOOL_CIRCULARS_EMAIL}")
+        print(f"Subject: 📢 {settings.SCHOOL_NAME} School Circular: {db_circular.title}")
         print(f"Target Class: {target_class}")
         if parent_emails:
             print(f"Recipients ({len(parent_emails)}): {', '.join(parent_emails)}")

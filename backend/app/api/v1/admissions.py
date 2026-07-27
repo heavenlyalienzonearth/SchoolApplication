@@ -4,6 +4,7 @@ from typing import List, Optional
 from app.core.database import get_db
 from app.api.v1.auth import get_current_user
 from app import models, schemas
+from app.core.config import settings
 import openpyxl
 import io
 import csv
@@ -200,23 +201,23 @@ def update_admission_status(
 ============================================================
 MOCK EMAIL DISPATCHED TO PARENT
 ============================================================
-From: Kangaroo Kids Portal <admissions@kangarookids.com>
+From: {settings.SCHOOL_SHORT_NAME} Portal <{settings.SCHOOL_ADMISSIONS_EMAIL}>
 To: {db_admission.email}
-Subject: Welcome to Kangaroo Kids! Your Parent Portal Account
+Subject: Welcome to {settings.SCHOOL_SHORT_NAME}! Your Parent Portal Account
 
 Dear {db_admission.parent_name},
 
-Congratulations! Your child, {db_admission.child_name}, has been admitted to Kangaroo Kids for the program '{program_title}'.
+Congratulations! Your child, {db_admission.child_name}, has been admitted to {settings.SCHOOL_SHORT_NAME} for the program '{program_title}'.
 
 We have created a temporary parent account for you to access the portal:
-- Portal URL: http://localhost:4200/admin/login
+- Portal URL: {settings.FRONTEND_URL}/admin/login
 - Login Email: {db_admission.email}
 - Temporary Password: {temp_password}
 
 Please log in and update your password under Site Settings.
 
 Best regards,
-Kangaroo Kids Administration
+{settings.SCHOOL_SHORT_NAME} Administration
 ============================================================
 """
             print(email_body)
@@ -271,14 +272,14 @@ def email_student_badge(
     current_year = datetime.now().year
     
     # Setup mock email contents
-    recipient = "printshop@schoolcards.com"
+    recipient = settings.SCHOOL_PRINTSHOP_EMAIL
     subject = f"📇 ID Card Printing Request: {db_admission.child_name}"
     
     email_body = f"""
 ============================================================
 📧 MOCK EMAIL DISPATCHED TO ID CARD PRINTER
 ============================================================
-From: Kangaroo Kids System <noreply@kangarookids.com>
+From: {settings.SCHOOL_SHORT_NAME} System <{settings.SCHOOL_NOREPLY_EMAIL}>
 To: {recipient}
 Subject: {subject}
 
@@ -291,17 +292,17 @@ Please print the following student ID badge:
 - Class Current Year: {current_year}
 - Emergency Phone: {db_admission.emergency_phone or db_admission.phone}
 - Blood Group: {db_admission.blood_group or "Not Specified"}
-- Photo Path: http://localhost:8000{db_admission.photo_url if db_admission.photo_url else "/photos/default.jpg"}
+- Photo Path: {settings.FRONTEND_URL.replace('localhost:4200', 'localhost:8000')}{db_admission.photo_url if db_admission.photo_url else "/photos/default.jpg"}
 
 Please reply once the badge has been printed and shipped.
 
 Regards,
-Kangaroo Kids Admin Portal
+{settings.SCHOOL_SHORT_NAME} Admin Portal
 ============================================================
 """
     print(email_body)
     
-    return {"message": "Success! The ID badge request has been directly emailed to printshop@schoolcards.com."}
+    return {"message": f"Success! The ID badge request has been directly emailed to {settings.SCHOOL_PRINTSHOP_EMAIL}."}
 
 @router.delete("/applications/{admission_id}")
 def delete_admission_application(

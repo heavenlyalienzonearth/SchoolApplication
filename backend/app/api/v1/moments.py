@@ -14,6 +14,7 @@ from sqlalchemy.orm import Session
 from app import models
 from app.core.database import get_db
 from app.api.v1.auth import get_current_user
+from app.core.config import settings
 
 router = APIRouter(prefix="/moments", tags=["Student Moments"])
 
@@ -70,7 +71,7 @@ def upload_student_moment(
     os.makedirs(MOMENTS_DIR, exist_ok=True)
     created_moments = []
     now = datetime.utcnow()
-    expires_at = now + timedelta(days=2)
+    expires_at = now + timedelta(days=settings.MOMENTS_RETENTION_DAYS)
     
     for idx, file in enumerate(files):
         # Verify file is image or video
@@ -134,7 +135,7 @@ def upload_student_moment(
         print(f"Class Teacher {current_user.full_name} has just shared {len(files)} new daily moments (photos/videos) for {student.name}!")
         print(f"Caption: '{title}'")
         print(f"Link: http://localhost:4200/parent/dashboard?tab=overview")
-        print(f"\n*Note: These updates will be available in the portal for 2 days (until {expires_at.strftime('%Y-%m-%d %H:%M UTC')}) and will then be automatically deleted for student privacy.*")
+        print(f"\n*Note: These updates will be available in the portal for {settings.MOMENTS_RETENTION_DAYS} days (until {expires_at.strftime('%Y-%m-%d %H:%M UTC')}) and will then be automatically deleted for student privacy.*")
         print("="*60)
         
     return {

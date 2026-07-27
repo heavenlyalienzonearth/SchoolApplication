@@ -317,7 +317,7 @@ def send_payment_reminder(
     print(f"EMAIL OUTBOX REMINDER (OVERDUE FEE)")
     print(f"Date: {datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S')}")
     print(f"To: {parent_email} ({parent_name})")
-    print(f"Subject: OVERDUE FEE REMINDER: {bill.title} - Kangaroo Kids")
+    print(f"Subject: OVERDUE FEE REMINDER: {bill.title} - {settings.SCHOOL_SHORT_NAME}")
     print(f"Body:")
     print(f"Dear {parent_name},")
     print(f"This is a reminder that the outstanding fee payment of {float(bill.amount):.2f} for {bill.title}")
@@ -325,7 +325,7 @@ def send_payment_reminder(
     print(f"Please log in to the Parent Portal at your earliest convenience to complete payment.")
     print(f"If you have already paid, please ignore this reminder.")
     print(f"Regards,")
-    print(f"Finance Office, Kangaroo Kids Pre-School")
+    print(f"Finance Office, {settings.SCHOOL_SHORT_NAME} Pre-School")
     print("="*60)
     
     return {"message": f"Overdue reminder email simulated to {parent_email} successfully."}
@@ -347,14 +347,14 @@ def send_bulk_payment_reminders(
         print(f"EMAIL OUTBOX REMINDER (BULK OVERDUE FEE)")
         print(f"Date: {datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S')}")
         print(f"To: {parent_email} ({parent_name})")
-        print(f"Subject: OVERDUE FEE REMINDER: {bill.title} - Kangaroo Kids")
+        print(f"Subject: OVERDUE FEE REMINDER: {bill.title} - {settings.SCHOOL_SHORT_NAME}")
         print(f"Body:")
         print(f"Dear {parent_name},")
         print(f"This is an urgent reminder that the outstanding fee payment of {float(bill.amount):.2f} for {bill.title}")
         print(f"assigned to your child {bill.student.name} is currently overdue (Due date: {bill.due_date}).")
         print(f"Please pay through the Fees & Billing ledger in the Parent Portal immediately.")
         print(f"Regards,")
-        print(f"Finance Office, Kangaroo Kids Pre-School")
+        print(f"Finance Office, {settings.SCHOOL_SHORT_NAME} Pre-School")
         print("="*60)
         reminded_count += 1
         

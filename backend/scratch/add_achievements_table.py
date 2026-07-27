@@ -4,10 +4,11 @@ from sqlalchemy import create_engine, text
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-DB_URL = "mssql+pyodbc://sa:M0_tre_141@200.97.168.156/SchoolDB?driver=ODBC+Driver+17+for+SQL+Server&TrustServerCertificate=yes"
+from app.core.config import settings
+DB_URL = settings.DATABASE_URL
 
 def migrate():
-    print("Connecting to production MS SQL Server database...")
+    print("Connecting to MS SQL Server database (from .env)...")
     try:
         engine = create_engine(DB_URL, connect_args={"timeout": 15})
         with engine.connect() as conn:

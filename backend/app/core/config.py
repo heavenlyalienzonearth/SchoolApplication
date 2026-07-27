@@ -14,6 +14,43 @@ class Settings(BaseSettings):
     RAZORPAY_KEY_ID: str = ""
     RAZORPAY_KEY_SECRET: str = ""
 
+    # School Identity & Branding
+    SCHOOL_NAME: str = "Vidyankuram"
+    SCHOOL_SHORT_NAME: str = "Kangaroo Kids"
+
+    # School Contact Information
+    SCHOOL_CONTACT_EMAIL: str = "admissions@school.com"
+    SCHOOL_CONTACT_PHONE: str = "1800-210-6868"
+    SCHOOL_ADMISSIONS_EMAIL: str = "admissions@kangarookids.com"
+    SCHOOL_NOREPLY_EMAIL: str = "noreply@kangarookids.com"
+    SCHOOL_CIRCULARS_EMAIL: str = "circulars@vidyankuram.edu"
+    SCHOOL_PRINTSHOP_EMAIL: str = "printshop@schoolcards.com"
+
+    # Super Admin Seed Credentials
+    SUPERADMIN_EMAIL: str = "superadmin@school.com"
+    SUPERADMIN_PASSWORD: str = "superadmin@123"
+
+    # 2FA Issuer Name
+    TWO_FA_ISSUER_NAME: str = "Vidyankuram School"
+
+    # TTS Voice Configuration
+    TTS_VOICE_NAME: str = "en-IN-NeerjaExpressiveNeural"
+    TTS_FALLBACK_LANG: str = "en"
+    TTS_FALLBACK_TLD: str = "co.in"
+
+    # File Upload Limits
+    MAX_UPLOAD_SIZE_MB: int = 100
+
+    # Student Moments Retention
+    MOMENTS_RETENTION_DAYS: int = 2
+
+    # Production Environment Detection
+    PRODUCTION_DB_HOST: str = "200.97.168.156"
+    PRODUCTION_DOMAIN: str = "deepfusion.cloud"
+
+    # Frontend Portal URL (used in reset password links)
+    FRONTEND_URL: str = "http://localhost:4200"
+
     @property
     def cors_origins_list(self) -> List[str]:
         if not self.CORS_ORIGINS:

@@ -27,6 +27,7 @@ from app.core.database import get_db
 from app.api.v1.auth import get_current_user
 from app import models
 from app.core.ai_vision_config import analyze_image_with_ai, AI_VISION_PROVIDER, AI_VISION_MODEL_NAME
+from app.core.config import settings
 
 AUDIO_DIR = os.path.join(os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "..")), "static", "art_audio")
 os.makedirs(AUDIO_DIR, exist_ok=True)
@@ -794,7 +795,7 @@ def render_15s_animated_gif(cutout: Image.Image, bg_path: str, preset: str, outp
             # Generate TTS Voice Narration directly describing the vision model findings (NO PUPIL NAME SPOKEN)
             try:
                 from gtts import gTTS
-                tts = gTTS(text=full_narration, lang='en', tld='co.in', slow=False)
+                tts = gTTS(text=full_narration, lang=settings.TTS_FALLBACK_LANG, tld=settings.TTS_FALLBACK_TLD, slow=False)
                 tts.save(temp_speech_path)
                 has_speech = True
             except Exception as voice_err:
@@ -968,7 +969,7 @@ def animate_student_artwork(
 
         async def _synthesize_voice():
             # 'en-IN-NeerjaExpressiveNeural' is an expressive, natural Indian English voice
-            communicate = edge_tts.Communicate(story_text, 'en-IN-NeerjaExpressiveNeural')
+            communicate = edge_tts.Communicate(story_text, settings.TTS_VOICE_NAME)
             await communicate.save(audio_path)
 
         asyncio.run(_synthesize_voice())
@@ -977,7 +978,7 @@ def animate_student_artwork(
         print(f"[Art Storyteller - edge-tts Notice]: {ae}. Falling back to gTTS...")
         try:
             from gtts import gTTS
-            tts = gTTS(text=story_text, lang='en', tld='co.in', slow=False)
+            tts = gTTS(text=story_text, lang=settings.TTS_FALLBACK_LANG, tld=settings.TTS_FALLBACK_TLD, slow=False)
             tts.save(audio_path)
             print(f"[Art Storyteller - gTTS] Audio saved: {audio_filename}")
         except Exception as ge:
