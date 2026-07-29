@@ -491,4 +491,9 @@ export class ContentService {
   sendCustomHolidayEmail(payload: any): Observable<any> {
     return this.apiService.post<any>('/holidays/send-custom-holiday-email', payload);
   }
+
+  // --- WEEKLY BIRTHDAY STARS ---
+  getWeeklyBirthdays(): Observable<any[]> {
+    return this.apiService.get<any[]>('/content/weekly-birthdays');
+  }
 }

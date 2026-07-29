@@ -31,6 +31,7 @@ interface AboutFeature {
 export class HomeComponent implements OnInit, OnDestroy {
   // Page Sections data
   @ViewChild('gallerySlider', { static: false }) gallerySlider!: ElementRef;
+  @ViewChild('birthdayScrollContainer', { static: false }) birthdayScrollContainer!: ElementRef;
   galleryInterval: any;
 
   heroSection: any = {};
@@ -134,6 +135,13 @@ export class HomeComponent implements OnInit, OnDestroy {
   admissionsSuccess = false;
   admissionsError = '';
 
+  // Weekly Birthday Stars State
+  weeklyBirthdays: any[] = [];
+  selectedBirthdayStudent: any = null;
+  playingBirthdayAudio = false;
+  birthdayAudioLoading = false;
+  birthdayAudioObj: HTMLAudioElement | null = null;
+
   // Holidays State
   holidaysList: any[] = [];
   selectedHolidayYear = new Date().getFullYear();
@@ -150,6 +158,7 @@ export class HomeComponent implements OnInit, OnDestroy {
     this.loadEvents();
     this.loadHolidays();
     this.loadBlogs();
+    this.loadWeeklyBirthdays();
     this.startHeroTimer();
     this.startGalleryTimer();
     this.loadVisitorCount();
@@ -636,5 +645,59 @@ export class HomeComponent implements OnInit, OnDestroy {
     else if (day === 3 || day === 23) suffix = 'rd';
     
     return `${day}${suffix} ${month} ${year}`;
+  }
+
+  // --- WEEKLY BIRTHDAY STARS METHODS ---
+  loadWeeklyBirthdays(): void {
+    this.contentService.getWeeklyBirthdays().subscribe({
+      next: (data) => {
+        this.weeklyBirthdays = data || [];
+      },
+      error: () => {
+        this.weeklyBirthdays = [];
+      }
+    });
+  }
+
+  // Card Highlight State
+  activeHighlightId: number | null = null;
+
+  hasValidPhoto(url: string | null | undefined): boolean {
+    if (!url) return false;
+    const trimmed = url.trim();
+    return trimmed.length > 0 && trimmed !== 'null' && trimmed !== 'undefined';
+  }
+
+  getStudentAvatar(kid: any): string {
+    if (!kid) return '/assets/images/parent_avatar1.jpg';
+    const g = (kid.gender || '').toLowerCase();
+    const name = (kid.name || '').toLowerCase();
+    
+    if (g === 'girl' || name.includes('riya') || name.includes('zoe') || name.includes('mia') || name.includes('tara') || name.endsWith('a') || name.endsWith('i')) {
+      return '/assets/images/parent_avatar2.jpg';
+    }
+    return '/assets/images/parent_avatar1.jpg';
+  }
+
+  onCardClick(kid: any): void {
+    this.activeHighlightId = kid.id;
+  }
+
+  onCardMouseLeave(kid: any): void {
+    if (this.activeHighlightId === kid.id) {
+      this.activeHighlightId = null;
+    }
+  }
+
+  scrollBirthdayLeft(): void {
+    if (this.birthdayScrollContainer) {
+      this.birthdayScrollContainer.nativeElement.scrollBy({ left: -320, behavior: 'smooth' });
+    }
+  }
+
+  scrollBirthdayRight(): void {
+    if (this.birthdayScrollContainer) {
+      this.birthdayScrollContainer.nativeElement.scrollBy({ left: 320, behavior: 'smooth' });
+    }
   }
 }

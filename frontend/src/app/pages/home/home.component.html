@@ -89,6 +89,105 @@
   </div>
 </section>
 
+<!-- WEEKLY BIRTHDAY STARS SECTION (Visible ONLY if current week has birthdays) -->
+<section class="weekly-birthdays-section" *ngIf="weeklyBirthdays && weeklyBirthdays.length > 0">
+  <!-- Dynamic Floating Colorful Background Balloons -->
+  <div class="birthday-section-balloons">
+    <svg class="balloon b-red" viewBox="0 0 50 70">
+      <ellipse cx="25" cy="25" rx="20" ry="24" fill="#FF3366"/>
+      <polygon points="25,49 21,55 29,55" fill="#E0245E"/>
+      <path d="M25,55 Q20,62 25,70" stroke="#E0245E" stroke-width="2" fill="none"/>
+      <ellipse cx="18" cy="16" rx="4" ry="7" fill="rgba(255,255,255,0.4)" transform="rotate(-20 18 16)"/>
+    </svg>
+    <svg class="balloon b-yellow" viewBox="0 0 50 70">
+      <ellipse cx="25" cy="25" rx="20" ry="24" fill="#FFC107"/>
+      <polygon points="25,49 21,55 29,55" fill="#FFA000"/>
+      <path d="M25,55 Q30,62 25,70" stroke="#FFA000" stroke-width="2" fill="none"/>
+      <ellipse cx="18" cy="16" rx="4" ry="7" fill="rgba(255,255,255,0.4)" transform="rotate(-20 18 16)"/>
+    </svg>
+    <svg class="balloon b-blue" viewBox="0 0 50 70">
+      <ellipse cx="25" cy="25" rx="20" ry="24" fill="#2196F3"/>
+      <polygon points="25,49 21,55 29,55" fill="#1976D2"/>
+      <path d="M25,55 Q20,62 25,70" stroke="#1976D2" stroke-width="2" fill="none"/>
+      <ellipse cx="18" cy="16" rx="4" ry="7" fill="rgba(255,255,255,0.4)" transform="rotate(-20 18 16)"/>
+    </svg>
+    <svg class="balloon b-green" viewBox="0 0 50 70">
+      <ellipse cx="25" cy="25" rx="20" ry="24" fill="#4CAF50"/>
+      <polygon points="25,49 21,55 29,55" fill="#388E3C"/>
+      <path d="M25,55 Q30,62 25,70" stroke="#388E3C" stroke-width="2" fill="none"/>
+      <ellipse cx="18" cy="16" rx="4" ry="7" fill="rgba(255,255,255,0.4)" transform="rotate(-20 18 16)"/>
+    </svg>
+    <svg class="balloon b-purple" viewBox="0 0 50 70">
+      <ellipse cx="25" cy="25" rx="20" ry="24" fill="#9C27B0"/>
+      <polygon points="25,49 21,55 29,55" fill="#7B1FA2"/>
+      <path d="M25,55 Q20,62 25,70" stroke="#7B1FA2" stroke-width="2" fill="none"/>
+      <ellipse cx="18" cy="16" rx="4" ry="7" fill="rgba(255,255,255,0.4)" transform="rotate(-20 18 16)"/>
+    </svg>
+    <svg class="balloon b-orange" viewBox="0 0 50 70">
+      <ellipse cx="25" cy="25" rx="20" ry="24" fill="#FF9800"/>
+      <polygon points="25,49 21,55 29,55" fill="#F57C00"/>
+      <path d="M25,55 Q30,62 25,70" stroke="#F57C00" stroke-width="2" fill="none"/>
+      <ellipse cx="18" cy="16" rx="4" ry="7" fill="rgba(255,255,255,0.4)" transform="rotate(-20 18 16)"/>
+    </svg>
+    <svg class="balloon b-cyan" viewBox="0 0 50 70">
+      <ellipse cx="25" cy="25" rx="20" ry="24" fill="#00BCD4"/>
+      <polygon points="25,49 21,55 29,55" fill="#0097A7"/>
+      <path d="M25,55 Q20,62 25,70" stroke="#0097A7" stroke-width="2" fill="none"/>
+      <ellipse cx="18" cy="16" rx="4" ry="7" fill="rgba(255,255,255,0.4)" transform="rotate(-20 18 16)"/>
+    </svg>
+  </div>
+
+  <div class="container">
+    <div class="birthday-header-flex">
+      <div class="birthday-title-group">
+        <span class="birthday-badge-pill">🎉 THIS WEEK'S CELEBRATIONS</span>
+        <h2>🎂 Birthday Stars of the Week</h2>
+        <p class="birthday-subtitle">Hover or click a student's card to celebrate!</p>
+      </div>
+      
+      <!-- Horizontal Scroll Nav Controls -->
+      <div class="birthday-scroll-controls" *ngIf="weeklyBirthdays.length > 3">
+        <button (click)="scrollBirthdayLeft()" class="btn-scroll-nav" title="Scroll Left">‹</button>
+        <button (click)="scrollBirthdayRight()" class="btn-scroll-nav" title="Scroll Right">›</button>
+      </div>
+    </div>
+
+    <!-- Horizontal Scroll Strip -->
+    <div class="birthday-scroll-wrapper" #birthdayScrollContainer>
+      <div class="birthday-card" 
+           *ngFor="let kid of weeklyBirthdays" 
+           [class.today-card]="kid.is_today"
+           [class.clicked-highlight]="activeHighlightId === kid.id"
+           (click)="onCardClick(kid)"
+           (mouseleave)="onCardMouseLeave(kid)">
+        
+        <!-- Professional Elegant Particle Burst Elements -->
+        <div class="sparkle-particle spark-1">✦</div>
+        <div class="sparkle-particle spark-2">🌟</div>
+        <div class="sparkle-particle spark-3">✨</div>
+        <div class="sparkle-particle spark-4">💫</div>
+        <div class="sparkle-particle spark-5">🎉</div>
+        <div class="birthday-card-sparkle"></div>
+
+        <div class="birthday-photo-wrapper">
+          <img [src]="hasValidPhoto(kid.photo_url) ? (kid.photo_url.startsWith('http') ? kid.photo_url : mediaBaseUrl + kid.photo_url) : getStudentAvatar(kid)" 
+               [alt]="kid.name" 
+               class="birthday-photo" />
+          <div class="birthday-party-hat">🥳</div>
+          <div class="birthday-tag" [class.is-today]="kid.is_today">
+            {{ kid.is_today ? '🎂 Today!' : kid.birthday_day_str }}
+          </div>
+        </div>
+
+        <div class="birthday-card-details">
+          <h4 class="kid-name">{{ kid.name }}</h4>
+          <p class="kid-program">{{ kid.program_name }}</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
 <!-- PROGRAMS SECTION -->
 <section class="section programs-sec">
   <div class="container">
